@@ -1,0 +1,19 @@
+{
+    "levels": [
+        {
+            "level": "Level01",
+            "par": -1,
+            "moves": ""
+        },
+        {
+            "level": "Level02",
+            "par": 7,
+            "moves": "RRRRRRR"
+        },
+        {
+            "level": "Level03",
+            "par": 17,
+            "moves": "RRRRRRRRRRRRRRRRR"
+        }
+    ]
+}

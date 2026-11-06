@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: Assets/Scripts/Core/Solver/LevelSolver.cs 572c71744d346513ce0aa204743baa12f6b4af25
+Reviewed-Content-Hash: Assets/Scripts/Core/Solver/ParTable.cs 918a9f4782c661c1f7c5928404842800be5346cd
+Reviewed-Content-Hash: Assets/Editor/LevelSolverMenu.cs 4cb5d5a6e06ffff1c7b134bbba145bae67678f3c
+Reviewed-Content-Hash: Assets/Scripts/Core/Level.cs e0ad761bffa8240f3ee3e86a1ebb31f896c1b1b9
+Reviewed-Content-Hash: Assets/Scripts/Core/LevelLoader.cs a0f5ddf8a77ca60717618e054cd796bf3382f753

@@ -1,0 +1,4 @@
+LevelSolver: Level01 | proven-unsolvable | par - | intended - | - | moves - | states 73 | 8 ms
+LevelSolver: Level02 | solved | par 7 | intended - | - | moves RRRRRRR | states 19 | 1 ms
+LevelSolver: Level03 | solved | par 17 | intended - | - | moves RRRRRRRRRRRRRRRRR | states 96 | 0 ms
+LevelSolver: 3 level(s), 0 error(s), par written to Assets/Levels/par.json
