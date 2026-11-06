@@ -1,0 +1,15 @@
+CHECK PASS A swap collision resets counter :: (2,1) count 0 Playing down=False cat=1
+CHECK PASS B mirror step 1 :: (2,1) count 1 Playing down=False cat=0
+CHECK PASS B mirror step 2 :: (3,1) count 2 Playing down=True cat=0
+CHECK PASS B mirror step 3 :: (2,1) count 1 Playing down=True cat=0
+CHECK PASS B mirror step 4 :: (1,1) count 0 Playing down=False cat=0
+CHECK PASS B mirror step 5 :: (2,1) count 1 Playing down=False cat=0
+CHECK PASS C world4 start value :: (1,1) count 5 Playing down=False cat=0
+CHECK PASS C world4 step 1 -> 6 :: (2,1) count 6 Playing down=False cat=0
+CHECK PASS C world4 step 2 -> 7 :: (3,1) count 7 Playing down=False cat=0
+CHECK PASS C world4 step 3 -> 8 lucky, exit opens :: (4,1) count 8 Won down=False cat=0
+CHECK PASS D counting down onto 13 kills :: (2,1) count 13 Dead down=True cat=0
+CHECK PASS E re-stepping from saved states reproduces them (undo/redo) :: 17 transitions
+CHECK PASS E restart equals the initial state :: (1,1) count 0 Playing down=False cat=0
+CHECK PASS E saved state after reset keeps cat and counter :: (9,1) count 0 Playing down=False cat=0
+CHECK SUMMARY failures=0

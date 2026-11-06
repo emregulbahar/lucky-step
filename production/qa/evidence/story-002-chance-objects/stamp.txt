@@ -1,0 +1,6 @@
+Reviewed-Content-Hash: Assets/Scripts/Core/StepRules.cs b7194f44d6cf029dd50170b813febc5d5bd9cc21
+Reviewed-Content-Hash: Assets/Scripts/Core/GameState.cs 52d0bc500317404ac9ead2bfcf067b8f62aeef56
+Reviewed-Content-Hash: Assets/Scripts/Core/Level.cs 2e3752732029c636ecdcc37372a8956dafc3bffb
+Reviewed-Content-Hash: Assets/Scripts/Core/RuleSet.cs a16713ace92cfcf971034223a185a577fb807da4
+Reviewed-Content-Hash: Assets/Scripts/Core/LevelLoader.cs 7ac87075deedbd71d21e6ef6b3a7e20994e53882
+Reviewed-Content-Hash: Assets/Levels/Level02.txt ff6b8e737a4c13ef0707fe52769bd26d9f1aeb2c

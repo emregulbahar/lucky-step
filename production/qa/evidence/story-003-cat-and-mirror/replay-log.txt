@@ -1,0 +1,38 @@
+REPLAY Assets/Levels/Level01.txt: start (1,1) count 0 Playing
+REPLAY Assets/Levels/Level01.txt: step 1 R -> (2,1) count 1 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 2 R -> (3,1) count 2 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 3 R -> (4,1) count 3 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 4 R -> (5,1) count 4 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 5 R -> (6,1) count 5 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 6 R -> (7,1) count 6 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 7 D -> (7,2) count 7 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level01.txt: step 8 D -> (7,2) count 7 Playing down=False cat=0 bridges=0 (rejected)
+REPLAY Assets/Levels/Level01.txt: RESULT NOT WON (Playing)
+REPLAY Assets/Levels/Level02.txt: start (1,1) count 0 Playing
+REPLAY Assets/Levels/Level02.txt: step 1 R -> (2,1) count 1 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 2 R -> (3,1) count 2 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 3 R -> (4,1) count 3 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 4 R -> (5,1) count 4 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 5 R -> (6,1) count 5 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 6 R -> (7,1) count 6 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: step 7 R -> (14,1) count 7 Won down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level02.txt: RESULT WON
+REPLAY Assets/Levels/Level03.txt: start (1,1) count 0 Playing
+REPLAY Assets/Levels/Level03.txt: step 1 R -> (2,1) count 1 Playing down=False cat=1 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 2 R -> (3,1) count 2 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 3 R -> (4,1) count 3 Playing down=False cat=1 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 4 R -> (5,1) count 4 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 5 R -> (6,1) count 5 Playing down=False cat=1 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 6 R -> (7,1) count 6 Playing down=False cat=0 bridges=0
+REPLAY Assets/Levels/Level03.txt: step 7 R -> (8,1) count 7 Playing down=False cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 8 R -> (9,1) count 0 Playing down=False cat=0 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 9 R -> (10,1) count 1 Playing down=False cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 10 R -> (11,1) count 2 Playing down=False cat=0 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 11 R -> (12,1) count 3 Playing down=False cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 12 R -> (13,1) count 4 Playing down=False cat=0 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 13 R -> (14,1) count 5 Playing down=False cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 14 R -> (15,1) count 6 Playing down=False cat=0 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 15 R -> (16,1) count 7 Playing down=False cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 16 R -> (17,1) count 8 Playing down=True cat=0 bridges=1
+REPLAY Assets/Levels/Level03.txt: step 17 R -> (18,1) count 7 Won down=True cat=1 bridges=1
+REPLAY Assets/Levels/Level03.txt: RESULT WON
