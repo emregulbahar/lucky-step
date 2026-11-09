@@ -1,0 +1,49 @@
+{
+    "entries": [
+        { "key": "game.title", "value": "YEDİNCİ ADIM" },
+        { "key": "common.press_any_key", "value": "BİR TUŞA BAS" },
+        { "key": "common.back", "value": "GERİ" },
+
+        { "key": "menu.play", "value": "OYNA" },
+        { "key": "menu.level_select", "value": "BÖLÜM SEÇ" },
+        { "key": "menu.language", "value": "DİL: {0}" },
+        { "key": "menu.quit", "value": "ÇIKIŞ" },
+        { "key": "lang.english", "value": "ENGLISH" },
+        { "key": "lang.turkish", "value": "TÜRKÇE" },
+
+        { "key": "levelselect.title", "value": "BÖLÜM SEÇ" },
+        { "key": "levelselect.world_format", "value": "DÜNYA {0}: {1}" },
+        { "key": "levelselect.level_format", "value": "BÖLÜM {0}" },
+        { "key": "levelselect.locked", "value": "KİLİTLİ" },
+        { "key": "levelselect.completed", "value": "TAMAMLANDI" },
+        { "key": "levelselect.legend_golden_pawn", "value": "ALTIN PİYON: PAR YA DA DAHA AZ HAMLEDE BİTİR" },
+        { "key": "world.1.name", "value": "BAŞLANGIÇ KARESİ" },
+        { "key": "world.2.name", "value": "KARA KEDİ SOKAĞI" },
+        { "key": "world.3.name", "value": "AYNALAR SALONU" },
+        { "key": "world.4.name", "value": "ÇİN MAHALLESİ" },
+
+        { "key": "hud.level_format", "value": "DÜNYA {0} - BÖLÜM {1}" },
+        { "key": "hud.steps", "value": "ADIM {0}" },
+        { "key": "hud.par", "value": "PAR {0}" },
+        { "key": "hud.par_none", "value": "PAR -" },
+        { "key": "hud.keys", "value": "R YENİDEN · Z GERİ AL · ESC MENÜ" },
+
+        { "key": "win.title", "value": "BÖLÜM TAMAM!" },
+        { "key": "win.score", "value": "ADIM {0} / PAR {1}" },
+        { "key": "win.score_no_par", "value": "ADIM {0}" },
+        { "key": "win.golden_pawn", "value": "ALTIN PİYON KAZANDIN!" },
+        { "key": "win.next", "value": "SONRAKİ" },
+        { "key": "win.retry", "value": "TEKRAR" },
+        { "key": "win.level_select", "value": "BÖLÜM SEÇ" },
+        { "key": "win.last_level", "value": "TÜM BÖLÜMLER BİTTİ! YENİ DÜNYALAR YOLDA." },
+
+        { "key": "story.world1.title", "value": "DÜNYA 1: BAŞLANGIÇ KARESİ" },
+        { "key": "story.world1.body", "value": "HER TAHTA TEK BİR ADIMLA BAŞLAR VE KAPIYI AÇAN YEDİNCİ ADIMDIR." },
+        { "key": "story.world2.title", "value": "DÜNYA 2: KARA KEDİ SOKAĞI" },
+        { "key": "story.world2.body", "value": "TÜYLÜ BİR ŞEY YOLUNU KESER VE SAYI BAŞTAN BAŞLAR." },
+        { "key": "story.world3.title", "value": "DÜNYA 3: AYNALAR SALONU" },
+        { "key": "story.world3.body", "value": "BURADA SAYILAR GERİYE AKAR VE ŞANS CAMIN ÖBÜR UCUNDA BEKLER." },
+        { "key": "story.world4.title", "value": "DÜNYA 4: ÇİN MAHALLESİ" },
+        { "key": "story.world4.body", "value": "BURADA ŞANSLI SAYI SEKİZDİR, DÖRT İSE HİÇ HOŞ KARŞILANMAZ." }
+    ]
+}

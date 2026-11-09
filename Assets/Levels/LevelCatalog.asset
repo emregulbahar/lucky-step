@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e05f0495234cca46820f4aa339d4b6d, type: 3}
+  m_Name: LevelCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::LuckyStep.LevelCatalog
+  worlds:
+  - storyKey: story.world1
+    ruleSetName: default
+    levels:
+    - {fileID: 4900000, guid: b3735935f5a8a6e4188ea870b989cb7c, type: 3}
+    - {fileID: 4900000, guid: 5c836e90511662a48987a9b64e95a292, type: 3}
+    - {fileID: 4900000, guid: 7be1f4b648388e34d99b260b6e68196f, type: 3}
+    - {fileID: 4900000, guid: b1cefb3ba7c38a644b29eba2783cb3cb, type: 3}
+    showPar: 0
+  - storyKey: story.world2
+    ruleSetName: default
+    levels:
+    - {fileID: 4900000, guid: 0a0b8973fb351af48b2276eb16b22f9a, type: 3}
+    - {fileID: 4900000, guid: 0d4132a61ab8c1c44b8a1c34a3320fcc, type: 3}
+    - {fileID: 4900000, guid: 914b9395bc851ab40b7653d56b8abe6b, type: 3}
+    - {fileID: 4900000, guid: c41508578d984e947880a4f22455d44a, type: 3}
+    showPar: 1
+  - storyKey: story.world3
+    ruleSetName: default
+    levels:
+    - {fileID: 4900000, guid: fb849f7be69174241989d6a0b51fe814, type: 3}
+    - {fileID: 4900000, guid: 0c117789797db1342a293cc883599803, type: 3}
+    - {fileID: 4900000, guid: 4bd7378c5e723fd42bdfc3eabe7fb118, type: 3}
+    - {fileID: 4900000, guid: b4366babf87195d4cbdd9007c93d84d7, type: 3}
+    showPar: 1
+  - storyKey: story.world4
+    ruleSetName: world4
+    levels:
+    - {fileID: 4900000, guid: 2d89c18ceb1b72e4e9a6402d9fd0d045, type: 3}
+    - {fileID: 4900000, guid: 960d840abdd0cca4c9945c3343cc3209, type: 3}
+    - {fileID: 4900000, guid: 87c5fb64d5704e141859b9d9d85f2ad9, type: 3}
+    - {fileID: 4900000, guid: 6e33f8900d7a9b648851f3711eb5856b, type: 3}
+    showPar: 1
+  parTable: {fileID: 4900000, guid: 56634fce48beb0f4689a12e8c53ed568, type: 3}

@@ -1,0 +1,84 @@
+{
+    "levels": [
+        {
+            "level": "Level01",
+            "par": 7,
+            "moves": "DURRRRR"
+        },
+        {
+            "level": "Level02",
+            "par": 7,
+            "moves": "DRRRURR"
+        },
+        {
+            "level": "Level03",
+            "par": 7,
+            "moves": "RRRRRRR"
+        },
+        {
+            "level": "Level04",
+            "par": 7,
+            "moves": "RRRDRRD"
+        },
+        {
+            "level": "Level05",
+            "par": 11,
+            "moves": "RRRRRLRRRRR"
+        },
+        {
+            "level": "Level06",
+            "par": 17,
+            "moves": "RLRLRRRRRRRLRLRRR"
+        },
+        {
+            "level": "Level07",
+            "par": 19,
+            "moves": "RRRRRRRLLLLDURRRRRR"
+        },
+        {
+            "level": "Level08",
+            "par": 15,
+            "moves": "DUDDRRRLRUDUDUU"
+        },
+        {
+            "level": "Level09",
+            "par": 11,
+            "moves": "RRLRRRRRRRR"
+        },
+        {
+            "level": "Level10",
+            "par": 9,
+            "moves": "DUDURRRRR"
+        },
+        {
+            "level": "Level11",
+            "par": 17,
+            "moves": "RRRRRRDDDLLLDDRRR"
+        },
+        {
+            "level": "Level12",
+            "par": 23,
+            "moves": "RRRRRRDDDLLLLLLDDRRRRRR"
+        },
+        {
+            "level": "Level13",
+            "par": 9,
+            "moves": "RRRRRDURR"
+        },
+        {
+            "level": "Level14",
+            "par": 8,
+            "moves": "RRRDLRDD"
+        },
+        {
+            "level": "Level15",
+            "par": 13,
+            "moves": "RRRRRRDDLLLLL"
+        },
+        {
+            "level": "Level16",
+            "par": 13,
+            "moves": "RRRDLRDDULRDD"
+        }
+    ]
+}

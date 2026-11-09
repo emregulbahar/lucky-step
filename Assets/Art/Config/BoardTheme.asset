@@ -1,0 +1,133 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 199b4431160e4f74faee4acd1ecc84a2, type: 3}
+  m_Name: BoardTheme
+  m_EditorClassIdentifier: Assembly-CSharp::LuckyStep.BoardTheme
+  floorTile: {fileID: 919132149155446097, guid: 24930d1b31b9c2f4d83c7c86ef07e229, type: 3}
+  gapTile: {fileID: 919132149155446097, guid: 80f2213c9366593439bada3fd3ef89b2, type: 3}
+  rimBar: {fileID: 919132149155446097, guid: edf658d92043785478992861c48e324c, type: 3}
+  wallPieces:
+  - {fileID: 919132149155446097, guid: a7f3121ab0754b64bbdb736ec05e0b38, type: 3}
+  - {fileID: 919132149155446097, guid: 06af64b5dc4e9dc4a8b5303c99d259d1, type: 3}
+  - {fileID: 919132149155446097, guid: 5920ecae22480d743992b70d6db177ea, type: 3}
+  spike: {fileID: 919132149155446097, guid: 65602462165ed144d8a5f99a659c6e8a, type: 3}
+  die: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
+  coin: {fileID: 919132149155446097, guid: fac1414cfc1590d4f87215e764ded900, type: 3}
+  mirror: {fileID: 919132149155446097, guid: f7feda4fb3f8ead43b6547c6249cbfd3, type: 3}
+  portalFrame: {fileID: 919132149155446097, guid: c3bb51acc32470b4fb193f8ac9d735ec, type: 3}
+  portalDisc: {fileID: 919132149155446097, guid: d8288d3a81b29f14ca2ce7acbd1c169a, type: 3}
+  character: {fileID: 919132149155446097, guid: 6c11ec23a03eb2346b876a3da7c6bb4c, type: 3}
+  flowerpot: {fileID: 919132149155446097, guid: 7122e35de2456744497ee5ccc9512e41, type: 3}
+  bridge: {fileID: 919132149155446097, guid: 15866e0a4023ff548895e7db944f6dfd, type: 3}
+  cat: {fileID: 919132149155446097, guid: 3b0bd8d4d47e4874ea9d4b72d63da373, type: 3}
+  floorLight: {fileID: 2100000, guid: c1e077efeb5a32d45b0a76e7f888baf6, type: 2}
+  floorColors:
+  - {fileID: 2100000, guid: f3a46da4e4b89f4479465b7f10787798, type: 2}
+  - {fileID: 2100000, guid: cb855c25d2744f54c808cb19e170832a, type: 2}
+  - {fileID: 2100000, guid: e4b84814b1704fc49a44c5a15c32e517, type: 2}
+  wallTile: {fileID: 2100000, guid: 1f976a501d21c0a45ba0822864a490c0, type: 2}
+  boardPlate: {fileID: 2100000, guid: 4e9522e655b0b1249ab711a27a61c120, type: 2}
+  portalSpark: {fileID: 2100000, guid: d084323f295dd98499558ce5874759b0, type: 2}
+  tileSize: 1
+  plateMargin: 0.22
+  rimWidth: 0.18
+  rimHeight: 0.1
+  flowerpotHeight: 1.3
+  flowerpotHover: 1.5
+  flowerpotSwayDegrees: 6
+  flowerpotSwaySpeed: 2
+  mirrorYaw: 0
+  mirrorLeanDegrees: 15
+  mirrorSkewDegrees: 5
+  portalYaw: 0
+  portalDiscHeight: 0.47
+  portalSpinSpeed: 100
+  portalSparkMax: 30
+  portalSparkRate: 14
+  portalOpenSeconds: 0.25
+  portalClosedScale: 0.55
+  portalClosedSpin: 0.2
+  portalClosedSparks: 0
+  bridgeLength: 1
+  bridgeYOffset: -0.04
+  bridgeClosedAngle: 70
+  bridgeLowerSeconds: 0.45
+  coinHeight: 0.85
+  coinSpinSpeed: 120
+  dieStandHeight: 0.45
+  dieYaw: 18
+  dieCenterHeight: 0.225
+  dieRollSeconds: 0.7
+  dieRollHeight: 0.6
+  dieRollTurns: 2
+  coinTossSeconds: 0.6
+  coinTossHeight: 0.7
+  coinFlipTurns: 3
+  potFallSeconds: 0.35
+  potHitHeight: 0.2
+  potMissOffset: 0.4
+  potTumbleDegrees: 90
+  catHeight: 0.5
+  catYawOffset: 0
+  characterHeight: 0.95
+  characterYawOffset: 0
+  characterIdleClip: idle
+  characterWalkClip: walk
+  trackSpace: {fileID: 2100000, guid: 2e48aceb2c4873042a87e4fa832b0dce, type: 2}
+  trackLucky: {fileID: 2100000, guid: 85a302187d46efe4f91b38494f530724, type: 2}
+  trackDeadly: {fileID: 2100000, guid: 9732af555d197f041abc7015272e240f, type: 2}
+  trackBlock: {fileID: 2100000, guid: aefcb9d3411ae2546987cd75618b3b6c, type: 2}
+  trackToken: {fileID: 919132149155446097, guid: fac1414cfc1590d4f87215e764ded900, type: 3}
+  trackTokenMaterial: {fileID: 2100000, guid: 2f709aa25f2ed454090d464d7e2ddf81, type: 2}
+  trackStripDepth: 0.8
+  trackSpaceSize: 0.48
+  trackSpacing: 0.56
+  trackCap: 30
+  tokenScale: 1.15
+  tokenMoveSeconds: 0.14
+  tokenHopHeight: 0.18
+  tokenPulseSpeed: 7
+  tokenPulseAmount: 0.2
+  pawPrint: {fileID: 919132149155446097, guid: 2f5466dcda1af81499e3f7672ecd8e8f, type: 3}
+  pawPrintMaterial: {fileID: 2100000, guid: 5486b017e7c5b4748acb172586beb388, type: 2}
+  pawPrintNextMaterial: {fileID: 2100000, guid: 5f49e216ac1557c4f914839ab013a994, type: 2}
+  pawPrintScale: 1
+  pawPrintSpacing: 0.13
+  pawPrintYawOffset: 0
+  catPuffMaterial: {fileID: 2100000, guid: 22937449312af1449b61d8dcd40c32a2, type: 2}
+  catResetSeconds: 0.5
+  catResetHopHeight: 0.45
+  catResetArchDegrees: 25
+  catPuffCount: 14
+  catPuffSize: 0.14
+  catPuffSpeed: 1.1
+  catPuffLifetime: 0.6
+  moveSeconds: 0.16
+  hopHeight: 0.12
+  deadTiltDegrees: 80
+  deadTiltSeconds: 0.3
+  holeFallSeconds: 0.32
+  holeFallDepth: 1.3
+  holeFallEndScale: 0.6
+  winSeconds: 0.55
+  winHopHeight: 0.3
+  winSpinTurns: 2
+  winSparkBurst: 24
+  winSparkSpeed: 1.2
+  winSparkSize: 0.08
+  winSparkLifetime: 0.6
+  bumpSeconds: 0.14
+  bumpDistance: 0.18
+  portalBlockedSeconds: 0.35
+  portalBlockedShrink: 0.35
+  portalBlockedPulses: 3
+  builderVersion: 2

@@ -1,0 +1,49 @@
+{
+    "entries": [
+        { "key": "game.title", "value": "Lucky Step" },
+        { "key": "common.press_any_key", "value": "Press any key" },
+        { "key": "common.back", "value": "Back" },
+
+        { "key": "menu.play", "value": "Play" },
+        { "key": "menu.level_select", "value": "Level select" },
+        { "key": "menu.language", "value": "Language: {0}" },
+        { "key": "menu.quit", "value": "Quit" },
+        { "key": "lang.english", "value": "English" },
+        { "key": "lang.turkish", "value": "Türkçe" },
+
+        { "key": "levelselect.title", "value": "Level select" },
+        { "key": "levelselect.world_format", "value": "World {0}: {1}" },
+        { "key": "levelselect.level_format", "value": "Level {0}" },
+        { "key": "levelselect.locked", "value": "Locked" },
+        { "key": "levelselect.completed", "value": "Completed" },
+        { "key": "levelselect.legend_golden_pawn", "value": "Golden pawn: finished in par moves or fewer" },
+        { "key": "world.1.name", "value": "The Starting Square" },
+        { "key": "world.2.name", "value": "Black Cat Lane" },
+        { "key": "world.3.name", "value": "Hall of Mirrors" },
+        { "key": "world.4.name", "value": "The Chinese Quarter" },
+
+        { "key": "hud.level_format", "value": "World {0} - Level {1}" },
+        { "key": "hud.steps", "value": "Steps {0}" },
+        { "key": "hud.par", "value": "Par {0}" },
+        { "key": "hud.par_none", "value": "Par -" },
+        { "key": "hud.keys", "value": "R restart · Z undo · Esc menu" },
+
+        { "key": "win.title", "value": "Level complete!" },
+        { "key": "win.score", "value": "Steps {0} / Par {1}" },
+        { "key": "win.score_no_par", "value": "Steps {0}" },
+        { "key": "win.golden_pawn", "value": "Golden pawn earned!" },
+        { "key": "win.next", "value": "Next" },
+        { "key": "win.retry", "value": "Retry" },
+        { "key": "win.level_select", "value": "Level select" },
+        { "key": "win.last_level", "value": "All levels done! More worlds are on the way." },
+
+        { "key": "story.world1.title", "value": "World 1: The Starting Square" },
+        { "key": "story.world1.body", "value": "Every board begins with a single step, and the seventh is the one that opens the door." },
+        { "key": "story.world2.title", "value": "World 2: Black Cat Lane" },
+        { "key": "story.world2.body", "value": "Something furry crosses your path, and the count starts over." },
+        { "key": "story.world3.title", "value": "World 3: Hall of Mirrors" },
+        { "key": "story.world3.body", "value": "Here the numbers run backwards, and luck waits at the other end of the glass." },
+        { "key": "story.world4.title", "value": "World 4: The Chinese Quarter" },
+        { "key": "story.world4.body", "value": "Eight is the lucky number here, and four is never welcome." }
+    ]
+}
