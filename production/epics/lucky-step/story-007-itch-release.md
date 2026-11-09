@@ -78,5 +78,5 @@
 
 ## Dependencies
 
-- Depends on: `production/epics/lucky-step/story-005-look-and-sound.md`, `production/epics/lucky-step/story-006-levels-and-menus.md`
+- Depends on: `production/epics/lucky-step/story-005-look-and-sound.md`, `production/epics/lucky-step/story-006-levels-and-menus.md`, `production/epics/lucky-step/story-008-audio.md`
 - Unlocks: None
