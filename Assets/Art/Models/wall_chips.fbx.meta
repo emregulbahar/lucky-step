@@ -12,6 +12,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: ChipLine
+    second: {fileID: 2100000, guid: 33a516941b2703e428fd7751e994e884, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: ChipRed
     second: {fileID: 2100000, guid: daf3837c3bef54e46b452e94456859cc, type: 2}
   - first:

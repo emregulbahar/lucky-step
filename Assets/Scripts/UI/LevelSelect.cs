@@ -123,6 +123,7 @@ namespace LuckyStep
             slot.Face.raycastTarget = true;
             UiRoot.Size(slot.Face, s.levelButtonSize, s.levelButtonSize);
             slot.Button = slot.Face.gameObject.AddComponent<Button>();
+            slot.Button.onClick.AddListener(Ui.NotifyButtonClicked);
             slot.Button.targetGraphic = slot.Face;
             slot.Button.colors = Ui.ButtonColors();
             slot.Button.onClick.AddListener(() => LevelChosen?.Invoke(level));

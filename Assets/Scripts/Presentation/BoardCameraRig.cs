@@ -124,9 +124,8 @@ namespace LuckyStep
 
         private void SetDepthOfField(float start)
         {
-            if (_volume == null) return;
-            if (!_volume.profile.TryGet(out DepthOfField dof)) dof = _volume.profile.Add<DepthOfField>(true);
-            dof.active = true;
+            // Printed Board look has no depth of field: the builder leaves the profile's DoF inactive, and then this is a no-op.
+            if (_volume == null || !_volume.profile.TryGet(out DepthOfField dof) || !dof.active) return;
             dof.mode.Override(DepthOfFieldMode.Gaussian);
             dof.gaussianStart.Override(start);
             dof.gaussianEnd.Override(start + _blurRamp);

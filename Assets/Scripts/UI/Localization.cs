@@ -84,8 +84,8 @@ namespace LuckyStep
     /// All UI text goes through here (Story 006). Loads the current language's table from
     /// Resources/Localization on first use; the language is saved in PlayerPrefs. Screens re-read their text when
     /// <see cref="LanguageChanged"/> fires.
-    /// Note: the UI font (Kenney Future) is caps-only, so strings_tr.json is written in Turkish upper case
-    /// (İ / I); do not call ToUpper() on localized text.
+    /// Note: strings are written in sentence case with Turkish casing (i / İ, ı / I) for the Fredoka UI font; do not
+    /// call ToUpper() or ToLower() on localized text (culture-invariant casing breaks Turkish i).
     /// </summary>
     /// <example>
     /// <code>

@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: StepFeedbackConfig
   m_EditorClassIdentifier: Assembly-CSharp::LuckyStep.StepFeedbackConfig
   glowColor: {r: 1, g: 0.78, b: 0.3, a: 1}
-  glowEmission: 2.5
+  glowEmission: 1.1
   glowSeconds: 0.7
   flashIntensity: 4
   flashRange: 3
   flashHeight: 1.1
   nearSteps: 3
-  vignetteBase: 0.2
+  vignetteBase: 0
   vignetteMax: 0.55
   vignetteChangePerSecond: 1.2

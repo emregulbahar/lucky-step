@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fa81f42d006012428e9bc5b40e93b05, type: 3}
+  m_Name: AudioConfig
+  m_EditorClassIdentifier: Assembly-CSharp::LuckyStep.AudioConfig
+  step:
+  - {fileID: 8300000, guid: d068b97889eb0ed42a5dfd4dcb031d72, type: 3}
+  - {fileID: 8300000, guid: 7556e4753de018245848a4e4cd1b9497, type: 3}
+  - {fileID: 8300000, guid: e9dc67f702a45cc40b3274289fe1fc43, type: 3}
+  - {fileID: 8300000, guid: 0cd7d431c5631664980259cbffd39394, type: 3}
+  wood:
+  - {fileID: 8300000, guid: b5cedb9881469f942aaaf3f98dfb3019, type: 3}
+  - {fileID: 8300000, guid: f3f3b3ed774ce58428fd52e15e4c9e71, type: 3}
+  - {fileID: 8300000, guid: 48f69c0bf7697c642948681c744a265c, type: 3}
+  dice:
+  - {fileID: 8300000, guid: 769acde489d96ed4ca2af3d12aa06e59, type: 3}
+  - {fileID: 8300000, guid: 60e7bcca1c3122a44bace9ea3dc6c9cd, type: 3}
+  - {fileID: 8300000, guid: a23807415b0e460449002838394f76c5, type: 3}
+  - {fileID: 8300000, guid: cf74f93ab1049a64eb09a8ca109c71a6, type: 3}
+  coin:
+  - {fileID: 8300000, guid: 377c4033b28db4141831cc2402e9c19b, type: 3}
+  - {fileID: 8300000, guid: edb73f8c58e4a0b439e71bb94ff0612d, type: 3}
+  lucky:
+  - {fileID: 8300000, guid: 7e174ec5e17d14543919611d522504da, type: 3}
+  pot:
+  - {fileID: 8300000, guid: d414eaea7606e2642b57b5fc9f599e92, type: 3}
+  - {fileID: 8300000, guid: 08914e9eae0b78b4392fc97e084faeb2, type: 3}
+  catReset:
+  - {fileID: 8300000, guid: 6f2a35d0cbc0ef947a78754e33ebf67b, type: 3}
+  mirror:
+  - {fileID: 8300000, guid: b88e48ba7d0e1654aa3e69b6e163c5ac, type: 3}
+  beadPickup:
+  - {fileID: 8300000, guid: 220a718f699b31b49b7b8b2d4eef4a41, type: 3}
+  - {fileID: 8300000, guid: 2d8dbf29b1efb804a889fee342fb5933, type: 3}
+  beadBreak:
+  - {fileID: 8300000, guid: a1e458b0f5b571a49a904b09424a4a2c, type: 3}
+  death:
+  - {fileID: 8300000, guid: 8567c7df38ab30a4eaea3957cbbfefca, type: 3}
+  fall:
+  - {fileID: 8300000, guid: 5171247af29c2ec4a83d34b91da108eb, type: 3}
+  blocked:
+  - {fileID: 8300000, guid: bbc1ca8f76653ec47844d016b22a6c6e, type: 3}
+  win:
+  - {fileID: 8300000, guid: d997868b1cbeae8478f9f3f4ba34a80f, type: 3}
+  undo:
+  - {fileID: 8300000, guid: cfe5dc92610e7114f8774df5a28d5598, type: 3}
+  click:
+  - {fileID: 8300000, guid: d61f228f730dfc54ab9293bd91e7dc18, type: 3}
+  menuMusic: {fileID: 8300000, guid: b7badd2eab0616a40a27d9104af3e8d6, type: 3}
+  gameMusic: {fileID: 8300000, guid: f56b2703687e88749bdcc6e9d2513c29, type: 3}
+  sfxVolume: 0.8
+  musicVolume: 0.35
+  pitchJitter: 0.06
+  musicFadeSeconds: 0.8
+  deadlyDuck: 0.1
+  deadlyDuckSeconds: 1.4
+  potDelay: 0.3

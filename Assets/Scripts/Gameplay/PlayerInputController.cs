@@ -106,7 +106,7 @@ namespace LuckyStep
         }
 
         /// <summary>
-        /// QA capture aid (run-and-observe, Story 005): "--moves UDLR" plays those moves at startup, one every
+        /// QA capture aid (run-and-observe, Story 005): "--moves UDLR" plays those moves (Z = undo) at startup, one every
         /// ReplaySeconds, so a ScreenshotOnArg capture can show a mid-level state. Not a gameplay value.
         /// </summary>
         private System.Collections.IEnumerator ReplayMovesFromArgs()
@@ -131,6 +131,7 @@ namespace LuckyStep
                     case 'D': TryMove(Direction.Down); break;
                     case 'L': TryMove(Direction.Left); break;
                     case 'R': TryMove(Direction.Right); break;
+                    case 'Z': Undo(); break;
                 }
             }
         }
@@ -149,7 +150,7 @@ namespace LuckyStep
             }
             if (kb.zKey.wasPressedThisFrame)
             {
-                if (_history.Count > 0) _state = _history.Pop();
+                Undo();
                 return;
             }
 
@@ -157,6 +158,12 @@ namespace LuckyStep
             else if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame) TryMove(Direction.Down);
             else if (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame) TryMove(Direction.Left);
             else if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame) TryMove(Direction.Right);
+        }
+
+        /// <summary>Steps back one move (Z key, or 'Z' in a --moves replay); does nothing at the start.</summary>
+        private void Undo()
+        {
+            if (_history.Count > 0) _state = _history.Pop();
         }
 
         private void TryMove(Direction direction)

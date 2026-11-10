@@ -6,6 +6,10 @@
 
         { "key": "menu.play", "value": "Play" },
         { "key": "menu.level_select", "value": "Level select" },
+        { "key": "menu.settings", "value": "Settings" },
+        { "key": "settings.title", "value": "Settings" },
+        { "key": "settings.music", "value": "Music" },
+        { "key": "settings.effects", "value": "Effects" },
         { "key": "menu.language", "value": "Language: {0}" },
         { "key": "menu.quit", "value": "Quit" },
         { "key": "lang.english", "value": "English" },
@@ -21,12 +25,17 @@
         { "key": "world.2.name", "value": "Black Cat Lane" },
         { "key": "world.3.name", "value": "Hall of Mirrors" },
         { "key": "world.4.name", "value": "The Chinese Quarter" },
+        { "key": "world.5.name", "value": "The Old Bazaar" },
 
         { "key": "hud.level_format", "value": "World {0} - Level {1}" },
         { "key": "hud.steps", "value": "Steps {0}" },
         { "key": "hud.par", "value": "Par {0}" },
         { "key": "hud.par_none", "value": "Par -" },
-        { "key": "hud.keys", "value": "R restart · Z undo · Esc menu" },
+        { "key": "hud.beads", "value": "Evil-eye beads: {0}" },
+        { "key": "hud.key_move", "value": "Move" },
+        { "key": "hud.key_undo", "value": "Undo" },
+        { "key": "hud.key_restart", "value": "Restart" },
+        { "key": "hud.key_menu", "value": "Menu" },
 
         { "key": "win.title", "value": "Level complete!" },
         { "key": "win.score", "value": "Steps {0} / Par {1}" },
@@ -44,6 +53,8 @@
         { "key": "story.world3.title", "value": "World 3: Hall of Mirrors" },
         { "key": "story.world3.body", "value": "Here the numbers run backwards, and luck waits at the other end of the glass." },
         { "key": "story.world4.title", "value": "World 4: The Chinese Quarter" },
-        { "key": "story.world4.body", "value": "Eight is the lucky number here, and four is never welcome." }
+        { "key": "story.world4.body", "value": "Eight is the lucky number here, and four is never welcome." },
+        { "key": "story.world5.title", "value": "World 5: The Old Bazaar" },
+        { "key": "story.world5.body", "value": "Knock on wood and the step does not count. Carry a blue bead and bad luck passes you by." }
     ]
 }

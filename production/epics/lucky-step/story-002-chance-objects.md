@@ -31,7 +31,7 @@
 - [ ] Spike: stepping on it on a normal step kills; on a lucky step it is retracted and safe.
 - [ ] Dice tile: flings the pawn in its movement direction, 1 tile on a normal step, 6 tiles on a lucky step; the fling counts as 1 step.
 - [ ] Dice fling path: stops on the last free tile before a wall; tiles passed over do not trigger (gaps are jumped); only the landing tile triggers.
-- [ ] Coin bridge: stepping on it on a lucky step opens it permanently (stays open for the rest of the level and across later steps); on a normal step the pawn falls and dies.
+- [x] Coin bridge (rule changed 2026-11-10): any lucky step opens ALL bridges on the board permanently, wherever the pawn is (stays open for the rest of the level and across later steps); stepping onto a closed bridge on a normal step kills; stepping onto one on the lucky step is safe. Verified by `Assets/Tests/EditMode/Editor/StepRulesTests.cs` (6 tests).
 - [ ] Falling flowerpot: passing under it on a normal step kills; on a lucky step it misses.
 - [ ] Each object's outcome is deterministic: the same state and input always give the same result.
 - [ ] Object state (e.g. bridge open) is part of `GameState`, so undo and restart restore it.
@@ -92,3 +92,4 @@
 **Deviations**: ADVISORY — preset rule-set values still hardcoded (TD-002); unity-specialist hardening items not applied (TD-004).
 **Test Evidence**: waived at qa.level minimal; Level01 regression capture `production/qa/evidence/story-002-chance-objects/01-level01-regression.png`.
 **Reviewed by**: self, no independent review
+**Rule change 2026-11-10**: coin bridge now opens on ANY lucky step (all bridges at once). Old rule ("be on THIS tile at 7") made the bridge a spike with memory. `Level.AllBridgesMask` added; `StepRulesTests` written first and watched fail (3/6) against the old rule. Bridge levels redesigned (07, 08, 12, 16); World 1 bridges in 03 and 04 became gaps, since without a cat or mirror a bridge can never matter.

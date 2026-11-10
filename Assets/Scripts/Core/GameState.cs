@@ -50,6 +50,12 @@ namespace LuckyStep
         /// <summary>True while the broken mirror makes the counter count down.</summary>
         public bool CountingDown { get; }
 
+        /// <summary>Evil-eye beads carried; each one wards off one death that is not a fall.</summary>
+        public int Beads { get; }
+
+        /// <summary>Bitmask of beads already picked up; bit i is the bead with index i (see <see cref="Level.BeadIndex"/>).</summary>
+        public ulong TakenBeads { get; }
+
         /// <summary>True if the pawn died.</summary>
         public bool IsDead => Status == GameStatus.Dead;
 
@@ -58,8 +64,10 @@ namespace LuckyStep
 
         /// <summary>Creates a state.</summary>
         public GameState(int x, int y, int counter, GameStatus status, ulong openBridges = 0,
-            int catIndex = 0, bool countingDown = false)
+            int catIndex = 0, bool countingDown = false, int beads = 0, ulong takenBeads = 0)
         {
+            Beads = beads;
+            TakenBeads = takenBeads;
             CatIndex = catIndex;
             CountingDown = countingDown;
             OpenBridges = openBridges;
@@ -71,10 +79,10 @@ namespace LuckyStep
 
         /// <summary>Returns a copy with the given fields replaced.</summary>
         public GameState With(int? x = null, int? y = null, int? counter = null, GameStatus? status = null, ulong? openBridges = null,
-            int? catIndex = null, bool? countingDown = null)
+            int? catIndex = null, bool? countingDown = null, int? beads = null, ulong? takenBeads = null)
         {
             return new GameState(x ?? X, y ?? Y, counter ?? Counter, status ?? Status, openBridges ?? OpenBridges,
-                catIndex ?? CatIndex, countingDown ?? CountingDown);
+                catIndex ?? CatIndex, countingDown ?? CountingDown, beads ?? Beads, takenBeads ?? TakenBeads);
         }
 
         /// <inheritdoc/>
@@ -82,13 +90,15 @@ namespace LuckyStep
         {
             return other != null && X == other.X && Y == other.Y && Counter == other.Counter && Status == other.Status
                 && OpenBridges == other.OpenBridges
-                && CatIndex == other.CatIndex && CountingDown == other.CountingDown;
+                && CatIndex == other.CatIndex && CountingDown == other.CountingDown
+                && Beads == other.Beads && TakenBeads == other.TakenBeads;
         }
 
         /// <inheritdoc/>
         public override bool Equals(object obj) => Equals(obj as GameState);
 
         /// <inheritdoc/>
-        public override int GetHashCode() => HashCode.Combine(X, Y, Counter, (int)Status, OpenBridges, CatIndex, CountingDown);
+        public override int GetHashCode() =>
+            HashCode.Combine(HashCode.Combine(X, Y, Counter, (int)Status, OpenBridges, CatIndex, CountingDown), Beads, TakenBeads);
     }
 }

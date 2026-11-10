@@ -44,38 +44,82 @@ namespace LuckyStep
         /// <summary>Cream board space (every other floor space, and under objects).</summary>
         [Header("Materials")]
         public Material floorLight;
-        /// <summary>Bright board-game colours of the plain floor spaces between the cream ones (picked by position).</summary>
+        /// <summary>Floor materials of the checkerboard: (x + y) % length picks the material of a non-wall space.</summary>
         public Material[] floorColors;
         /// <summary>Tile under interior wall pieces (tiles carrying other objects use the cream floorLight).</summary>
         public Material wallTile;
+        /// <summary>Crimson base of hazard spaces (spike, dice, flowerpot) and of a coin bridge's edge while it is closed.</summary>
+        public Material hazardTile;
+        /// <summary>Material on the flowerpot model's pot body that flowerpotGlaze replaces (shared with other furniture).</summary>
+        public Material flowerpotBody;
+        /// <summary>Crimson glaze put on the flowerpot's pot body so it reads as a hazard.</summary>
+        public Material flowerpotGlaze;
         /// <summary>Wooden plate under the whole board.</summary>
         public Material boardPlate;
         /// <summary>Material of the portal's spark particles.</summary>
         public Material portalSpark;
+        /// <summary>Material of the flat base disc under the player figure (tabletop-miniature look).</summary>
+        public Material figureBase;
+        /// <summary>World diameter of the figure's base disc, in grid cells.</summary>
+        public float figureBaseDiameter = 0.55f;
+        /// <summary>World height of the figure's base disc.</summary>
+        public float figureBaseHeight = 0.04f;
 
         /// <summary>World size of one grid cell.</summary>
         [Header("Layout")]
         public float tileSize = 1f;
         /// <summary>Margin of the board plate around the playable tiles, in world units.</summary>
         public float plateMargin = 0.22f;
-        /// <summary>Width of the raised rim along the board's edge.</summary>
-        public float rimWidth = 0.18f;
-        /// <summary>Height of the rim's top above the tile tops.</summary>
-        public float rimHeight = 0.1f;
+        /// <summary>Width of the wooden border along the board's edge.</summary>
+        public float rimWidth = 0.16f;
+        /// <summary>Height of the border's top above the space tops (small: the printed board is nearly flat).</summary>
+        public float rimHeight = 0.03f;
         /// <summary>Flowerpot height.</summary>
         public float flowerpotHeight = 1.3f;
         /// <summary>Height the flowerpot hovers at, above the tile, ready to fall.</summary>
         public float flowerpotHover = 1.5f;
-        /// <summary>Flowerpot wobble amplitude in degrees.</summary>
-        public float flowerpotSwayDegrees = 6f;
-        /// <summary>Flowerpot wobble speed in radians per second.</summary>
-        public float flowerpotSwaySpeed = 2f;
+        /// <summary>Flowerpot pendulum swing amplitude in degrees (around the rope's top end).</summary>
+        public float flowerpotSwayDegrees = 2f;
+        /// <summary>Flowerpot swing speed in radians per second.</summary>
+        public float flowerpotSwaySpeed = 1.6f;
+        /// <summary>Material of the flowerpot's rope and hanger strings.</summary>
+        public Material ropeMaterial;
+        /// <summary>Length of the rope from the hanger knot up out of view.</summary>
+        public float ropeLength = 6f;
+        /// <summary>Rope and string diameter.</summary>
+        public float ropeThickness = 0.035f;
+        /// <summary>Height of the hanger knot above the pot's base, as a fraction of flowerpotHeight.</summary>
+        public float potKnotHeight = 1.15f;
+        /// <summary>Height of the pot rim the strings start from, as a fraction of flowerpotHeight.</summary>
+        public float potRimHeight = 0.45f;
+        /// <summary>Radius of the pot rim the strings start from, as a fraction of flowerpotHeight.</summary>
+        public float potRimRadius = 0.17f;
         /// <summary>Mirror yaw in degrees (0 = glass faces along the grid's rows).</summary>
         public float mirrorYaw = 0f;
         /// <summary>Backward lean of the standing mirror in degrees.</summary>
         public float mirrorLeanDegrees = 15f;
         /// <summary>Mirror skew (roll) in degrees.</summary>
         public float mirrorSkewDegrees = 5f;
+        /// <summary>Evil-eye bead (World 5): upright disc, bottom at its origin.</summary>
+        public GameObject bead;
+        /// <summary>Knock-on-wood planks laid on a space (World 5), bottom at its origin.</summary>
+        public GameObject woodPlanks;
+        /// <summary>Height of the bead's bottom above its space while it waits to be picked up.</summary>
+        public float beadHover = 0.12f;
+        /// <summary>Up-and-down bob amplitude of a waiting bead.</summary>
+        public float beadBob = 0.04f;
+        /// <summary>Bob cycles per second.</summary>
+        public float beadBobSpeed = 0.6f;
+        /// <summary>A waiting bead sways left and right by this many degrees, keeping its eye towards the camera.</summary>
+        public float beadSwayDegrees = 35f;
+        /// <summary>Sway speed in radians per second.</summary>
+        public float beadSwaySpeed = 1.4f;
+        /// <summary>Seconds a picked-up bead takes to fly up and shrink away.</summary>
+        public float beadPickupSeconds = 0.35f;
+        /// <summary>How far a picked-up bead rises while it shrinks away.</summary>
+        public float beadPickupRise = 0.6f;
+        /// <summary>Height above the space where the puff of a broken (used) bead appears.</summary>
+        public float beadWardPuffHeight = 0.45f;
         /// <summary>Portal yaw in degrees (0 = disc faces along the grid's rows, towards the default camera).</summary>
         public float portalYaw = 0f;
         /// <summary>Height of the portal disc's centre above the tile (matches the ring in the model).</summary>
@@ -168,7 +212,7 @@ namespace LuckyStep
         public Material trackLucky;
         /// <summary>Deadly space material (number atlas, skull block, untinted).</summary>
         public Material trackDeadly;
-        /// <summary>Material of the little blocks the track spaces are printed on.</summary>
+        /// <summary>Material of the little blocks the track spaces are printed on (ink: it shows as each space's border).</summary>
         public Material trackBlock;
         /// <summary>Marker token model (round, lying flat, centred).</summary>
         public GameObject trackToken;
@@ -279,6 +323,34 @@ namespace LuckyStep
         /// <summary>Shrink pulses in one closed-exit flicker (they fade out over the flicker).</summary>
         [Tooltip("Shrink pulses in one closed-exit flicker (they fade out over the flicker).")]
         public float portalBlockedPulses = 3f;
+
+        /// <summary>Green felt top of the card table (TableView).</summary>
+        [Header("Card table (TableView, decoration only)")]
+        public Material tableFelt;
+        /// <summary>Wooden rail around the felt.</summary>
+        public Material tableRail;
+        /// <summary>Mug prop left of the board (bottom at its origin).</summary>
+        public GameObject tableMug;
+        /// <summary>Closed game box prop right of the board.</summary>
+        public GameObject tableBox;
+        /// <summary>Felt beyond the board's bounds on the left and right, in world units.</summary>
+        public float tableMarginX = 4.2f;
+        /// <summary>Felt beyond the board's bounds at the far and near sides, in world units.</summary>
+        public float tableMarginZ = 1.4f;
+        /// <summary>Width of the wooden rail.</summary>
+        public float tableRailWidth = 0.6f;
+        /// <summary>Height of the rail's top above the felt.</summary>
+        public float tableRailHeight = 0.16f;
+        /// <summary>Distance from the board's side to a prop's centre.</summary>
+        public float propGap = 1.3f;
+        /// <summary>Mug height.</summary>
+        public float mugHeight = 0.8f;
+        /// <summary>Mug yaw in degrees (turns the handle).</summary>
+        public float mugYaw = 200f;
+        /// <summary>Footprint side of the game box.</summary>
+        public float boxSize = 1.25f;
+        /// <summary>Game box yaw in degrees.</summary>
+        public float boxYaw = -14f;
 
         /// <summary>Layout version last written by the scene builder; it resets tunables when the layout changes.</summary>
         [HideInInspector] public int builderVersion;

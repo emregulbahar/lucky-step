@@ -65,7 +65,9 @@ namespace LuckyStep
         private void OnStateChanged(GameState previous, GameState current, bool isForwardStep)
         {
             RuleSet rules = _board.Level.Rules;
-            if (isForwardStep && !current.IsDead && !rules.IsDeadly(current.Counter) && rules.IsLucky(current.Counter))
+            // A step onto wood keeps the count, so standing on a lucky count and knocking on wood is not a new lucky step.
+            bool counted = previous == null || previous.Counter != current.Counter;
+            if (isForwardStep && counted && !current.IsDead && !rules.IsDeadly(current.Counter) && rules.IsLucky(current.Counter))
             {
                 _glowTime = 0f;
             }

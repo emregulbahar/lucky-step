@@ -4,7 +4,7 @@ namespace LuckyStep
 {
     /// <summary>
     /// Command-line QA capture arguments (run-and-observe, Story 006), same pattern as ScreenshotOnArg:
-    /// <c>--ui menu|select|story|hud|win</c>, <c>--lang en|tr</c>, <c>--level LevelId</c>, <c>--progress-demo</c>,
+    /// <c>--ui menu|select|settings|story|hud|win</c>, <c>--lang en|tr</c>, <c>--level LevelId</c>, <c>--progress-demo</c>,
     /// plus the Story 005 <c>--moves</c> replay. Read once at startup (allocates).
     /// </summary>
     /// <example>

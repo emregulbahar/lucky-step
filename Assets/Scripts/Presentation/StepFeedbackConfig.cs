@@ -10,7 +10,7 @@ namespace LuckyStep
         [Header("Lucky glow")]
         public Color glowColor = new Color(1f, 0.78f, 0.3f);
         /// <summary>Peak HDR emission multiplier on the player figure (bloom picks it up).</summary>
-        public float glowEmission = 2.5f;
+        public float glowEmission = 1.1f;
         /// <summary>Seconds the glow pulse lasts.</summary>
         public float glowSeconds = 0.7f;
         /// <summary>Peak intensity of the warm flash light.</summary>
@@ -23,8 +23,8 @@ namespace LuckyStep
         /// <summary>"Near" = the next deadly count is at most this many steps ahead.</summary>
         [Header("Near-deadly vignette")]
         [Min(1)] public int nearSteps = 3;
-        /// <summary>Vignette intensity when no deadly count is near.</summary>
-        [Range(0f, 1f)] public float vignetteBase = 0.2f;
+        /// <summary>Vignette intensity when no deadly count is near (0: the Printed Board look has no resting vignette).</summary>
+        [Range(0f, 1f)] public float vignetteBase = 0f;
         /// <summary>Vignette intensity one step before a deadly count, and after death.</summary>
         [Range(0f, 1f)] public float vignetteMax = 0.55f;
         /// <summary>Vignette intensity change per second while easing to the target.</summary>

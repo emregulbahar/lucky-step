@@ -32,13 +32,13 @@
         },
         {
             "level": "Level07",
-            "par": 19,
-            "moves": "RRRRRRRLLLLDURRRRRR"
+            "par": 15,
+            "moves": "RLRLRRRDURRRRRR"
         },
         {
             "level": "Level08",
-            "par": 15,
-            "moves": "DUDDRRRLRUDUDUU"
+            "par": 17,
+            "moves": "DUDDRRRRRDUUUDURR"
         },
         {
             "level": "Level09",
@@ -57,8 +57,8 @@
         },
         {
             "level": "Level12",
-            "par": 23,
-            "moves": "RRRRRRDDDLLLLLLDDRRRRRR"
+            "par": 27,
+            "moves": "RLRLRLRRRRLRRRDDLLLLLLDDRRR"
         },
         {
             "level": "Level13",
@@ -77,8 +77,78 @@
         },
         {
             "level": "Level16",
-            "par": 13,
-            "moves": "RRRDLRDDULRDD"
+            "par": 9,
+            "moves": "RLRRRDURR"
+        },
+        {
+            "level": "Level17",
+            "par": 7,
+            "moves": "DRRDDLL"
+        },
+        {
+            "level": "Level18",
+            "par": 7,
+            "moves": "RDDRDRR"
+        },
+        {
+            "level": "Level19",
+            "par": 14,
+            "moves": "DRDRRUUURRDDLD"
+        },
+        {
+            "level": "Level20",
+            "par": 19,
+            "moves": "RRRRDRRURRDDDDLLLLL"
+        },
+        {
+            "level": "Level21",
+            "par": 23,
+            "moves": "DUDUDUDDURRRRRRDDDUDUDD"
+        },
+        {
+            "level": "Level22",
+            "par": 25,
+            "moves": "RLRLRLDDRRRRDRRUUURRDDDDD"
+        },
+        {
+            "level": "Level23",
+            "par": 18,
+            "moves": "RLRLDDRRRRRRLLRDRR"
+        },
+        {
+            "level": "Level24",
+            "par": 24,
+            "moves": "RRRLRLLLDDDDRRUURRRRDDRR"
+        },
+        {
+            "level": "Level25",
+            "par": 8,
+            "moves": "RRRRRRRR"
+        },
+        {
+            "level": "Level26",
+            "par": 23,
+            "moves": "RLRLRRLRRRDDUUDUDURRRRR"
+        },
+        {
+            "level": "Level27",
+            "par": 7,
+            "moves": "RRRRRRR"
+        },
+        {
+            "level": "Level28",
+            "par": 14,
+            "moves": "RRRRRRRRRRRRRR"
+        },
+        {
+            "level": "Level29",
+            "par": 20,
+            "moves": "DDRRDDDRUURRUUURRDDD"
+        },
+        {
+            "level": "Level30",
+            "par": 24,
+            "moves": "DDUURRRRRRRRRDDDDLLLLRLL"
         }
     ]
 }

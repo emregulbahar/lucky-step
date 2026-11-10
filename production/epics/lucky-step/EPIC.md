@@ -31,3 +31,4 @@ The brief's Build order:
 | 006 | 16 levels in 4 worlds, menu, level select, golden pawn, EN/TR | UI | Ready | N/A (minimal) |
 | 007 | WebGL release on itch.io with credits and AI disclosure | Integration | Ready | N/A (minimal) |
 | 008 | Audio: 7/8 music, bell on lucky steps, dice/coin/step sounds (split from 005) | Integration | Ready | N/A (minimal) |
+| 009 | World 5 "The Old Bazaar": wooden tile and evil-eye bead | Logic | Ready | N/A (minimal) |

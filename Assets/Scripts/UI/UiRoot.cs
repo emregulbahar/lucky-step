@@ -9,7 +9,7 @@ namespace LuckyStep
     /// Story 006 UI entry point. On Awake builds a Screen Space Overlay canvas (scaled from 1920x1080), an EventSystem
     /// with the Input System UI module if the scene has none, and the screens, then runs <see cref="ScreenFlow"/>.
     /// Also the small widget factory the screens share (legacy <see cref="Text"/> with the Turkish-patched Kenney fonts,
-    /// 9-sliced Kenney sprites). All references are set by BuildBoardScene; the UI itself is never saved in the scene.
+    /// 9-sliced card and button sprites). All references are set by BuildBoardScene; the UI itself is never saved in the scene.
     /// </summary>
     /// <example>
     /// <code>
@@ -31,9 +31,22 @@ namespace LuckyStep
         [SerializeField] private Sprite _lockIcon;
         [SerializeField] private Sprite _tickIcon;
         [SerializeField] private Sprite _pawnIcon;
+        [SerializeField] private Sprite _arrowIcon;
         [SerializeField] private UiStyle _style = new UiStyle();
 
         private ScreenFlow _flow;
+
+        /// <summary>Raised when any UI button is pressed (sound hooks in here; the UI does not know about audio).</summary>
+        public event System.Action ButtonClicked;
+
+        /// <summary>The player's music and effects volume (saved, except in QA runs).</summary>
+        public VolumeSettings Volume { get; private set; }
+
+        /// <summary>True while a level is on screen (playing or its win panel); false on the menu, level select and story cards.</summary>
+        public bool InGame => _flow != null && _flow.InGame;
+
+        /// <summary>Raises <see cref="ButtonClicked"/>; for buttons a screen builds itself.</summary>
+        public void NotifyButtonClicked() => ButtonClicked?.Invoke();
 
         /// <summary>Sizes, colours and timings.</summary>
         public UiStyle Style => _style;
@@ -56,6 +69,9 @@ namespace LuckyStep
         /// <summary>White pawn icon (tinted gold for the Golden pawn).</summary>
         public Sprite PawnIcon => _pawnIcon;
 
+        /// <summary>White up arrow (HUD arrow-key caps; rotate for other directions).</summary>
+        public Sprite ArrowIcon => _arrowIcon;
+
         private void Awake()
         {
             if (_controller == null || _catalog == null || _titleFont == null || _bodyFont == null)
@@ -66,6 +82,7 @@ namespace LuckyStep
             }
             BuildCanvas();
             IProgressStore store = QaArgs.IsQaRun ? new MemoryProgressStore() : (IProgressStore)new PlayerPrefsProgressStore();
+            Volume = new VolumeSettings(!QaArgs.IsQaRun);
             // QA captures count frames; with runInBackground off (the player setting) an unfocused window stalls them.
             if (QaArgs.IsQaRun) Application.runInBackground = true;
             _flow = new ScreenFlow(this, _controller, _catalog, new Progress(store));
@@ -83,6 +100,8 @@ namespace LuckyStep
             canvasGo.transform.SetParent(transform, false);
             Canvas canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            // Snap every element to whole pixels: text laid out on a half pixel was sampled between rows and read blurry.
+            canvas.pixelPerfect = true;
             CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = _style.referenceResolution;
@@ -185,6 +204,14 @@ namespace LuckyStep
             outline.effectDistance = _style.outlineDistance;
         }
 
+        /// <summary>Adds the style's hard ink offset shadow (no blur); add after <see cref="AddOutline"/> to shadow the outline too.</summary>
+        public void AddHardShadow(Graphic graphic)
+        {
+            Shadow shadow = graphic.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = _style.shadowColor;
+            shadow.effectDistance = _style.titleShadowDistance;
+        }
+
         /// <summary>Tint colours shared by every button (hover and gamepad focus look the same).</summary>
         public ColorBlock ButtonColors()
         {
@@ -210,6 +237,7 @@ namespace LuckyStep
             face.rectTransform.sizeDelta = size;
             Size(face, size.x, size.y);
             Button button = face.gameObject.AddComponent<Button>();
+            button.onClick.AddListener(NotifyButtonClicked);
             button.targetGraphic = face;
             button.colors = ButtonColors();
             label = CreateText("Label", face.transform, false, _style.bodySize, _style.textDark, TextAnchor.MiddleCenter);
@@ -233,9 +261,12 @@ namespace LuckyStep
             if (card)
             {
                 Image background = CreateImage(name, parent, _panel, _style.panelColor);
-                Shadow shadow = background.gameObject.AddComponent<Shadow>();
-                shadow.effectColor = _style.shadowColor;
-                shadow.effectDistance = _style.cardShadowDistance;
+                if (_style.cardShadowDistance != Vector2.zero)
+                {
+                    Shadow shadow = background.gameObject.AddComponent<Shadow>();
+                    shadow.effectColor = _style.shadowColor;
+                    shadow.effectDistance = _style.cardShadowDistance;
+                }
                 rect = background.rectTransform;
             }
             else
@@ -243,7 +274,8 @@ namespace LuckyStep
                 rect = CreateRect(name, parent);
             }
             VerticalLayoutGroup layout = rect.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(padding, padding, padding, padding);
+            int inset = card ? _style.cardShadowInset : 0; // keeps content centred inside the ink border
+            layout.padding = new RectOffset(padding, padding + inset, padding, padding + inset);
             layout.spacing = spacing;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlWidth = true;

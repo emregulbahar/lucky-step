@@ -1,16 +1,20 @@
-"""Lucky Step toy-piece generator (Story 005, visual slice).
+"""Lucky Step board-piece generator (Story 005, visual slice; "Printed Board" look).
 
-Builds the low-poly painted-wood board pieces and exports one FBX per piece:
+Builds the low-poly board pieces and exports one FBX per piece:
 die, coin, spike, tile_floor, tile_gap, rim_bar, wall_cards, wall_chips, wall_box, mirror,
-portal_frame, portal_disc, paw_print (and pawn, kept but no longer used by the game).
+portal_frame, portal_disc, paw_print, mug (table prop; and pawn, kept but no longer used by the game),
+bead (evil-eye bead, World 5) and tile_wood (three nailed planks laid on a space, World 5).
 
 Run headless (Blender 5.1):
     blender.exe --background --python tools/blender/make_models.py [-- <output_dir>]
 
 Default output: <repo>/Assets/Art/Models. Units: 1 Blender metre = 1 Unity unit = 1 board tile.
 Material slot names are the contract with Unity: Assets/Editor/BuildBoardScene.cs remaps each slot
-name to a painted-wood URP/Lit material, so the colours here are only for Blender previews.
+name to a Unity material, so the colours here are only for Blender previews.
 Origins: tiles have their TOP face at z=0; standing pieces have their BOTTOM at z=0; the coin is centred.
+Spaces (tile_floor, tile_gap) are thin card slabs UV-mapped onto the printed textures written by
+tools/textures/make_print_textures.py. Outlined pieces (build(outline=True)) carry their smoothed normals,
+in Unity object space, in the vertex colour (see bake_smooth_normals).
 """
 
 import math
@@ -23,6 +27,13 @@ from mathutils import Matrix, Vector
 
 SEG = 20  # radial segments for turned pieces
 
+TILE = 0.96  # footprint of a printed space; BoardView's score-track blocks assume this size
+SLAB = 0.04  # card thickness of a space; the top face is at z=0
+# Centre of the bottom run of the printed ink border (texture pixels 5..11 of 256 from the edge, see
+# tools/textures/make_print_textures.py). Slab sides and bottoms collapse onto this point, so they show ink;
+# a constant UV has zero screen derivatives, so the GPU samples mip 0 and paper never bleeds in.
+INK_UV = (0.5, 8.0 / 256.0)
+
 PREVIEW_COLOURS = {
     "PawnPaint": (0.80, 0.18, 0.15),
     "Ivory": (0.96, 0.93, 0.85),
@@ -31,23 +42,29 @@ PREVIEW_COLOURS = {
     "Metal": (0.62, 0.66, 0.68),
     "SpikeBase": (0.55, 0.36, 0.22),
     "Tile": (0.90, 0.68, 0.45),
-    "Hole": (0.04, 0.03, 0.03),
-    "Rim": (0.40, 0.25, 0.15),
+    "Hole": (0.08, 0.10, 0.20),
+    "Rim": (0.15, 0.20, 0.36),
     "CardFace": (0.95, 0.94, 0.90),
     "CardBack": (0.65, 0.12, 0.12),
     "ChipRed": (0.75, 0.12, 0.10),
     "ChipWhite": (0.92, 0.90, 0.85),
     "ChipBlue": (0.15, 0.28, 0.62),
+    "ChipLine": (0.30, 0.33, 0.45),
     "BoxBody": (0.20, 0.32, 0.55),
     "BoxLid": (0.90, 0.72, 0.25),
     "MirrorFrame": (0.45, 0.30, 0.20),
     "MirrorGlass": (0.75, 0.85, 0.95),
     "MirrorCrack": (0.10, 0.10, 0.12),
     "PortalFrame": (0.55, 0.36, 0.22),
-    "PortalStone": (0.30, 0.25, 0.45),
-    "PortalSwirlA": (0.55, 0.35, 1.00),
-    "PortalSwirlB": (0.25, 0.85, 1.00),
+    "PortalStone": (0.55, 0.42, 0.18),
+    "PortalSwirlA": (1.00, 0.72, 0.18),
+    "PortalSwirlB": (1.00, 0.88, 0.50),
     "PawPrint": (0.22, 0.14, 0.09),
+    "MugBody": (0.96, 0.93, 0.86),
+    "Coffee": (0.30, 0.18, 0.10),
+    "BeadBlue": (0.12, 0.31, 0.75),
+    "BeadLight": (0.49, 0.78, 0.95),
+    "Plank": (0.84, 0.62, 0.38),
 }
 
 
@@ -58,6 +75,56 @@ def output_dir():
             return os.path.abspath(args[0])
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     return os.path.join(root, "Assets", "Art", "Models")
+
+
+def slab_uv(x, y):
+    """UV of a slab top-face point: 0..1 across the space, upright in Unity (image top towards Unity +Z).
+
+    Unity sees Blender (x, y) as (-x, -y) on its ground plane (see unity_space), so both axes are flipped here.
+    """
+    return (0.5 - x / TILE, 0.5 - y / TILE)
+
+
+def unity_space(n):
+    """Blender object-space direction -> Unity object space, for this script's export settings.
+
+    The FBX exporter (axis_forward='-Z', axis_up='Y', bake_space_transform=True) bakes Blender (x, y, z) into the
+    file as FBX (x, z, -y) and writes the default FBX axis system (Y up, front +Z, coord +X, right-handed);
+    Unity's importer then mirrors FBX X into its left-handed space. Net: Blender (x, y, z) -> Unity (-x, z, -y).
+    """
+    return Vector((-n.x, n.z, -n.y))
+
+
+def bake_smooth_normals(mesh, merge=1e-4):
+    """Writes an outline normal per vertex into colour attribute 'SmoothNormal' (POINT domain, float, linear).
+
+    For every position (vertices closer than `merge` count as one, so split and coincident vertices agree) the
+    corner-angle-weighted normals of all faces touching it are summed and normalised, converted to Unity object
+    space and encoded as rgb = n * 0.5 + 0.5, a = 1. Exported with colors_type='LINEAR', so Unity's mesh.colors
+    holds these values unchanged; the Toon shader decodes COLOR.rgb * 2 - 1 when _OutlineSmoothNormals is on.
+    """
+    keys = [tuple(round(c / merge) for c in v.co) for v in mesh.vertices]
+    sums = {}
+    for poly in mesh.polygons:
+        idx = poly.vertices
+        k = len(idx)
+        for c in range(k):
+            p = mesh.vertices[idx[c]].co
+            a = mesh.vertices[idx[c - 1]].co - p
+            b = mesh.vertices[idx[(c + 1) % k]].co - p
+            if a.length < 1e-9 or b.length < 1e-9:
+                continue
+            key = keys[idx[c]]
+            sums[key] = sums.get(key, Vector((0.0, 0.0, 0.0))) + poly.normal * a.angle(b)
+    attr = mesh.color_attributes.new("SmoothNormal", 'FLOAT_COLOR', 'POINT')
+    flat = []
+    for v, key in zip(mesh.vertices, keys):
+        n = sums.get(key, Vector((0.0, 0.0, 0.0)))
+        n = n.normalized() if n.length > 1e-6 else v.normal.copy()
+        u = unity_space(n)
+        flat.extend((u.x * 0.5 + 0.5, u.y * 0.5 + 0.5, u.z * 0.5 + 0.5, 1.0))
+    attr.data.foreach_set("color", flat)
+    mesh.color_attributes.active_color = attr
 
 
 def material(name):
@@ -166,7 +233,54 @@ class Piece:
                     q = (grid[r][k], grid[r + 1][k], grid[r + 1][k2], grid[r][k2])
                     self.bm.faces.new(q if side > 0 else tuple(reversed(q))).material_index = idx[arm]
 
-    def build(self, sharp_angle_deg=35.0):
+    def slab(self, cuts, slot_of):
+        """Card slab TILE x TILE x SLAB, top at z=0, its top split on the grid `cuts` (same coordinates on x and y).
+
+        slot_of(i, j) names the material of top cell (i, j). Top faces get slab_uv; sides and bottom take the
+        outer cell's slot and collapse onto INK_UV.
+        """
+        bm = self.bm
+        uv = bm.loops.layers.uv.verify()
+        n = len(cuts)
+        top = [[bm.verts.new((x, y, 0.0)) for x in cuts] for y in cuts]  # top[j][i]
+        for j in range(n - 1):
+            for i in range(n - 1):
+                f = bm.faces.new((top[j][i], top[j][i + 1], top[j + 1][i + 1], top[j + 1][i]))
+                f.material_index = self._slot(slot_of(i, j))
+                for loop in f.loops:
+                    loop[uv].uv = slab_uv(loop.vert.co.x, loop.vert.co.y)
+        ring = ([top[0][i] for i in range(n)] + [top[j][n - 1] for j in range(1, n)]
+                + [top[n - 1][i] for i in range(n - 2, -1, -1)] + [top[j][0] for j in range(n - 2, 0, -1)])
+        low = [bm.verts.new((v.co.x, v.co.y, -SLAB)) for v in ring]
+        edge = self._slot(slot_of(0, 0))
+        m = len(ring)
+        faces = [bm.faces.new((ring[k], low[k], low[(k + 1) % m], ring[(k + 1) % m])) for k in range(m)]
+        faces.append(bm.faces.new(tuple(reversed(low))))
+        for f in faces:
+            f.material_index = edge
+            for loop in f.loops:
+                loop[uv].uv = INK_UV
+
+    def banded_prism(self, outline, bands, x=0.0, y=0.0):
+        """Vertical prism over the 2D polygon `outline` (counter-clockwise, centred on x, y) with side bands.
+
+        bands = [(z0, z1, mat), ...] bottom to top, touching. One closed shell: side quads take their band's slot,
+        the bottom cap the first band's, the top cap the last band's; no inner caps, so bake_smooth_normals gives
+        the band rings pure sideways normals and the outline wraps the whole prism without lines across it.
+        """
+        bm = self.bm
+        levels = [bands[0][0]] + [b[1] for b in bands]
+        rings = [[bm.verts.new((x + px, y + py, z)) for px, py in outline] for z in levels]
+        m = len(outline)
+        for k, (_, _, mat) in enumerate(bands):
+            idx = self._slot(mat)
+            lo, hi = rings[k], rings[k + 1]
+            for i in range(m):
+                bm.faces.new((lo[i], lo[(i + 1) % m], hi[(i + 1) % m], hi[i])).material_index = idx
+        bm.faces.new(tuple(reversed(rings[0]))).material_index = self._slot(bands[0][2])
+        bm.faces.new(tuple(rings[-1])).material_index = self._slot(bands[-1][2])
+
+    def build(self, sharp_angle_deg=35.0, outline=False):
         mesh = bpy.data.meshes.new(self.name)
         self.bm.normal_update()
         self.bm.to_mesh(mesh)
@@ -175,6 +289,8 @@ class Piece:
             mesh.materials.append(material(slot))
         mesh.shade_smooth()
         mesh.set_sharp_from_angle(angle=math.radians(sharp_angle_deg))
+        if outline:
+            bake_smooth_normals(mesh)
         obj = bpy.data.objects.new(self.name, mesh)
         bpy.context.scene.collection.objects.link(obj)
         return obj
@@ -187,7 +303,7 @@ def make_pawn():
     p.cone("PawnPaint", 0.15, 0.075, 0.10, 0.40)
     p.cone("PawnPaint", 0.125, 0.125, 0.40, 0.44)
     p.sphere("PawnPaint", 0.10, (0.0, 0.0, 0.53))
-    return p.build()
+    return p.build(outline=True)
 
 
 PIP_LAYOUT = {
@@ -219,14 +335,14 @@ def make_die():
             else:
                 c = (u, sign * out, h + v)
             p.disc("PipBlack", 0.034, 0.012, c, axis, seg=10)
-    return p.build(sharp_angle_deg=40.0)
+    return p.build(sharp_angle_deg=40.0, outline=True)
 
 
 def make_coin():
     p = Piece("coin")
     p.disc("Gold", 0.16, 0.035, (0, 0, 0), "z", seg=24)
     p.disc("Gold", 0.115, 0.047, (0, 0, 0), "z", seg=24)
-    return p.build(sharp_angle_deg=30.0)
+    return p.build(sharp_angle_deg=30.0, outline=True)
 
 
 def make_spike():
@@ -234,44 +350,56 @@ def make_spike():
     p.box("SpikeBase", (0.74, 0.74, 0.05), (0, 0, 0.025), bevel=0.012)
     for x, y in [(0, 0), (-0.2, -0.2), (0.2, -0.2), (-0.2, 0.2), (0.2, 0.2)]:
         p.cone("Metal", 0.085, 0.0, 0.05, 0.34, x, y, seg=8)
-    return p.build(sharp_angle_deg=30.0)
+    return p.build(sharp_angle_deg=30.0, outline=True)
 
 
 def make_tile_floor():
+    """Printed space: one card slab (slot Tile), top face = the whole printed texture, ink sides."""
     p = Piece("tile_floor")
-    p.box("Tile", (0.96, 0.96, 0.12), (0, 0, -0.06), bevel=0.025)
+    h = TILE * 0.5
+    p.slab([-h, h], lambda i, j: "Tile")
     return p.build()
 
 
 def make_rim_bar():
-    """Unit bar (1 x 1 x 1, bottom at z=0); BoardView scales it into the board's raised edge."""
+    """Unit bar (1 x 1 x 1, bottom at z=0), square edges; BoardView scales it into the flat printed board border."""
     p = Piece("rim_bar")
-    p.box("Rim", (1.0, 1.0, 1.0), (0, 0, 0.5), bevel=0.06)
+    p.box("Rim", (1.0, 1.0, 1.0), (0, 0, 0.5))
     return p.build()
 
 
 def make_wall_cards():
-    """Blocking piece: a squared-up stack of playing cards with a few loose cards on top."""
+    """Blocking piece: one squared-up deck of playing cards, its blue back on top (one clean silhouette).
+
+    The deck is a banded prism (see Piece.banded_prism): its middle rings carry pure sideways outline normals, so
+    the outline keeps its width along the tall sides (a plain box only has corner normals tilted up or down).
+    """
     p = Piece("wall_cards")
-    p.box("CardFace", (0.56, 0.8, 0.3), (0, 0, 0.15), bevel=0.01)
-    for i, (ang, dx) in enumerate([(8, 0.02), (-12, -0.03), (21, 0.04)]):
-        z = 0.3 + 0.006 + i * 0.012
-        p.box("CardFace", (0.56, 0.8, 0.01), (dx, 0, z), rot=Matrix.Rotation(math.radians(ang), 4, 'Z'))
-    p.box("CardBack", (0.5, 0.74, 0.004), (0.04, 0, 0.3 + 0.006 + 2 * 0.012 + 0.007),
-          rot=Matrix.Rotation(math.radians(21), 4, 'Z'))
-    return p.build(sharp_angle_deg=30.0)
+    w, d = 0.28, 0.4
+    p.banded_prism([(-w, -d), (w, -d), (w, d), (-w, d)], [(0.0, 0.1, "CardFace"), (0.1, 0.2, "CardFace"), (0.2, 0.3, "CardFace")])
+    p.box("CardBack", (0.46, 0.7, 0.006), (0, 0, 0.3 + 0.003))
+    return p.build(sharp_angle_deg=30.0, outline=True)
 
 
 def make_wall_chips():
-    """Blocking piece: three stacks of poker chips."""
+    """Blocking piece: three poker-chip stacks; one colour per stack, thin edge lines between chips.
+
+    Each stack is one banded prism (see Piece.banded_prism), so the ink outline wraps the whole stack, not every chip.
+    """
     p = Piece("wall_chips")
-    colours = ["ChipRed", "ChipWhite", "ChipBlue"]
-    stacks = [(-0.17, -0.14, 9), (0.18, -0.1, 7), (0.0, 0.2, 11)]
-    for s, (x, y, n) in enumerate(stacks):
+    chip, line, seg, r = 0.039, 0.006, 24, 0.16
+    circle = [(r * math.cos(2 * math.pi * k / seg), r * math.sin(2 * math.pi * k / seg)) for k in range(seg)]
+    stacks = [("ChipRed", -0.17, -0.14, 9), ("ChipWhite", 0.18, -0.1, 7), ("ChipBlue", 0.0, 0.2, 11)]
+    for mat, x, y, n in stacks:
+        bands, z = [], 0.0
         for i in range(n):
-            mat = colours[(i + s) % 3]
-            p.cone(mat, 0.16, 0.16, i * 0.045, i * 0.045 + 0.042, x + 0.006 * ((i * 7) % 3 - 1), y, seg=16)
-    return p.build(sharp_angle_deg=40.0)
+            bands.append((z, z + chip, mat))
+            z += chip
+            if i < n - 1:
+                bands.append((z, z + line, "ChipLine"))
+                z += line
+        p.banded_prism(circle, bands, x, y)
+    return p.build(sharp_angle_deg=40.0, outline=True)
 
 
 def make_wall_box():
@@ -280,7 +408,16 @@ def make_wall_box():
     p.box("BoxBody", (0.78, 0.78, 0.26), (0, 0, 0.13), bevel=0.015)
     p.box("BoxLid", (0.82, 0.82, 0.1), (0, 0, 0.26 + 0.03), bevel=0.02)
     p.box("BoxBody", (0.4, 0.4, 0.006), (0, 0, 0.34 + 0.003))
-    return p.build(sharp_angle_deg=30.0)
+    return p.build(sharp_angle_deg=30.0, outline=True)
+
+
+def make_mug():
+    """Table prop (not a board piece): a coffee mug with a side handle; bottom at z=0, about 0.4 tall."""
+    p = Piece("mug")
+    p.cone("MugBody", 0.19, 0.2, 0.0, 0.38, seg=24)
+    p.cone("Coffee", 0.165, 0.165, 0.38, 0.386, seg=24)
+    p.ring("MugBody", 0.1, 0.032, (0.21, 0.0, 0.2), major_seg=20, minor_seg=8)
+    return p.build(sharp_angle_deg=40.0, outline=True)
 
 
 def make_mirror():
@@ -306,17 +443,24 @@ def make_mirror():
         length = math.hypot(du, dv)
         p.box("MirrorCrack", (length, 0.024, 0.016), ((u0 + u1) * 0.5, 0, zc + (v0 + v1) * 0.5),
               rot=Matrix.Rotation(-math.atan2(dv, du), 4, 'Y'))
-    return p.build(sharp_angle_deg=30.0)
+    return p.build(sharp_angle_deg=30.0, outline=True)
 
 
 def make_portal_frame():
-    """Exit portal: wooden plinth and an upright ring; the swirl disc is a separate model so it can spin."""
+    """Exit: oak plinth and an upright HORSESHOE arch (open end down, lucky); the glow disc is a separate model so it can spin."""
     p = Piece("portal_frame")
     p.box("PortalFrame", (0.8, 0.36, 0.08), (0, 0, 0.04), bevel=0.02)
     p.box("PortalFrame", (0.12, 0.2, 0.2), (-0.3, 0, 0.18), bevel=0.02)
     p.box("PortalFrame", (0.12, 0.2, 0.2), (0.3, 0, 0.18), bevel=0.02)
-    p.ring("PortalStone", 0.34, 0.055, (0, 0, 0.47))
-    return p.build(sharp_angle_deg=40.0)
+    radius, cz, segs = 0.34, 0.47, 16
+    start, sweep = math.radians(-30.0), math.radians(240.0)
+    step = sweep / segs
+    chord = 2.0 * radius * math.sin(step * 0.5) * 1.12
+    for i in range(segs):
+        a = start + step * (i + 0.5)
+        p.box("PortalStone", (chord, 0.09, 0.09), (radius * math.cos(a), 0, cz + radius * math.sin(a)),
+              rot=Matrix.Rotation(-(a + math.pi * 0.5), 4, 'Y'))
+    return p.build(sharp_angle_deg=40.0, outline=True)
 
 
 def make_paw_print():
@@ -332,22 +476,47 @@ def make_paw_print():
 def make_portal_disc():
     """Emissive swirl disc, centred at the origin, facing along Y; spun at runtime."""
     p = Piece("portal_disc")
-    p.swirl_disc(["PortalSwirlA", "PortalSwirlB"], 0.3, (0, 0, 0))
+    p.swirl_disc(["PortalSwirlA", "PortalSwirlB"], 0.26, (0, 0, 0))
     return p.build(sharp_angle_deg=10.0)
 
 
 def make_tile_gap():
+    """Printed space with a flat dark hole: the same card slab, its top a paper ring (slot Tile, printed texture
+    with its ink border) around a flush 0.70-wide square hole (slot Hole); ink sides like tile_floor."""
     p = Piece("tile_gap")
-    outer, inner, t = 0.96, 0.66, 0.12
-    rim = (outer - inner) * 0.5
-    off = (inner + rim) * 0.5
-    p.box("Tile", (outer, rim, t), (0, off, -t * 0.5), bevel=0.02)
-    p.box("Tile", (outer, rim, t), (0, -off, -t * 0.5), bevel=0.02)
-    p.box("Tile", (rim, inner, t), (off, 0, -t * 0.5), bevel=0.02)
-    p.box("Tile", (rim, inner, t), (-off, 0, -t * 0.5), bevel=0.02)
-    # Dark pit floor just above the board plate (plate top is at z = -0.12).
-    p.box("Hole", (inner, inner, 0.01), (0, 0, -0.105))
+    h, hole = TILE * 0.5, 0.35
+    p.slab([-h, -hole, hole, h], lambda i, j: "Hole" if (i, j) == (1, 1) else "Tile")
     return p.build()
+
+
+def make_bead():
+    """Evil-eye bead (nazar boncugu): an upright glass disc, cobalt / white / light blue / black rings on both
+    faces, with a small gold loop on top. Disc axis along Y (faces front and back); bottom at z=0."""
+    p = Piece("bead")
+    r = 0.17
+    c = (0.0, 0.0, r)
+    p.disc("BeadBlue", r, 0.06, c, "y", seg=28)
+    p.disc("Ivory", 0.115, 0.068, c, "y", seg=28)
+    p.disc("BeadLight", 0.075, 0.076, c, "y", seg=24)
+    p.disc("PipBlack", 0.038, 0.084, c, "y", seg=16)
+    p.ring("Gold", 0.032, 0.011, (0.0, 0.0, 2 * r + 0.022), major_seg=16, minor_seg=6)
+    return p.build(sharp_angle_deg=30.0, outline=True)
+
+
+def make_tile_wood():
+    """Knock-on-wood space: three nailed planks laid across a printed space; bottom at z=0 (the space's top)."""
+    p = Piece("tile_wood")
+    width, gap, thick = 0.26, 0.035, 0.05
+    yaws = (-2.5, 1.5, -1.0)
+    for k, (offset, yaw) in enumerate(zip((-(width + gap), 0.0, width + gap), yaws)):
+        rot = Matrix.Rotation(math.radians(yaw), 4, 'Z')
+        length = 0.86 - 0.03 * k
+        p.box("Plank", (length, width, thick), (0.0, offset, thick * 0.5), bevel=0.012, rot=rot)
+        for side in (-1, 1):
+            nx = side * (length * 0.5 - 0.07)
+            ny = offset + nx * math.tan(math.radians(yaw))
+            p.disc("PipBlack", 0.018, 0.012, (nx, ny, thick + 0.002), "z", seg=8)
+    return p.build(sharp_angle_deg=30.0, outline=True)
 
 
 def export(obj, out_dir):
@@ -359,7 +528,7 @@ def export(obj, out_dir):
         filepath=path, use_selection=True, object_types={'MESH'},
         apply_scale_options='FBX_SCALE_ALL', axis_forward='-Z', axis_up='Y',
         bake_space_transform=True, use_mesh_modifiers=True, mesh_smooth_type='FACE',
-        add_leaf_bones=False, bake_anim=False, path_mode='STRIP')
+        add_leaf_bones=False, bake_anim=False, path_mode='STRIP', colors_type='LINEAR')
     tris = sum(len(poly.vertices) - 2 for poly in obj.data.polygons)
     print("EXPORTED", obj.name, tris, "tris ->", path)
 
@@ -370,7 +539,7 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     for make in (make_pawn, make_die, make_coin, make_spike, make_tile_floor, make_tile_gap, make_rim_bar,
                  make_wall_cards, make_wall_chips, make_wall_box, make_mirror, make_portal_frame,
-                 make_portal_disc, make_paw_print):
+                 make_portal_disc, make_paw_print, make_mug, make_bead, make_tile_wood):
         export(make(), out_dir)
 
 

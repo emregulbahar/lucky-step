@@ -19,18 +19,28 @@ namespace LuckyStep
         /// <summary>
         /// Applies one move. Returns the SAME instance (reference-equal to <paramref name="state"/>) when the move is
         /// rejected: level not in Playing status, wall, or closed exit. A rejected move adds no step.
-        /// A successful move increments the counter by exactly 1 (a dice fling is still ONE step: the step onto the dice
-        /// tile). "Lucky" means the new count is lucky and not deadly (deadly beats lucky). The exit needs a lucky count,
+        /// A successful move changes the counter by exactly 1 (a dice fling is still ONE step: the step onto the dice
+        /// tile), except a step onto wood, which leaves it unchanged. "Lucky" means the new count is lucky and not deadly (deadly beats lucky). The exit needs a lucky count,
         /// otherwise it is closed and blocks. A deadly count kills wherever the pawn lands.
         /// Dice: after stepping onto a dice tile the pawn is flung on in the same direction, RuleSet.DiceLuckyDistance
         /// tiles on a lucky step, DiceNormalDistance otherwise. It stops on the last free tile before a wall (or a closed
         /// exit); with a wall right behind the dice tile it stays on the dice tile. Tiles passed over never trigger
         /// (gaps, spikes, bridges, pots are jumped); only the landing tile does. No chaining: landing on a dice tile
         /// does not fling again.
-        /// Landing tile: Spike and Flowerpot kill unless lucky; Gap always kills; a closed Bridge opens permanently on a
-        /// lucky step (GameState.OpenBridges) and kills on a normal step; an open Bridge is safe.
+        /// Coin bridges: a lucky step opens EVERY bridge on the board permanently (GameState.OpenBridges becomes
+        /// Level.AllBridgesMask), wherever the pawn lands; a spike asks WHERE the lucky count is spent, a bridge asks WHEN.
+        /// Landing tile: Spike and Flowerpot kill unless lucky; Gap always kills; a closed Bridge kills on a normal step
+        /// (on a lucky step it is already open, so stepping onto it then is safe); an open Bridge is safe.
+        /// Wood ("knock on wood"): a step straight onto a Wood tile is not counted: the counter keeps its value and the
+        /// step is neither lucky nor deadly (the cat still moves). A dice fling that lands on wood is the dice step and
+        /// counts normally.
+        /// Evil-eye bead: landing on a Bead tile not yet taken picks it up (GameState.Beads + 1, its bit set in
+        /// GameState.TakenBeads). If the step would kill by bad luck (a deadly count, or a spike or flowerpot on a
+        /// normal step) and the pawn carries a bead, one bead is used up and the pawn lives (a bead picked up this very
+        /// step already counts). Falls (a gap, a closed bridge) are not bad luck: a bead does not help.
         /// Order of operations in one successful step: (1) the new count is the old one +1, or -1 while
-        /// GameState.CountingDown; (2) lucky/deadly are judged on that count; (3) dice fling and landing-tile effect;
+        /// GameState.CountingDown, or unchanged onto wood; (2) lucky/deadly are judged on that count; (3) dice fling,
+        /// then on a lucky step all bridges open, then bead pickup, then the landing-tile effect and the bead ward;
         /// (4) the black cat advances one route index (looping); (5) cat collision: if the cat is on the pawn's landing
         /// tile, or the two swapped tiles, and the pawn is still alive and has not won, the counter becomes
         /// RuleSet.StartValue. The step's own count therefore resolves the tile first (a lucky 7 can open a bridge and
@@ -64,9 +74,11 @@ namespace LuckyStep
             if (tile == Tile.Wall) return state;
 
             RuleSet rules = level.Rules;
-            int count = state.CountingDown ? state.Counter - 1 : state.Counter + 1;
-            bool deadly = rules.IsDeadly(count);
-            bool lucky = !deadly && rules.IsLucky(count);
+            // Knock on wood: a step straight onto a wooden tile is not counted, so it is neither lucky nor deadly.
+            bool counted = tile != Tile.Wood;
+            int count = !counted ? state.Counter : state.CountingDown ? state.Counter - 1 : state.Counter + 1;
+            bool deadly = counted && rules.IsDeadly(count);
+            bool lucky = counted && !deadly && rules.IsLucky(count);
 
             if (tile == Tile.Exit && !lucky) return state;
 
@@ -83,26 +95,40 @@ namespace LuckyStep
                 tile = level.GetTile(nx, ny);
             }
 
-            bool dies = deadly;
-            ulong bridges = state.OpenBridges;
+            int beads = state.Beads;
+            ulong takenBeads = state.TakenBeads;
+            if (tile == Tile.Bead)
+            {
+                ulong beadBit = 1UL << level.BeadIndex(nx, ny);
+                if ((takenBeads & beadBit) == 0)
+                {
+                    takenBeads |= beadBit;
+                    beads++;
+                }
+            }
+
+            bool cursed = deadly; // bad luck a bead wards off
+            bool falls = false;   // gravity: no bead helps
+            ulong bridges = lucky ? level.AllBridgesMask : state.OpenBridges;
             switch (tile)
             {
                 case Tile.Spike:
                 case Tile.Flowerpot:
-                    dies |= !lucky;
+                    cursed |= !lucky;
                     break;
                 case Tile.Gap:
-                    dies = true;
+                    falls = true;
                     break;
                 case Tile.Bridge:
-                    ulong bit = 1UL << level.BridgeIndex(nx, ny);
-                    if ((bridges & bit) == 0)
-                    {
-                        if (lucky) bridges |= bit;
-                        else dies = true;
-                    }
+                    falls = (bridges & (1UL << level.BridgeIndex(nx, ny))) == 0;
                     break;
             }
+            if (cursed && !falls && beads > 0)
+            {
+                beads--;
+                cursed = false;
+            }
+            bool dies = cursed || falls;
 
             GameStatus status = tile == Tile.Exit ? GameStatus.Won : dies ? GameStatus.Dead : GameStatus.Playing;
 
@@ -120,7 +146,7 @@ namespace LuckyStep
             bool countingDown = state.CountingDown || tile == Tile.Mirror;
             if (countingDown && count <= rules.StartValue) countingDown = false;
 
-            return new GameState(nx, ny, count, status, bridges, catIndex, countingDown);
+            return new GameState(nx, ny, count, status, bridges, catIndex, countingDown, beads, takenBeads);
         }
     }
 }

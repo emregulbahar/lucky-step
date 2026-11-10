@@ -8,12 +8,12 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: carpet
-    second: {fileID: 2100000, guid: b7c4032d95afb4941b7c9509a186e272, type: 2}
+    second: {fileID: 2100000, guid: 287fe326198f5bf45a0fe1bcfc825e25, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: carpetDarker
-    second: {fileID: 2100000, guid: 8159db2d1fb86744d87809045c417bcd, type: 2}
+    second: {fileID: 2100000, guid: 287fe326198f5bf45a0fe1bcfc825e25, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -9,11 +9,12 @@ namespace LuckyStep
     /// Story 006 screen state machine. The UI only requests changes (LoadLevel, MarkCompleted, InputEnabled); the rules
     /// stay in the controller. Transition table:
     /// <list type="table">
-    /// <item><term>Menu</term><description>Play: Story (first level of its world) or Playing, at the continue level. Level select: LevelSelect.</description></item>
+    /// <item><term>Menu</term><description>Play: Story (first level of its world) or Playing, at the continue level. Level select: LevelSelect. Settings: Settings.</description></item>
+    /// <item><term>Settings</term><description>Music and effects volume. Back, Esc or gamepad East: Menu.</description></item>
     /// <item><term>LevelSelect</term><description>Unlocked level: Story or Playing. Back, Esc or gamepad East: Menu.</description></item>
     /// <item><term>Story</term><description>Any key, click or gamepad South/Start: Playing.</description></item>
-    /// <item><term>Playing</term><description>LevelWon: Won (progress saved, panel after <see cref="UiStyle.winPanelDelay"/>). Esc or gamepad East: LevelSelect.</description></item>
-    /// <item><term>Won</term><description>Next: Story or Playing (next level). Retry: Playing (same level). Level select, Esc or East: LevelSelect.</description></item>
+    /// <item><term>Playing</term><description>LevelWon: Won (progress saved, panel after <see cref="UiStyle.winPanelDelay"/>). Esc or gamepad East: Menu.</description></item>
+    /// <item><term>Won</term><description>Next: Story or Playing (next level). Retry: Playing (same level). Level select: LevelSelect. Esc or East: Menu.</description></item>
     /// </list>
     /// Player input is enabled only in Playing, from the frame after entering it, so the key that closed a screen does
     /// not also move the pawn. Every screen re-reads its text on <see cref="Localization.LanguageChanged"/>.
@@ -22,7 +23,7 @@ namespace LuckyStep
     public sealed class ScreenFlow : IDisposable
     {
         /// <summary>Screen states.</summary>
-        public enum State { Menu, LevelSelect, Story, Playing, Won }
+        public enum State { Menu, LevelSelect, Story, Playing, Won, Settings }
 
         private readonly UiRoot _ui;
         private readonly PlayerInputController _controller;
@@ -33,9 +34,13 @@ namespace LuckyStep
         private readonly LevelSelect _select;
         private readonly StoryCard _story;
         private readonly WinPanel _win;
+        private readonly SettingsPanel _settings;
         private readonly UiScreen[] _screens;
 
         private State _state;
+
+        /// <summary>True while a level is on screen (Playing or Won).</summary>
+        public bool InGame => _state == State.Playing || _state == State.Won;
         private UiScreen _top;
         private int _enteredFrame = -1;
         private float _winTimer = -1f;
@@ -55,10 +60,13 @@ namespace LuckyStep
             _select = new LevelSelect(ui, catalog, progress);
             _story = new StoryCard(ui);
             _win = new WinPanel(ui);
-            _screens = new UiScreen[] { _hud, _menu, _select, _story, _win };
+            _settings = new SettingsPanel(ui, ui.Volume);
+            _screens = new UiScreen[] { _hud, _menu, _select, _story, _win, _settings };
 
             _menu.PlayClicked += () => StartLevel(ContinueLevel());
             _menu.LevelSelectClicked += () => Enter(State.LevelSelect);
+            _menu.SettingsClicked += () => Enter(State.Settings);
+            _settings.BackClicked += () => Enter(State.Menu);
             _select.LevelChosen += StartLevel;
             _select.BackClicked += () => Enter(State.Menu);
             _win.NextClicked += () => StartLevel(_catalog.Next(_controller.CurrentLevelFile));
@@ -106,6 +114,9 @@ namespace LuckyStep
                 case "select":
                     Enter(State.LevelSelect);
                     break;
+                case "settings":
+                    Enter(State.Settings);
+                    break;
                 case "story":
                     EnterStory(_catalog.WorldIndexOf(level));
                     break;
@@ -134,11 +145,13 @@ namespace LuckyStep
             {
                 case State.Playing:
                     _hud.SetMoves(_controller.Moves);
+                    _hud.SetBeads(BeadsForHud());
                     if (entered) break;
                     _controller.InputEnabled = true;
-                    if (BackPressed()) Enter(State.LevelSelect);
+                    if (BackPressed()) Enter(State.Menu); // Esc in a level opens the main menu (user request 2026-11-10)
                     break;
                 case State.LevelSelect:
+                case State.Settings:
                     if (!entered && BackPressed()) Enter(State.Menu);
                     break;
                 case State.Story:
@@ -146,6 +159,7 @@ namespace LuckyStep
                     break;
                 case State.Won:
                     _hud.SetMoves(_controller.Moves);
+                    _hud.SetBeads(BeadsForHud());
                     if (_winTimer >= 0f)
                     {
                         _winTimer -= deltaTime;
@@ -157,7 +171,7 @@ namespace LuckyStep
                     }
                     else if (_top == _win && !entered && BackPressed())
                     {
-                        Enter(State.LevelSelect);
+                        Enter(State.Menu);
                     }
                     break;
             }
@@ -184,6 +198,7 @@ namespace LuckyStep
                 case State.Menu: _top = _menu; break;
                 case State.LevelSelect: _top = _select; break;
                 case State.Story: _top = _story; break;
+                case State.Settings: _top = _settings; break;
                 default: _top = null; break; // Playing; Won opens its panel after the delay
             }
             if (state == State.Playing || state == State.Won) _hud.Show();
@@ -234,6 +249,7 @@ namespace LuckyStep
             int index = world >= 0 ? Array.IndexOf(_catalog.Worlds[world].levels, level) : -1;
             _hud.SetLevel(world + 1, index + 1, level != null ? _catalog.Par(level.name) : -1);
             _hud.SetMoves(_controller.Moves);
+            _hud.SetBeads(BeadsForHud());
         }
 
         private void OnLanguageChanged()
@@ -301,6 +317,13 @@ namespace LuckyStep
             Gamepad gamepad = Gamepad.current;
             return gamepad != null && (gamepad.dpad.up.wasPressedThisFrame || gamepad.dpad.down.wasPressedThisFrame
                 || gamepad.dpad.left.wasPressedThisFrame || gamepad.dpad.right.wasPressedThisFrame);
+        }
+
+        /// <summary>Beads carried, for the HUD; -1 when the level has no beads (the HUD hides its bead line).</summary>
+        private int BeadsForHud()
+        {
+            Level level = _controller.Level;
+            return level != null && level.BeadCount > 0 && _controller.State != null ? _controller.State.Beads : -1;
         }
     }
 }

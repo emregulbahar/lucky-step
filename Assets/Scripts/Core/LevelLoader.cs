@@ -8,6 +8,7 @@ namespace LuckyStep
     /// '#' wall, '.' floor, 'S' start, 'E' exit, '^' spike, 'D' dice tile, 'B' coin bridge, 'P' falling flowerpot,
     /// '~' gap (fatal on foot, jumped by a dice fling). Blank lines are ignored. Exactly one S and one E; all rows
     /// equal length; at most 64 bridges. 'M' is the broken mirror (counting flips to down, see StepRules).
+    /// 'W' is a wooden tile (a step onto it does not count), 'N' an evil-eye bead (at most 64; see StepRules).
     /// Optional line "cat: x,y x,y x,y" (anywhere after the header): the black cat's route as grid coordinates, x = column,
     /// y = row, both 0-based from the top-left. The route LOOPS: after the last tile the cat goes back to the first, one
     /// tile per player step (for ping-pong, list the way out and back). It starts on the first tile. Needs at least 2
@@ -105,7 +106,7 @@ namespace LuckyStep
             int width = rows[0].Length;
             int height = rows.Count;
             var tiles = new Tile[width * height];
-            int startX = -1, startY = -1, starts = 0, exits = 0, bridges = 0;
+            int startX = -1, startY = -1, starts = 0, exits = 0, bridges = 0, beads = 0;
 
             for (int y = 0; y < height; y++)
             {
@@ -128,6 +129,8 @@ namespace LuckyStep
                         case 'P': tiles[y * width + x] = Tile.Flowerpot; break;
                         case '~': tiles[y * width + x] = Tile.Gap; break;
                         case 'M': tiles[y * width + x] = Tile.Mirror; break;
+                        case 'W': tiles[y * width + x] = Tile.Wood; break;
+                        case 'N': tiles[y * width + x] = Tile.Bead; beads++; break;
                         default:
                             error = "Unknown character '" + rows[y][x] + "' at row " + (y + 1) + ", column " + (x + 1) + ".";
                             return false;
@@ -149,6 +152,11 @@ namespace LuckyStep
             if (bridges > 64)
             {
                 error = "Level has " + bridges + " bridges, the maximum is 64.";
+                return false;
+            }
+            if (beads > 64)
+            {
+                error = "Level has " + beads + " beads, the maximum is 64.";
                 return false;
             }
 

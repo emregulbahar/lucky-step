@@ -1,34 +1,45 @@
-"""Makes the UI sprites the Kenney UI Pack does not have in the warm board-game palette (Story 006).
+"""Draws the "Printed Board" UI sprites (Story 006; art direction in design/game-brief.md).
 
-1. Recolours Kenney's grey "Double" sprites to cream/brown (per-channel linear map: grey face -> cream,
-   blue-grey depth -> wood brown, white highlight stays near white). Kenney originals are not modified.
-2. Draws two white 128x128 icons the pack lacks: a lock (locked level) and a pawn (Golden pawn reward);
-   the UI tints them. Drawn at 4x and downsampled for smooth edges.
+1. Card and button faces: cream (#FFF6E0) or gold (#FFC21A) rounded rectangles with a 3 px ink (#1C1A24) border
+   and a hard 4 px ink shadow offset down-right (no blur). Drawn at 2x (6 px border, 8 px shadow, 24 px corner
+   radius) for UiStyle.slicedPixelsPerUnitMultiplier = 2, so they show at the stated sizes at 1080p. File names
+   and sizes match the Kenney sprites they replace, so the 9-slice borders in BuildBoardScene.UiSpriteBorders
+   (32 px; 40 px at the bottom of buttons) still fit: every corner, border and shadow lies inside 32 px.
+2. Three white 128x128 icons: a lock (locked level), a pawn (Golden pawn reward) and an up arrow (HUD arrow-key
+   caps, rotated for the other directions); the UI tints them.
+Everything is drawn at 4x and box-downsampled for smooth edges.
 
-Usage: python -I tools/ui/make_ui_sprites.py <kenney_ui-pack/PNG dir> Assets/Art/UI/Sprites
+Usage: python -I tools/ui/make_ui_sprites.py Assets/Art/UI/Sprites
 """
 import sys
 from pathlib import Path
 from PIL import Image, ImageDraw
 
+SS = 4  # supersampling factor
 BIG, OUT = 512, 128
 WHITE, CLEAR = (255, 255, 255, 255), (0, 0, 0, 0)
-# Grey sprite colours (face 218,220,231; depth 102,104,128) -> cream (250,238,214) and brown (150,105,70).
-WARM = [((102, 218), (150, 250)), ((104, 220), (105, 238)), ((128, 231), (70, 214))]
-RECOLOUR = {
-    "Grey/Double/button_rectangle_depth_flat.png": "cream_button_rectangle_depth_flat.png",
-    "Grey/Double/button_square_depth_flat.png": "cream_button_square_depth_flat.png",
-    "Grey/Double/button_square_flat.png": "cream_panel.png",
+INK = (0x1C, 0x1A, 0x24, 255)
+CREAM = (0xFF, 0xF6, 0xE0, 255)
+GOLD = (0xFF, 0xC2, 0x1A, 255)
+BORDER, SHADOW, RADIUS = 6, 8, 24  # sprite px (2x of the on-screen 3 px border, 4 px shadow, 12 px radius)
+CARDS = {
+    "cream_panel.png": ((128, 128), CREAM),
+    "cream_button_rectangle_depth_flat.png": ((384, 128), CREAM),
+    "cream_button_square_depth_flat.png": ((128, 128), CREAM),
+    "yellow_button_rectangle_depth_flat.png": ((384, 128), GOLD),
+    "yellow_button_square_depth_flat.png": ((128, 128), GOLD),
 }
 
 
-def warm(src, dst):
-    img = Image.open(src).convert("RGBA")
-    bands = list(img.split())
-    for i, ((x0, x1), (y0, y1)) in enumerate(WARM):
-        k = (y1 - y0) / (x1 - x0)
-        bands[i] = bands[i].point(lambda v, k=k, x0=x0, y0=y0: max(0, min(255, round(y0 + k * (v - x0)))))
-    Image.merge("RGBA", bands).save(dst)
+def card(path, size, face):
+    w, h = size[0] * SS, size[1] * SS
+    s, b, r = SHADOW * SS, BORDER * SS, RADIUS * SS
+    img = Image.new("RGBA", (w, h), INK[:3] + (0,))  # ink-coloured transparency: no dark or light fringe
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((s, s, w - 1, h - 1), radius=r, fill=INK)  # hard shadow
+    d.rounded_rectangle((0, 0, w - 1 - s, h - 1 - s), radius=r, fill=INK)  # ink border
+    d.rounded_rectangle((b, b, w - 1 - s - b, h - 1 - s - b), radius=r - b, fill=face)
+    img.resize(size, Image.BOX).save(path)
 
 
 def lock(path):
@@ -51,9 +62,17 @@ def pawn(path):
     img.resize((OUT, OUT), Image.LANCZOS).save(path)
 
 
+def arrow(path):
+    img = Image.new("RGBA", (BIG, BIG), CLEAR)
+    d = ImageDraw.Draw(img)
+    d.polygon([(256, 64), (448, 280), (328, 280), (328, 448), (184, 448), (184, 280), (64, 280)], fill=WHITE)
+    img.resize((OUT, OUT), Image.LANCZOS).save(path)
+
+
 if __name__ == "__main__":
-    kenney, out = Path(sys.argv[1]), Path(sys.argv[2])
-    for src, dst in RECOLOUR.items():
-        warm(kenney / src, out / dst)
+    out = Path(sys.argv[1])
+    for name, (size, face) in CARDS.items():
+        card(out / name, size, face)
     lock(out / "icon_lock.png")
     pawn(out / "icon_pawn.png")
+    arrow(out / "icon_arrow.png")

@@ -1,12 +1,12 @@
 # Story 005: Wooden board look, lucky/13 feedback
 
 > **Epic**: Lucky Step
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-08
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -91,3 +91,12 @@
 
 - Depends on: `production/epics/lucky-step/story-001-core-rules.md`, `production/epics/lucky-step/story-002-chance-objects.md`
 - Unlocks: `production/epics/lucky-step/story-007-itch-release.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-10
+**Criteria**: 4/6 passing (2 deferred: lamp light and tilt-shift blur, dropped with the Parlour look; 60 fps in the WebGL browser build, moved to Story 007)
+**Deviations**: Advisory: the `## Files` list predates the Printed Board look (TableView, audio and UI files belong to Stories 006, 008, 009); the old lamp and tilt-shift vision was replaced by the Printed Board art direction (no depth of field).
+**Test Evidence**: `production/qa/evidence/story-005-look-and-sound/` (74 screenshots) + sign-off `production/qa/evidence/story-005-look-and-sound-evidence.md`
+**Reviewed by**: self, no independent review (`/code-review` of 2026-11-10: APPROVED WITH SUGGESTIONS)

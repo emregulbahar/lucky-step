@@ -7,7 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// EditMode tests for <see cref="LocalizationTable"/> and the shipped string files (Story 006): lookup, missing keys,
-/// and English/Turkish tables kept in step (same keys, same {n} placeholders, Turkish all upper case for the caps-only font).
+/// and English/Turkish tables kept in step (same keys, same {n} placeholders, Turkish in sentence case for Fredoka).
 /// </summary>
 public sealed class LocalizationTests
 {
@@ -71,15 +71,16 @@ public sealed class LocalizationTests
     }
 
     [Test]
-    public void ShippedTurkish_EveryValue_HasNoLowercaseLetters()
+    public void ShippedTurkish_EveryValue_IsSentenceCase()
     {
-        // Kenney Future is caps-only and its lowercase i has no dot, so Turkish must be written in upper case (İ / I).
+        // Fredoka (Turkish-patched) has real lower case, so Turkish is written in sentence case, never all caps.
         LocalizationTable tr = LoadShipped(Language.Turkish);
 
         foreach (string key in tr.Keys)
         {
             string value = tr.Get(key);
-            Assert.IsFalse(value.Any(char.IsLower), "lowercase letter in tr " + key + ": " + value);
+            if (value.Count(char.IsLetter) < 3) continue;
+            Assert.IsTrue(value.Any(char.IsLower), "all-caps value in tr " + key + ": " + value);
         }
     }
 

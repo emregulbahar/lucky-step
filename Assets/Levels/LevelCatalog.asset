@@ -20,6 +20,8 @@ MonoBehaviour:
     - {fileID: 4900000, guid: 5c836e90511662a48987a9b64e95a292, type: 3}
     - {fileID: 4900000, guid: 7be1f4b648388e34d99b260b6e68196f, type: 3}
     - {fileID: 4900000, guid: b1cefb3ba7c38a644b29eba2783cb3cb, type: 3}
+    - {fileID: 4900000, guid: 99b394ecea294561b59398a215d602c5, type: 3}
+    - {fileID: 4900000, guid: d763e75911884aafa073a15920fd6753, type: 3}
     showPar: 0
   - storyKey: story.world2
     ruleSetName: default
@@ -28,6 +30,8 @@ MonoBehaviour:
     - {fileID: 4900000, guid: 0d4132a61ab8c1c44b8a1c34a3320fcc, type: 3}
     - {fileID: 4900000, guid: 914b9395bc851ab40b7653d56b8abe6b, type: 3}
     - {fileID: 4900000, guid: c41508578d984e947880a4f22455d44a, type: 3}
+    - {fileID: 4900000, guid: 78aa8f3caf4a4f4eb8c0333ff03b0e5d, type: 3}
+    - {fileID: 4900000, guid: 1c7841a5d7454b1dbd78a9ecf3a92c8f, type: 3}
     showPar: 1
   - storyKey: story.world3
     ruleSetName: default
@@ -36,6 +40,8 @@ MonoBehaviour:
     - {fileID: 4900000, guid: 0c117789797db1342a293cc883599803, type: 3}
     - {fileID: 4900000, guid: 4bd7378c5e723fd42bdfc3eabe7fb118, type: 3}
     - {fileID: 4900000, guid: b4366babf87195d4cbdd9007c93d84d7, type: 3}
+    - {fileID: 4900000, guid: d0d70bb08e704b3b9b23af813f449723, type: 3}
+    - {fileID: 4900000, guid: ec102fdbabc54e05982a8fe05d7c6b7e, type: 3}
     showPar: 1
   - storyKey: story.world4
     ruleSetName: world4
@@ -44,5 +50,17 @@ MonoBehaviour:
     - {fileID: 4900000, guid: 960d840abdd0cca4c9945c3343cc3209, type: 3}
     - {fileID: 4900000, guid: 87c5fb64d5704e141859b9d9d85f2ad9, type: 3}
     - {fileID: 4900000, guid: 6e33f8900d7a9b648851f3711eb5856b, type: 3}
+    - {fileID: 4900000, guid: 6c78f275164f478c9b828e829882e54f, type: 3}
+    - {fileID: 4900000, guid: 6d6ffd9495254af4be9ececcb741e354, type: 3}
+    showPar: 1
+  - storyKey: story.world5
+    ruleSetName: default
+    levels:
+    - {fileID: 4900000, guid: 75958508e1b4bf942985d8ad62edcd64, type: 3}
+    - {fileID: 4900000, guid: a0a3fe1d379b3d0438d223f86a07c19f, type: 3}
+    - {fileID: 4900000, guid: ca46ffa6da03957439a58b7916c2be39, type: 3}
+    - {fileID: 4900000, guid: d1eaff582a6ecd04f9ec3b82e775ac09, type: 3}
+    - {fileID: 4900000, guid: 560ad1041430ed749b7799ac32580486, type: 3}
+    - {fileID: 4900000, guid: 1c8648af58a9e84479d6492f9cf30193, type: 3}
     showPar: 1
   parTable: {fileID: 4900000, guid: 56634fce48beb0f4689a12e8c53ed568, type: 3}

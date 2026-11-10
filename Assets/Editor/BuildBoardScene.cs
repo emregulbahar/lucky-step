@@ -10,10 +10,13 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// Story 005 (visual slice): builds the wooden-board look into SampleScene without hand-editing YAML.
-/// Creates/updates the painted-wood URP/Lit materials, remaps every model's material slots onto them, writes the
-/// BoardTheme, StepFeedbackConfig and volume profile assets, then rebuilds the camera, lamp lights, global volume,
-/// presentation objects and the room around the table. Keeps the "Game" object and points it at Level04.
+/// Story 005 (visual slice): builds the "Printed Board" look (design/game-brief.md, Art and audio direction) into
+/// SampleScene without hand-editing YAML. Creates/updates the LuckyStep/Toon materials (two-band cel shading, ink
+/// outlines on pieces only, printed paper spaces), remaps every model's material slots onto them, writes the
+/// BoardTheme, StepFeedbackConfig and volume profile assets, then rebuilds the camera (dark floor colour beyond the felt card table), the
+/// single soft-shadow key light, global volume (no tonemapping so palette hexes print as authored, no DoF, no
+/// resting vignette, gold-only bloom) and presentation
+/// objects. No room, table or candle. Keeps the "Game" object and points it at Level08.
 /// Idempotent: objects it owns (by root name) are deleted and rebuilt, assets are updated in place.
 /// Batch: <c>Unity.exe -batchmode -projectPath . -executeMethod BuildBoardScene.BuildBatch -logFile -</c>
 /// </summary>
@@ -28,21 +31,49 @@ public static class BuildBoardScene
     private const string ProfilePath = "Assets/Art/Config/BoardVolumeProfile.asset";
     private const string ThemePath = "Assets/Art/Config/BoardTheme.asset";
     private const string FeedbackPath = "Assets/Art/Config/StepFeedbackConfig.asset";
+    private const string AudioConfigPath = "Assets/Audio/AudioConfig.asset";
+    private const string SfxFolder = "Assets/Audio/Sfx";
+    private const string MusicFolder = "Assets/Audio/Music";
     private const string CatTexturePath = "Assets/Art/Kenney/CubePets/Textures/colormap.png";
     private const string CharacterTexturePath = "Assets/Art/Kenney/MiniCharacters/Textures/colormap.png";
     private const string CharacterFolderTag = "/MiniCharacters/";
     private const string GeneratedFolder = "Assets/Art/Generated";
+    // Score-track numbers in Fredoka Bold (tools/textures/make_track_atlas.py), layout in TrackAtlas.
     private const string TrackAtlasPath = "Assets/Art/Generated/TrackAtlas.png";
+    // Printed space textures (tools/textures/make_print_textures.py): paper with an ink border; hazard adds a red band.
+    private const string PrintSpacePath = "Assets/Art/Generated/PrintSpace.png";
+    private const string PrintHazardPath = "Assets/Art/Generated/PrintHazard.png";
+    private const string TableFeltPath = "Assets/Art/Generated/TableFelt.png";
+    private const string ToonShaderName = "LuckyStep/Toon";
 
     // Bump when BoardTheme's layout defaults change: the builder then resets the theme's tunables to the code defaults.
-    private const int ThemeVersion = 2;
+    private const int ThemeVersion = 6;
 
-    // Scene layout (world units; tile tops at y = 0, board plate bottom at TableTop).
-    private const float TableTop = -0.30f;
-    private const float TableHeight = 5.6f;
-    private const float FloorY = TableTop - TableHeight;
-    private static readonly Vector3 LampBase = new Vector3(-6.2f, TableTop, 3.8f);
-    private const float LampHeight = 5f;
+    // The one key light comes from the back-left, above the board (space tops at y = 0).
+    private static readonly Vector3 KeyLightFrom = new Vector3(-6.2f, 2.15f, 3.8f);
+    // Neutral flat ambient (gamma 0.735 = linear 0.5); the Toon shader adds 0.15 of it, so lit = base * (0.925 + 0.075).
+    private static readonly Color Ambient = new Color(0.735f, 0.735f, 0.735f);
+    private const float KeyIntensity = 0.925f;
+
+    // Printed Board palette (brief): colour carries meaning only.
+    private static readonly Color Ink = C(0.110f, 0.102f, 0.141f);        // #1C1A24 outlines, pips, track borders
+    private static readonly Color Paper = C(1f, 0.965f, 0.878f);          // #FFF6E0 space A
+    private static readonly Color PaperB = C(0.929f, 0.878f, 0.761f);     // #EDE0C2 space B
+    private static readonly Color BoardWood = C(0.353f, 0.227f, 0.141f);  // #5A3A24 board plate and frames
+    private static readonly Color RimWood = C(0.431f, 0.290f, 0.180f);    // #6E4A2E board border
+    private static readonly Color Felt = C(0.180f, 0.471f, 0.302f);       // #2E784D table felt (tints TableFelt.png)
+    private static readonly Color TableWood = C(0.788f, 0.545f, 0.306f);  // #C98B4E table rail
+    private static readonly Color Charcoal = C(0.290f, 0.278f, 0.318f);   // #4A4751 card backs, dark chips, game box
+    private static readonly Color ChipBrown = C(0.549f, 0.361f, 0.239f);  // #8C5C3D brown chips
+    private static readonly Color Background = C(0.125f, 0.090f, 0.071f); // #201712 floor beyond the table
+    private static readonly Color Red = C(0.886f, 0.231f, 0.231f);        // #E23B3B hazard
+    private static readonly Color Gold = C(1f, 0.761f, 0.102f);           // #FFC21A lucky, the only bloom
+    private static readonly Color Teal = C(0.094f, 0.651f, 0.627f);       // #18A6A0 player
+    // Gold's bloom: with no tonemapping the lit colour clips at 1, so the HDR push goes mostly into red. Lit gold
+    // (linear 1, 0.54, 0.01) + this = (3, 0.62, 0.01): it still prints as #FFCF1A and is the only thing over the bloom
+    // threshold. More green would bloom yellower but print lemon-yellow.
+    private static readonly Color GoldGlow = Hdr(2.0f, 0.08f, 0f);
+    private const float Px = 3f; // piece outline width in px at 1080p (3 px reads better than 2 px at board distance)
 
     private static readonly string[] OwnedRoots = { "Main Camera", "Directional Light", "Global Volume", "Lights", "Presentation", "Room", "UI" };
 
@@ -64,72 +95,88 @@ public static class BuildBoardScene
     {
         public string Name;
         public Color Color;
-        public float Smoothness;
-        public float Metallic;
+        /// <summary>Added after shading (HDR, authored in gamma like Color); only gold goes above the bloom threshold.</summary>
         public Color Emission = Color.black;
-        public bool EmissionKeyword;
         public string BaseMap;
+        /// <summary>URP/Unlit (particles); every other material is LuckyStep/Toon.</summary>
         public bool Unlit;
+        /// <summary>Ink outline width in px at 1080p; 0 for spaces, prints and tiny parts.</summary>
+        public float Outline;
+        /// <summary>Own Blender models carry smoothed outline normals in their vertex colour; Kenney models do not.</summary>
+        public bool SmoothNormals;
+        public Color OutlineColor = Ink;
     }
 
-    // One painted-wood family: every material is URP/Lit with a flat colour.
     private static readonly Paint[] Palette =
     {
-        new Paint { Name = "Wood_Light", Color = C(0.90f, 0.68f, 0.45f), Smoothness = 0.35f },
-        new Paint { Name = "Wood_Dark", Color = C(0.68f, 0.46f, 0.30f), Smoothness = 0.35f },
-        new Paint { Name = "Wood_Natural", Color = C(0.90f, 0.60f, 0.39f), Smoothness = 0.30f },
-        new Paint { Name = "Wood_Wall", Color = C(0.45f, 0.30f, 0.20f), Smoothness = 0.30f },
-        new Paint { Name = "Wood_Plate", Color = C(0.55f, 0.36f, 0.22f), Smoothness = 0.35f },
-        new Paint { Name = "Wood_Table", Color = C(0.40f, 0.24f, 0.14f), Smoothness = 0.45f },
-        // Emission keyword on (black) so the lit-emission variant ships in the WebGL build for the glow.
-        new Paint { Name = "Paint_Pawn", Color = C(0.80f, 0.18f, 0.15f), Smoothness = 0.50f, EmissionKeyword = true },
-        new Paint { Name = "Paint_Ivory", Color = C(0.96f, 0.93f, 0.85f), Smoothness = 0.45f },
-        new Paint { Name = "Paint_Black", Color = C(0.06f, 0.06f, 0.06f), Smoothness = 0.30f },
-        new Paint { Name = "Paint_Gold", Color = C(0.95f, 0.72f, 0.22f), Smoothness = 0.70f, Metallic = 0.6f },
-        new Paint { Name = "Paint_Metal", Color = C(0.62f, 0.66f, 0.68f), Smoothness = 0.60f, Metallic = 0.5f },
-        new Paint { Name = "Paint_MetalDark", Color = C(0.31f, 0.39f, 0.39f), Smoothness = 0.50f, Metallic = 0.4f },
-        new Paint { Name = "Paint_Green", Color = C(0.18f, 0.62f, 0.42f), Smoothness = 0.30f },
-        new Paint { Name = "Paint_GlassCracked", Color = C(0.52f, 0.62f, 0.64f), Smoothness = 0.85f },
-        new Paint { Name = "Paint_Red", Color = C(0.80f, 0.33f, 0.30f), Smoothness = 0.20f },
-        new Paint { Name = "Paint_RedDark", Color = C(0.55f, 0.27f, 0.26f), Smoothness = 0.20f },
-        new Paint { Name = "Paint_White", Color = C(0.92f, 0.92f, 0.88f), Smoothness = 0.30f },
-        new Paint { Name = "Paint_Stone", Color = C(0.62f, 0.70f, 0.72f), Smoothness = 0.20f },
-        new Paint { Name = "Paint_Hole", Color = C(0.03f, 0.025f, 0.02f), Smoothness = 0f },
-        new Paint { Name = "Lamp_Shade", Color = C(1f, 0.88f, 0.60f), Smoothness = 0.3f, Emission = C(1.5f, 1.1f, 0.6f), EmissionKeyword = true },
-        new Paint { Name = "Cat_Black", Color = C(0.14f, 0.13f, 0.14f), Smoothness = 0.25f, BaseMap = CatTexturePath },
-        new Paint { Name = "Room_Wall", Color = C(0.30f, 0.22f, 0.18f), Smoothness = 0.10f },
-        new Paint { Name = "Room_Floor", Color = C(0.32f, 0.20f, 0.13f), Smoothness = 0.25f },
-        new Paint { Name = "Wood_Rim", Color = C(0.36f, 0.22f, 0.13f), Smoothness = 0.45f },
-        new Paint { Name = "Paint_CardFace", Color = C(0.95f, 0.94f, 0.90f), Smoothness = 0.35f },
-        new Paint { Name = "Paint_CardBack", Color = C(0.65f, 0.12f, 0.12f), Smoothness = 0.35f },
-        new Paint { Name = "Paint_ChipRed", Color = C(0.75f, 0.12f, 0.10f), Smoothness = 0.45f },
-        new Paint { Name = "Paint_ChipWhite", Color = C(0.92f, 0.90f, 0.85f), Smoothness = 0.45f },
-        new Paint { Name = "Paint_ChipBlue", Color = C(0.15f, 0.28f, 0.62f), Smoothness = 0.45f },
-        new Paint { Name = "Paint_BoxBody", Color = C(0.20f, 0.32f, 0.55f), Smoothness = 0.30f },
-        new Paint { Name = "Paint_BoxLid", Color = C(0.90f, 0.72f, 0.25f), Smoothness = 0.30f },
-        // Mirror glass: glossy, slightly metallic, pale blue; a faint emission keeps it bright without a reflection probe.
-        new Paint { Name = "Paint_MirrorGlass", Color = C(0.72f, 0.84f, 0.95f), Smoothness = 0.95f, Metallic = 0.6f, Emission = C(0.10f, 0.14f, 0.19f), EmissionKeyword = true },
-        new Paint { Name = "Paint_MirrorCrack", Color = C(0.08f, 0.08f, 0.10f), Smoothness = 0.2f },
-        new Paint { Name = "Portal_Stone", Color = C(0.30f, 0.25f, 0.45f), Smoothness = 0.4f },
-        new Paint { Name = "Portal_SwirlA", Color = C(0.25f, 0.15f, 0.45f), Smoothness = 0.5f, Emission = C(1.4f, 0.8f, 2.6f), EmissionKeyword = true },
-        new Paint { Name = "Portal_SwirlB", Color = C(0.10f, 0.35f, 0.45f), Smoothness = 0.5f, Emission = C(0.5f, 1.8f, 2.4f), EmissionKeyword = true },
-        new Paint { Name = "Portal_Spark", Color = C(2.2f, 1.9f, 3.0f), Unlit = true },
-        // Cat route prints: faint dark brown; the next tile's prints are warm and slightly emissive.
-        new Paint { Name = "Paw_Print", Color = C(0.30f, 0.19f, 0.12f), Smoothness = 0.1f },
-        new Paint { Name = "Paw_PrintNext", Color = C(0.95f, 0.72f, 0.30f), Smoothness = 0.2f, Emission = C(0.45f, 0.28f, 0.06f), EmissionKeyword = true },
-        new Paint { Name = "Cat_Puff", Color = C(0.16f, 0.14f, 0.17f), Unlit = true },
-        // Box board-game palette: cream spaces alternating with bright red / blue / green (gold stays for lucky).
-        new Paint { Name = "Board_Cream", Color = C(0.96f, 0.91f, 0.78f), Smoothness = 0.4f },
-        new Paint { Name = "Board_Red", Color = C(0.88f, 0.26f, 0.22f), Smoothness = 0.4f },
-        new Paint { Name = "Board_Blue", Color = C(0.24f, 0.48f, 0.86f), Smoothness = 0.4f },
-        new Paint { Name = "Board_Green", Color = C(0.30f, 0.70f, 0.36f), Smoothness = 0.4f },
-        // Score track: number atlas tinted per space type; the marker token in the player's colour.
-        new Paint { Name = "Track_Space", Color = C(0.97f, 0.93f, 0.82f), Smoothness = 0.35f, BaseMap = TrackAtlasPath },
-        new Paint { Name = "Track_Lucky", Color = C(1f, 0.78f, 0.25f), Smoothness = 0.6f, Metallic = 0.3f, Emission = C(0.15f, 0.10f, 0.02f), EmissionKeyword = true, BaseMap = TrackAtlasPath },
-        new Paint { Name = "Track_Deadly", Color = Color.white, Smoothness = 0.3f, BaseMap = TrackAtlasPath },
-        new Paint { Name = "Token_Player", Color = C(0.86f, 0.18f, 0.16f), Smoothness = 0.6f },
-        // Emission keyword on (black) so the glow pulse works on the player figure in the WebGL build.
-        new Paint { Name = "Character_Paint", Color = Color.white, Smoothness = 0.3f, BaseMap = CharacterTexturePath, EmissionKeyword = true },
+        // Spaces and board: printed, no geometric outline.
+        new Paint { Name = "Board_Cream", Color = Paper, BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_Linen", Color = PaperB, BaseMap = PrintSpacePath },
+        new Paint { Name = "Space_Hazard", Color = Color.white, BaseMap = PrintHazardPath },
+        new Paint { Name = "Paint_Hole", Color = C(0.07f, 0.08f, 0.15f) },
+        new Paint { Name = "Wood_Plate", Color = BoardWood },
+        new Paint { Name = "Wood_Rim", Color = RimWood },
+        // Card table (TableView): background surfaces, no outline.
+        new Paint { Name = "Table_Felt", Color = Felt, BaseMap = TableFeltPath },
+        new Paint { Name = "Table_Rail", Color = TableWood },
+        new Paint { Name = "Paw_Print", Color = C(0.25f, 0.27f, 0.40f) },
+        new Paint { Name = "Paw_PrintNext", Color = Gold, Emission = C(0.25f, 0.17f, 0f) },
+        // Score track: number atlas (lucky colours are baked into the atlas, so its tint is white).
+        new Paint { Name = "Track_Space", Color = Paper, BaseMap = TrackAtlasPath },
+        new Paint { Name = "Track_Lucky", Color = Color.white, Emission = C(0.10f, 0.07f, 0f), BaseMap = TrackAtlasPath },
+        new Paint { Name = "Track_Deadly", Color = Color.white, BaseMap = TrackAtlasPath },
+        new Paint { Name = "Paint_Black", Color = Ink }, // die pips and track borders
+        // Own pieces (smoothed outline normals in vertex colour).
+        new Paint { Name = "Paint_Ivory", Color = C(0.98f, 0.95f, 0.88f), Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_Gold", Color = Gold, Emission = GoldGlow, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_Hazard", Color = Red, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_Metal", Color = C(0.80f, 0.82f, 0.86f), Outline = Px },
+        new Paint { Name = "Paint_CardFace", Color = Paper, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_CardBack", Color = Charcoal, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_ChipRed", Color = ChipBrown, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_ChipWhite", Color = Paper, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_ChipBlue", Color = Charcoal, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_ChipLine", Color = C(0.62f, 0.55f, 0.47f), Outline = Px, SmoothNormals = true }, // chip edge lines; outlined too, or the stack outline breaks at every line
+        new Paint { Name = "Paint_BoxBody", Color = Charcoal, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_BoxLid", Color = Paper, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Wood_Wall", Color = BoardWood, Outline = Px, SmoothNormals = true }, // mirror and portal frames
+        new Paint { Name = "Paint_MirrorGlass", Color = C(0.72f, 0.84f, 0.95f), Emission = C(0.08f, 0.10f, 0.14f), Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_MirrorCrack", Color = Ink },
+        new Paint { Name = "Paint_BeadBlue", Color = C(0.12f, 0.31f, 0.75f), Emission = C(0.02f, 0.05f, 0.14f), Outline = Px, SmoothNormals = true }, // evil-eye bead
+        new Paint { Name = "Paint_BeadLight", Color = C(0.49f, 0.78f, 0.95f), Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Wood_Plank", Color = C(0.84f, 0.62f, 0.38f), Outline = Px, SmoothNormals = true }, // knock-on-wood planks
+        new Paint { Name = "Portal_Stone", Color = C(0.95f, 0.72f, 0.12f), Outline = Px, SmoothNormals = true }, // horseshoe arch
+        new Paint { Name = "Portal_SwirlA", Color = Gold, Emission = GoldGlow },
+        new Paint { Name = "Portal_SwirlB", Color = C(1f, 0.88f, 0.5f), Emission = Hdr(2.2f, 0.6f, 0.05f) }, // pale-yellow core
+        new Paint { Name = "Token_Player", Color = Teal, Outline = Px, SmoothNormals = true }, // track token (coin model)
+        new Paint { Name = "Paint_Pawn", Color = Red, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Prop_Mug", Color = C(0.96f, 0.93f, 0.86f), Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Prop_Coffee", Color = C(0.36f, 0.22f, 0.13f) },
+        new Paint { Name = "Prop_Rope", Color = C(0.72f, 0.58f, 0.40f), Outline = 2f }, // flowerpot rope (Unity cylinders)
+        // Kenney pieces and Unity primitives: outlined along mesh normals.
+        new Paint { Name = "Token_Base", Color = Teal, Outline = Px }, // figure base disc (Unity cylinder)
+        new Paint { Name = "Character_Paint", Color = Color.white, BaseMap = CharacterTexturePath, Outline = Px },
+        new Paint { Name = "Cat_Black", Color = C(0.14f, 0.13f, 0.16f), BaseMap = CatTexturePath, Outline = Px, OutlineColor = Paper },
+        new Paint { Name = "Paint_PotGlaze", Color = Red, Outline = Px },
+        new Paint { Name = "Wood_Natural", Color = C(0.80f, 0.58f, 0.36f), Outline = Px }, // coin bridge deck, pot body
+        new Paint { Name = "Wood_Dark", Color = C(0.55f, 0.38f, 0.24f), Outline = Px },
+        new Paint { Name = "Paint_Green", Color = C(0.36f, 0.62f, 0.42f), Outline = Px },
+        new Paint { Name = "Paint_Stone", Color = C(0.72f, 0.74f, 0.78f), Outline = Px },
+        new Paint { Name = "Paint_MetalDark", Color = C(0.36f, 0.42f, 0.46f), Outline = Px },
+        new Paint { Name = "Paint_GlassCracked", Color = C(0.62f, 0.72f, 0.78f), Outline = Px },
+        new Paint { Name = "Paint_White", Color = C(0.92f, 0.92f, 0.88f), Outline = Px },
+        // Slots of models the board no longer shows (old room, candle, pawn); kept so every slot resolves.
+        new Paint { Name = "Wood_Light", Color = C(0.90f, 0.68f, 0.45f), Outline = Px },
+        new Paint { Name = "Wood_Table", Color = C(0.40f, 0.24f, 0.14f), Outline = Px },
+        new Paint { Name = "Paint_Red", Color = C(0.80f, 0.33f, 0.30f), Outline = Px },
+        new Paint { Name = "Paint_RedDark", Color = C(0.55f, 0.27f, 0.26f), Outline = Px },
+        new Paint { Name = "Lamp_Shade", Color = C(1f, 0.86f, 0.55f), Outline = Px },
+        new Paint { Name = "Paint_Brass", Color = C(0.714f, 0.541f, 0.227f), Outline = Px },
+        new Paint { Name = "Candle_Wax", Color = C(0.94f, 0.89f, 0.78f), Outline = Px },
+        new Paint { Name = "Room_Fabric", Color = C(0.20f, 0.14f, 0.11f), Outline = Px },
+        // Particles.
+        new Paint { Name = "Portal_Spark", Color = C(2.4f, 1.6f, 0.3f), Unlit = true },
+        new Paint { Name = "Cat_Puff", Color = C(0.85f, 0.85f, 0.92f), Unlit = true },
     };
 
     // Model material slot name (lower case) -> palette material. Own slots come from tools/blender/make_models.py.
@@ -137,18 +184,18 @@ public static class BuildBoardScene
     {
         { "wood", "Wood_Natural" }, { "wooddark", "Wood_Dark" }, { "woodbark", "Wood_Dark" },
         { "plant", "Paint_Green" }, { "metal", "Paint_Metal" }, { "metaldark", "Paint_MetalDark" },
-        { "glass", "Paint_GlassCracked" }, { "lamp", "Lamp_Shade" }, { "carpet", "Paint_Red" },
-        { "carpetdarker", "Paint_RedDark" }, { "carpetwhite", "Paint_White" }, { "stone", "Paint_Stone" },
+        { "glass", "Paint_GlassCracked" }, { "lamp", "Lamp_Shade" }, { "carpet", "Room_Fabric" },
+        { "carpetdarker", "Room_Fabric" }, { "carpetwhite", "Room_Fabric" }, { "stone", "Paint_Stone" },
         { "colormap", "Cat_Black" }, { "_defaultmat", "Paint_White" },
         { "pawnpaint", "Paint_Pawn" }, { "ivory", "Paint_Ivory" }, { "pipblack", "Paint_Black" },
-        { "gold", "Paint_Gold" }, { "spikebase", "Wood_Dark" }, { "tile", "Board_Cream" },
+        { "gold", "Paint_Gold" }, { "spikebase", "Paint_Hazard" }, { "tile", "Board_Cream" },
         { "wallwood", "Wood_Wall" }, { "hole", "Paint_Hole" }, { "rim", "Wood_Rim" },
         { "cardface", "Paint_CardFace" }, { "cardback", "Paint_CardBack" }, { "chipred", "Paint_ChipRed" },
-        { "chipwhite", "Paint_ChipWhite" }, { "chipblue", "Paint_ChipBlue" }, { "boxbody", "Paint_BoxBody" },
+        { "chipwhite", "Paint_ChipWhite" }, { "chipblue", "Paint_ChipBlue" }, { "chipline", "Paint_ChipLine" }, { "boxbody", "Paint_BoxBody" },
         { "boxlid", "Paint_BoxLid" }, { "mirrorframe", "Wood_Wall" }, { "mirrorglass", "Paint_MirrorGlass" },
-        { "mirrorcrack", "Paint_MirrorCrack" }, { "portalframe", "Wood_Dark" }, { "portalstone", "Portal_Stone" },
+        { "mirrorcrack", "Paint_MirrorCrack" }, { "portalframe", "Wood_Wall" }, { "portalstone", "Portal_Stone" },
         { "portalswirla", "Portal_SwirlA" }, { "portalswirlb", "Portal_SwirlB" },
-        { "pawprint", "Paw_Print" },
+        { "pawprint", "Paw_Print" }, { "mugbody", "Prop_Mug" }, { "beadblue", "Paint_BeadBlue" }, { "beadlight", "Paint_BeadLight" }, { "plank", "Wood_Plank" }, { "coffee", "Prop_Coffee" }, { "brass", "Paint_Brass" }, { "wax", "Candle_Wax" },
     };
 
     /// <summary>Menu entry: builds the board scene in the open editor.</summary>
@@ -178,77 +225,87 @@ public static class BuildBoardScene
         EnsureFolder(MaterialsFolder);
         EnsureFolder(ConfigFolder);
         EnsureFolder(GeneratedFolder);
-        WriteTrackAtlas();
+        ConfigureTrackAtlas();
+        ConfigurePrintTexture(PrintSpacePath);
+        ConfigurePrintTexture(PrintHazardPath);
+        ConfigurePrintTexture(TableFeltPath);
         Dictionary<string, Material> mats = CreateMaterials();
         RemapModelMaterials(mats);
         BoardTheme theme = CreateTheme(mats);
         StepFeedbackConfig feedback = LoadOrCreate<StepFeedbackConfig>(FeedbackPath);
         VolumeProfile profile = CreateVolumeProfile(feedback);
+        AudioConfig audio = CreateAudioConfig();
         AssetDatabase.SaveAssets();
-        BuildScene(theme, feedback, profile, mats);
+        BuildScene(theme, feedback, profile, audio);
         Debug.Log("BuildBoardScene: done -> " + ScenePath);
     }
 
-    /// <summary>Writes the score-track number atlas (TrackAtlas) as an uncompressed PNG; rewritten only if it changed.</summary>
-    private static void WriteTrackAtlas()
+    /// <summary>Score-track number atlas (TrackAtlas layout): sRGB, mipmapped, clamped, uncompressed (keeps the numerals crisp).</summary>
+    private static void ConfigureTrackAtlas()
     {
-        Texture2D atlas = TrackAtlas.Generate();
-        byte[] png = atlas.EncodeToPNG();
-        UnityEngine.Object.DestroyImmediate(atlas);
-        bool exists = File.Exists(TrackAtlasPath);
-        if (!exists || !File.ReadAllBytes(TrackAtlasPath).SequenceEqual(png))
-        {
-            File.WriteAllBytes(TrackAtlasPath, png);
-            AssetDatabase.ImportAsset(TrackAtlasPath, ImportAssetOptions.ForceUpdate);
-        }
-        var importer = (TextureImporter)AssetImporter.GetAtPath(TrackAtlasPath);
+        var importer = AssetImporter.GetAtPath(TrackAtlasPath) as TextureImporter;
+        if (importer == null) throw new FileNotFoundException("Track atlas not imported (run tools/textures/make_track_atlas.py)", TrackAtlasPath);
         if (importer.textureCompression == TextureImporterCompression.Uncompressed && importer.wrapMode == TextureWrapMode.Clamp
-            && importer.mipmapEnabled && importer.maxTextureSize == TrackAtlas.Size) return;
+            && importer.mipmapEnabled && importer.sRGBTexture && importer.maxTextureSize == TrackAtlas.Height
+            && importer.anisoLevel == 16) return;
+        importer.textureType = TextureImporterType.Default;
+        importer.sRGBTexture = true;
+        importer.mipmapEnabled = true;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.filterMode = FilterMode.Trilinear;
+        importer.anisoLevel = 16; // the track is seen at a glancing angle: keeps the numerals sharp
+        importer.maxTextureSize = TrackAtlas.Height;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.SaveAndReimport();
+    }
+
+    /// <summary>Printed space texture: sRGB, mipmapped, clamped, uncompressed (keeps the thin ink border clean).</summary>
+    private static void ConfigurePrintTexture(string path)
+    {
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) throw new FileNotFoundException("Print texture not imported (run tools/textures/make_print_textures.py)", path);
+        if (importer.textureCompression == TextureImporterCompression.Uncompressed && importer.wrapMode == TextureWrapMode.Clamp
+            && importer.mipmapEnabled && importer.sRGBTexture) return;
         importer.textureType = TextureImporterType.Default;
         importer.sRGBTexture = true;
         importer.mipmapEnabled = true;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.filterMode = FilterMode.Trilinear;
         importer.anisoLevel = 4;
-        importer.maxTextureSize = TrackAtlas.Size;
-        importer.textureCompression = TextureImporterCompression.Uncompressed; // keeps the digits crisp
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.SaveAndReimport();
     }
 
     private static Dictionary<string, Material> CreateMaterials()
     {
-        Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+        Shader toon = Shader.Find(ToonShaderName);
         Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
-        if (lit == null || unlit == null) throw new InvalidOperationException("URP Lit/Unlit shader not found.");
+        if (toon == null || unlit == null) throw new InvalidOperationException("LuckyStep/Toon or URP Unlit shader not found.");
         var result = new Dictionary<string, Material>();
         foreach (Paint p in Palette)
         {
             string path = MaterialsFolder + "/" + p.Name + ".mat";
             Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            Shader shader = p.Unlit ? unlit : lit;
+            Shader shader = p.Unlit ? unlit : toon;
             if (m == null)
             {
                 m = new Material(shader);
                 AssetDatabase.CreateAsset(m, path);
             }
             m.shader = shader;
+            m.shaderKeywords = new string[0]; // drop URP/Lit keywords left from the old look
             m.SetColor("_BaseColor", p.Color);
-            m.SetFloat("_Smoothness", p.Smoothness);
-            m.SetFloat("_Metallic", p.Metallic);
             Texture2D baseMap = p.BaseMap != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(p.BaseMap) : null;
+            if (p.BaseMap != null && baseMap == null) throw new FileNotFoundException("Base map not imported", p.BaseMap);
             m.SetTexture("_BaseMap", baseMap);
-            if (p.EmissionKeyword)
+            if (!p.Unlit)
             {
-                m.EnableKeyword("_EMISSION");
                 m.SetColor("_EmissionColor", p.Emission);
-                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                m.SetColor("_OutlineColor", p.OutlineColor);
+                m.SetFloat("_OutlineWidth", p.Outline);
+                m.SetFloat("_OutlineSmoothNormals", p.SmoothNormals ? 1f : 0f);
             }
-            else
-            {
-                m.DisableKeyword("_EMISSION");
-                m.SetColor("_EmissionColor", Color.black);
-                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-            }
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             m.enableInstancing = true;
             EditorUtility.SetDirty(m);
             result[p.Name] = m;
@@ -328,12 +385,14 @@ public static class BuildBoardScene
         theme.rimBar = Model(ModelsFolder + "/rim_bar.fbx");
         theme.wallPieces = new[]
         {
-            Model(ModelsFolder + "/wall_cards.fbx"), Model(ModelsFolder + "/wall_chips.fbx"), Model(ModelsFolder + "/wall_box.fbx"),
+            Model(ModelsFolder + "/wall_cards.fbx"), Model(ModelsFolder + "/wall_chips.fbx"),
         };
         theme.spike = Model(ModelsFolder + "/spike.fbx");
         theme.die = Model(ModelsFolder + "/die.fbx");
         theme.coin = Model(ModelsFolder + "/coin.fbx");
         theme.mirror = Model(ModelsFolder + "/mirror.fbx");
+        theme.bead = Model(ModelsFolder + "/bead.fbx");
+        theme.woodPlanks = Model(ModelsFolder + "/tile_wood.fbx");
         theme.portalFrame = Model(ModelsFolder + "/portal_frame.fbx");
         theme.portalDisc = Model(ModelsFolder + "/portal_disc.fbx");
         theme.character = Model(KenneyFolder + "/MiniCharacters/character-female-b.fbx");
@@ -341,20 +400,29 @@ public static class BuildBoardScene
         theme.bridge = Model(KenneyFolder + "/NatureKit/bridge_woodNarrow.fbx");
         theme.cat = Model(KenneyFolder + "/CubePets/animal-cat.fbx");
         theme.floorLight = mats["Board_Cream"];
-        theme.floorColors = new[] { mats["Board_Red"], mats["Board_Blue"], mats["Board_Green"] };
-        theme.wallTile = mats["Wood_Dark"];
+        theme.floorColors = new[] { mats["Board_Cream"], mats["Board_Linen"] };
+        theme.wallTile = mats["Board_Linen"];
+        theme.hazardTile = mats["Space_Hazard"];
+        theme.flowerpotBody = mats["Wood_Natural"]; // pottedPlant.fbx "wood" slot = the pot body
+        theme.flowerpotGlaze = mats["Paint_PotGlaze"];
         theme.trackSpace = mats["Track_Space"];
         theme.trackLucky = mats["Track_Lucky"];
         theme.trackDeadly = mats["Track_Deadly"];
-        theme.trackBlock = mats["Wood_Rim"];
+        theme.trackBlock = mats["Paint_Black"];
         theme.trackToken = Model(ModelsFolder + "/coin.fbx");
         theme.trackTokenMaterial = mats["Token_Player"];
         theme.boardPlate = mats["Wood_Plate"];
         theme.portalSpark = mats["Portal_Spark"];
+        theme.figureBase = mats["Token_Base"];
         theme.pawPrint = Model(ModelsFolder + "/paw_print.fbx");
         theme.pawPrintMaterial = mats["Paw_Print"];
         theme.pawPrintNextMaterial = mats["Paw_PrintNext"];
         theme.catPuffMaterial = mats["Cat_Puff"];
+        theme.ropeMaterial = mats["Prop_Rope"];
+        theme.tableFelt = mats["Table_Felt"];
+        theme.tableRail = mats["Table_Rail"];
+        theme.tableMug = Model(ModelsFolder + "/mug.fbx");
+        theme.tableBox = Model(ModelsFolder + "/wall_box.fbx");
         EditorUtility.SetDirty(theme);
         return theme;
     }
@@ -363,33 +431,33 @@ public static class BuildBoardScene
     {
         VolumeProfile profile = LoadOrCreate<VolumeProfile>(ProfilePath);
 
+        // No tonemapping: the key light is tuned so lit paper comes out at 1.0, i.e. every palette hex prints as authored.
         Tonemapping tone = GetOrAdd<Tonemapping>(profile);
-        tone.mode.Override(TonemappingMode.Neutral);
+        tone.mode.Override(TonemappingMode.None);
 
+        // Threshold is gamma; 1.4 is ~2.16 linear and URP's built-in soft knee (half the threshold) starts at ~1.08,
+        // above lit paper (1.0), so only HDR gold (GoldGlow, red channel ~3) blooms.
         Bloom bloom = GetOrAdd<Bloom>(profile);
-        bloom.threshold.Override(1f);
+        bloom.threshold.Override(1.4f);
         bloom.intensity.Override(0.6f);
         bloom.scatter.Override(0.6f);
         bloom.highQualityFiltering.Override(false);
 
+        // No resting vignette (vignetteBase 0); StepFeedback still drives it for the near-deadly darkening and death pulse.
         Vignette vignette = GetOrAdd<Vignette>(profile);
         vignette.intensity.Override(feedback.vignetteBase);
         vignette.smoothness.Override(0.45f);
-        vignette.color.Override(new Color(0.06f, 0.02f, 0.01f));
+        vignette.color.Override(Ink);
 
-        // Distances are placeholders; BoardCameraRig sets them from the framed board at runtime.
+        // Printed Board: no depth of field. Kept in the profile but inactive, so BoardCameraRig leaves it alone.
         DepthOfField dof = GetOrAdd<DepthOfField>(profile);
-        dof.mode.Override(DepthOfFieldMode.Gaussian);
-        dof.gaussianStart.Override(20f);
-        dof.gaussianEnd.Override(26f);
-        dof.gaussianMaxRadius.Override(1.2f);
-        dof.highQualitySampling.Override(false);
+        dof.active = false;
 
         EditorUtility.SetDirty(profile);
         return profile;
     }
 
-    private static void BuildScene(BoardTheme theme, StepFeedbackConfig feedback, VolumeProfile profile, Dictionary<string, Material> mats)
+    private static void BuildScene(BoardTheme theme, StepFeedbackConfig feedback, VolumeProfile profile, AudioConfig audio)
     {
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         foreach (GameObject root in scene.GetRootGameObjects())
@@ -412,29 +480,20 @@ public static class BuildBoardScene
         volume.priority = 1f;
         volume.sharedProfile = profile;
 
-        // Lights: warm key from the lamp's side (the only shadow caster: WebGL's Mobile URP asset has no additional
-        // light shadows), plus a shadowless point light at the lamp shade for the warm pool.
+        // One key light with soft-filtered shadows; the Toon shader folds its shadow into the shade band. No fill lights.
         var lights = new GameObject("Lights").transform;
-        Vector3 bulb = LampBase + Vector3.up * (LampHeight * 0.78f);
-        var key = new GameObject("Lamp Key Light").AddComponent<Light>();
+        var key = new GameObject("Key Light").AddComponent<Light>();
         key.transform.SetParent(lights, false);
         key.type = LightType.Directional;
-        key.color = new Color(1f, 0.83f, 0.62f);
-        key.intensity = 1.25f;
-        key.shadows = LightShadows.Soft;
-        key.shadowStrength = 0.8f;
-        key.transform.rotation = Quaternion.LookRotation((Vector3.zero - bulb).normalized + Vector3.down * 0.6f);
-        var lamp = new GameObject("Lamp Bulb Light").AddComponent<Light>();
-        lamp.transform.SetParent(lights, false);
-        lamp.transform.position = bulb;
-        lamp.type = LightType.Point;
-        lamp.color = new Color(1f, 0.72f, 0.42f);
-        lamp.intensity = 3f;
-        lamp.range = 16f;
-        lamp.shadows = LightShadows.None;
+        // Lit = base * (key + 0.15 * ambient) in the Toon shader; key + 0.15 * ambient = 1 makes lit colours equal the hexes.
+        key.color = Color.white;
+        key.intensity = KeyIntensity;
+        key.shadows = LightShadows.Soft; // soft filtering hides shadow-map texel steps (they read as scribbles)
+        key.shadowStrength = 1f;
+        key.transform.rotation = Quaternion.LookRotation((Vector3.zero - KeyLightFrom).normalized + Vector3.down * 0.6f);
         RenderSettings.sun = key;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.26f, 0.21f, 0.18f);
+        RenderSettings.ambientLight = Ambient;
         RenderSettings.skybox = null;
         RenderSettings.fog = false;
 
@@ -456,13 +515,16 @@ public static class BuildBoardScene
         SetRef(stepFeedback, "_volume", volume);
         SetRef(stepFeedback, "_flashLight", flash);
         SetRef(stepFeedback, "_config", feedback);
+        TableView table = presentation.AddComponent<TableView>();
+        SetRef(table, "_board", board);
+        SetRef(table, "_theme", theme);
 
         // Camera (BoardCameraRig frames it at runtime; this is the edit-time placeholder pose).
         var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
         Camera cam = camGo.AddComponent<Camera>();
         camGo.AddComponent<AudioListener>();
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.08f, 0.06f, 0.05f);
+        cam.backgroundColor = Background;
         cam.fieldOfView = 30f;
         cam.nearClipPlane = 0.3f;
         cam.farClipPlane = 80f;
@@ -470,28 +532,33 @@ public static class BuildBoardScene
         UniversalAdditionalCameraData camData = cam.GetUniversalAdditionalCameraData();
         camData.renderPostProcessing = true;
         camData.requiresDepthOption = CameraOverrideOption.On;
-        camData.antialiasing = AntialiasingMode.FastApproximateAntialiasing;
+        camData.antialiasing = AntialiasingMode.None; // MSAA 4x in the URP assets: FXAA blurred the printed track numerals
         BoardCameraRig rig = camGo.AddComponent<BoardCameraRig>();
         SetRef(rig, "_board", board);
         SetRef(rig, "_volume", volume);
 
-        BuildRoom(mats);
-        BuildUi(controller);
+        UiRoot ui = BuildUi(controller);
+        AudioFeedback sound = presentation.AddComponent<AudioFeedback>();
+        SetRef(sound, "_board", board);
+        SetRef(sound, "_controller", controller);
+        SetRef(sound, "_ui", ui);
+        // Reload from disk: a config created earlier in this run can be replaced by the UI sprite reimport above.
+        SetRef(sound, "_config", Load<AudioConfig>(AudioConfigPath));
 
         EditorSceneManager.MarkSceneDirty(scene);
         if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save " + ScenePath);
     }
 
     /// <summary>Story 006: writes the level catalog, sets up the UI sprite importers and adds the "UI" root with its references.</summary>
-    private static void BuildUi(PlayerInputController controller)
+    private static UiRoot BuildUi(PlayerInputController controller)
     {
         LevelCatalog catalog = LevelCatalogBuilder.CreateOrUpdateDefault();
         ConfigureUiSprites();
         UiRoot ui = new GameObject("UI").AddComponent<UiRoot>();
         SetRef(ui, "_controller", controller);
         SetRef(ui, "_catalog", catalog);
-        SetRef(ui, "_titleFont", Load<Font>(UiFontsFolder + "/KenneyFuture-TR.ttf"));
-        SetRef(ui, "_bodyFont", Load<Font>(UiFontsFolder + "/KenneyFutureNarrow-TR.ttf"));
+        SetRef(ui, "_titleFont", Load<Font>(UiFontsFolder + "/Fredoka-Bold.ttf"));
+        SetRef(ui, "_bodyFont", Load<Font>(UiFontsFolder + "/Fredoka-Bold.ttf")); // SemiBold read faint at caption sizes
         SetRef(ui, "_panel", Load<Sprite>(UiSpritesFolder + "/cream_panel.png"));
         SetRef(ui, "_buttonPrimary", Load<Sprite>(UiSpritesFolder + "/yellow_button_rectangle_depth_flat.png"));
         SetRef(ui, "_buttonSecondary", Load<Sprite>(UiSpritesFolder + "/cream_button_rectangle_depth_flat.png"));
@@ -500,6 +567,57 @@ public static class BuildBoardScene
         SetRef(ui, "_lockIcon", Load<Sprite>(UiSpritesFolder + "/icon_lock.png"));
         SetRef(ui, "_tickIcon", Load<Sprite>(UiSpritesFolder + "/green_icon_checkmark.png"));
         SetRef(ui, "_pawnIcon", Load<Sprite>(UiSpritesFolder + "/icon_pawn.png"));
+        SetRef(ui, "_arrowIcon", Load<Sprite>(UiSpritesFolder + "/icon_arrow.png"));
+        return ui;
+    }
+
+    /// <summary>
+    /// Story 008 audio: import settings for Assets/Audio (effects decompressed on load, music compressed in memory so
+    /// the Web build does not stream) and the AudioConfig asset with its clips. Mix values keep what the asset has.
+    /// </summary>
+    private static AudioConfig CreateAudioConfig()
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { SfxFolder, MusicFolder }))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (!(AssetImporter.GetAtPath(path) is AudioImporter importer)) continue;
+            bool music = path.StartsWith(MusicFolder, StringComparison.Ordinal);
+            AudioImporterSampleSettings settings = importer.defaultSampleSettings;
+            AudioClipLoadType loadType = music ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+            if (settings.loadType == loadType && settings.compressionFormat == AudioCompressionFormat.Vorbis) continue;
+            settings.loadType = loadType;
+            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            settings.quality = music ? 0.5f : 0.7f;
+            importer.defaultSampleSettings = settings;
+            importer.SaveAndReimport();
+        }
+
+        AudioConfig config = LoadOrCreate<AudioConfig>(AudioConfigPath);
+        config.step = Clips("footstep02", "footstep03", "footstep06", "footstep08"); // low thuds; chip-lay was too thin
+        config.wood = Clips("bookPlace1", "bookPlace2", "bookPlace3");
+        config.dice = Clips("die-throw-1", "die-throw-2", "die-throw-3", "die-throw-4");
+        config.coin = Clips("handleCoins", "handleCoins2");
+        config.lucky = Clips("glass_004");
+        config.pot = Clips("metalPot1", "metalPot2");
+        config.catReset = Clips("scratch_001");
+        config.mirror = Clips("glass_001");
+        config.beadPickup = Clips("pluck_001", "pluck_002");
+        config.beadBreak = Clips("glass_002");
+        config.death = Clips("error_008");
+        config.fall = Clips("drop_002");
+        config.blocked = Clips("tick_002");
+        config.win = Clips("confirmation_004");
+        config.undo = Clips("back_001");
+        config.click = Clips("click-a");
+        config.menuMusic = Load<AudioClip>(MusicFolder + "/cozy_puzzle_title.ogg");
+        config.gameMusic = Load<AudioClip>(MusicFolder + "/cozy_puzzle_in-game_3.ogg");
+        EditorUtility.SetDirty(config);
+        return config;
+    }
+
+    private static AudioClip[] Clips(params string[] names)
+    {
+        return names.Select(n => Load<AudioClip>(SfxFolder + "/" + n + ".ogg")).ToArray();
     }
 
     /// <summary>Every PNG in the UI sprite folder: single Sprite, bilinear, no mips, uncompressed, 9-slice border from UiSpriteBorders.</summary>
@@ -530,46 +648,6 @@ public static class BuildBoardScene
         T asset = AssetDatabase.LoadAssetAtPath<T>(path);
         if (asset == null) throw new FileNotFoundException(typeof(T).Name + " not found (imported?)", path);
         return asset;
-    }
-
-    private static void BuildRoom(Dictionary<string, Material> mats)
-    {
-        Transform room = new GameObject("Room").transform;
-        string kit = KenneyFolder + "/FurnitureKit/";
-
-        Transform table = ModelFit.Spawn(Model(kit + "table.fbx"), room, "Table", new Vector3(15f, TableHeight, 11f), false);
-        table.position = new Vector3(0f, FloorY, 0f);
-        foreach (Renderer r in table.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mats["Wood_Table"];
-
-        Spawn(room, kit + "rugRectangle.fbx", "Rug", new Vector3(28f, 0f, 18f), false, new Vector3(0f, FloorY + 0.01f, 0f), 0f);
-        Spawn(room, kit + "lampSquareTable.fbx", "Lamp", new Vector3(0f, LampHeight, 0f), true, LampBase, 0f);
-        Spawn(room, kit + "books.fbx", "Books", new Vector3(0f, 0.9f, 0f), true, new Vector3(6.0f, TableTop, 3.9f), 20f);
-        Spawn(room, kit + "plantSmall1.fbx", "Plant", new Vector3(0f, 1.6f, 0f), true, new Vector3(6.4f, TableTop, 0.6f), 0f);
-        Spawn(room, kit + "bookcaseOpen.fbx", "Bookcase", new Vector3(0f, 14f, 0f), true, new Vector3(10f, FloorY, 14.5f), 180f);
-        Spawn(room, kit + "loungeSofa.fbx", "Sofa", new Vector3(0f, 7f, 0f), true, new Vector3(-9f, FloorY, 13.5f), 180f);
-        Spawn(room, kit + "wallWindow.fbx", "Window", new Vector3(0f, 20f, 0f), true, new Vector3(0f, FloorY, 15.9f), 180f);
-
-        Quad(room, "Room Floor", new Vector3(0f, FloorY, 6f), Quaternion.Euler(90f, 0f, 0f), new Vector3(80f, 60f, 1f), mats["Room_Floor"]);
-        Quad(room, "Back Wall", new Vector3(0f, FloorY + 20f, 16f), Quaternion.identity, new Vector3(80f, 40f, 1f), mats["Room_Wall"]);
-    }
-
-    private static void Spawn(Transform parent, string path, string name, Vector3 size, bool uniform, Vector3 position, float yaw)
-    {
-        Transform t = ModelFit.Spawn(Model(path), parent, name, size, uniform);
-        t.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
-    }
-
-    private static void Quad(Transform parent, string name, Vector3 position, Quaternion rotation, Vector3 scale, Material material)
-    {
-        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        quad.name = name;
-        UnityEngine.Object.DestroyImmediate(quad.GetComponent<Collider>());
-        quad.transform.SetParent(parent, false);
-        quad.transform.SetPositionAndRotation(position, rotation);
-        quad.transform.localScale = scale;
-        var r = quad.GetComponent<MeshRenderer>();
-        r.sharedMaterial = material;
-        r.shadowCastingMode = ShadowCastingMode.Off;
     }
 
     private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
@@ -624,4 +702,7 @@ public static class BuildBoardScene
     }
 
     private static Color C(float r, float g, float b) => new Color(r, g, b);
+
+    /// <summary>HDR colour from LINEAR values; Material.SetColor linearises colours in a Linear project, so they go in as gamma.</summary>
+    private static Color Hdr(float r, float g, float b) => new Color(r, g, b).gamma;
 }

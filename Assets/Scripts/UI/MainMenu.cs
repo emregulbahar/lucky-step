@@ -6,7 +6,7 @@ namespace LuckyStep
 {
     /// <summary>
     /// Main menu (Story 006): game title over the dimmed board, then a cream card with Play (continue), Level select,
-    /// the EN/TR language toggle and Quit (hidden on WebGL, where a page cannot quit).
+    /// Settings (music and effects volume), the EN/TR language toggle and Quit (hidden on WebGL, where a page cannot quit).
     /// </summary>
     /// <example><code>var menu = new MainMenu(ui); menu.PlayClicked += Continue; menu.Show();</code></example>
     public sealed class MainMenu : UiScreen
@@ -14,6 +14,7 @@ namespace LuckyStep
         private readonly Text _title;
         private readonly Text _play;
         private readonly Text _levelSelect;
+        private readonly Text _settings;
         private readonly Text _language;
         private readonly Text _quit;
         private readonly Button _playButton;
@@ -24,6 +25,9 @@ namespace LuckyStep
         /// <summary>Level select pressed.</summary>
         public event Action LevelSelectClicked;
 
+        /// <summary>Settings pressed.</summary>
+        public event Action SettingsClicked;
+
         /// <summary>Builds the menu (hidden).</summary>
         public MainMenu(UiRoot ui) : base(ui, "MainMenu", ui.Style.dimColor)
         {
@@ -31,12 +35,15 @@ namespace LuckyStep
             RectTransform column = ui.CreateStack("Column", Root, s.menuWidth, false, 0, s.spacing * 2);
             _title = ui.CreateText("Title", column, true, s.titleSize, s.gold, TextAnchor.MiddleCenter);
             ui.AddOutline(_title);
+            ui.AddHardShadow(_title);
             RectTransform card = ui.CreateStack("Card", column, 0f, true, s.cardPadding, s.spacing);
 
             _playButton = ui.CreateButton("Play", card, true, s.buttonSize, out _play);
             _playButton.onClick.AddListener(() => PlayClicked?.Invoke());
             ui.CreateButton("LevelSelect", card, false, s.buttonSize, out _levelSelect)
                 .onClick.AddListener(() => LevelSelectClicked?.Invoke());
+            ui.CreateButton("Settings", card, false, s.buttonSize, out _settings)
+                .onClick.AddListener(() => SettingsClicked?.Invoke());
             ui.CreateButton("Language", card, false, s.buttonSize, out _language).onClick.AddListener(ToggleLanguage);
             Button quit = ui.CreateButton("Quit", card, false, s.buttonSize, out _quit);
             quit.onClick.AddListener(Application.Quit);
@@ -52,6 +59,7 @@ namespace LuckyStep
             _title.text = Localization.Get("game.title");
             _play.text = Localization.Get("menu.play");
             _levelSelect.text = Localization.Get("menu.level_select");
+            _settings.text = Localization.Get("menu.settings");
             string current = Localization.Current == Language.Turkish ? "lang.turkish" : "lang.english";
             _language.text = Localization.Format("menu.language", Localization.Get(current));
             _quit.text = Localization.Get("menu.quit");

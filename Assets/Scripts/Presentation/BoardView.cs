@@ -22,6 +22,9 @@ namespace LuckyStep
     public sealed class BoardView : MonoBehaviour
     {
         private const float PlateBottom = -0.30f;
+        // tile_floor model (tools/blender/make_models.py): a card slab 0.96 x 0.96, 0.04 thick, top at y = 0.
+        private const float SpaceFootprint = 0.96f;
+        private const float SlabThickness = 0.04f;
 
         private enum FigureFx
         {
@@ -37,6 +40,7 @@ namespace LuckyStep
         private readonly List<PotView> _pots = new List<PotView>();
         private readonly List<DieView> _dice = new List<DieView>();
         private readonly List<PortalView> _portals = new List<PortalView>();
+        private readonly List<BeadView> _beads = new List<BeadView>();
         private readonly List<Mesh> _spaceMeshes = new List<Mesh>();
         private Level _builtLevel;
         private GameState _shown;
@@ -60,6 +64,7 @@ namespace LuckyStep
         private Transform _catBody;
         private ParticleSystem _catPuff;
         private ParticleSystem _potDust;
+        private ParticleSystem _beadPuff;
         private float _catResetT = 1f;
         private Vector3[] _trackSpaces = new Vector3[0];
         private int _trackStart;
@@ -211,6 +216,7 @@ namespace LuckyStep
             _pots.Clear();
             _dice.Clear();
             _portals.Clear();
+            _beads.Clear();
             _builtLevel = level;
             _shown = null;
             _root = new GameObject("Board").transform;
@@ -226,6 +232,7 @@ namespace LuckyStep
 
             BuildFigure(level);
             _potDust = _pots.Count > 0 ? BuildCatPuff("Pot Dust") : null;
+            _beadPuff = _beads.Count > 0 ? BuildCatPuff("Bead Puff") : null;
 
             _cat = null;
             _catBody = null;
@@ -244,7 +251,10 @@ namespace LuckyStep
                 _catPuff = BuildCatPuff("Cat Puff");
             }
 
+            // Flowerpot ropes run up out of view; leave them out of the framing bounds (inactive renderers are skipped).
+            foreach (PotView pot in _pots) pot.Rope.gameObject.SetActive(false);
             BoardBounds = ModelFit.WorldBounds(_root.gameObject);
+            foreach (PotView pot in _pots) pot.Rope.gameObject.SetActive(true);
             Built?.Invoke();
         }
 
@@ -257,9 +267,12 @@ namespace LuckyStep
             float south = -d * 0.5f - strip; // the plate grows towards the camera to carry the score track
             float depth = north - south;
             float centreZ = (north + south) * 0.5f;
-            Transform plate = Place(_theme.floorTile, "Plate", new Vector3(0f, -0.12f, centreZ));
-            plate.localScale = new Vector3(w, 1.5f, depth); // tile is 0.12 thick: plate spans PlateBottom..-0.12
+            // The plate is the slab model stretched to span PlateBottom..-SlabThickness, so the spaces sit on its top.
+            const float plateTop = -SlabThickness;
+            Transform plate = Place(_theme.floorTile, "Plate", new Vector3(0f, plateTop, centreZ));
+            plate.localScale = new Vector3(w / SpaceFootprint, (plateTop - PlateBottom) / SlabThickness, depth / SpaceFootprint);
             SetMaterial(plate, _theme.boardPlate);
+            SetShadows(plate, ShadowCastingMode.Off);
 
             float rw = _theme.rimWidth;
             float h = _theme.rimHeight - PlateBottom;
@@ -282,6 +295,14 @@ namespace LuckyStep
             return Mathf.Max(rules.StartValue, cap);
         }
 
+        /// <summary>Printed face of track count <paramref name="n"/>: deadly, else START on the first space, else lucky, else plain.</summary>
+        public static TrackAtlas.Face TrackFace(RuleSet rules, int n, int trackStart)
+        {
+            if (rules.IsDeadly(n)) return TrackAtlas.Face.Deadly;
+            if (n == trackStart) return TrackAtlas.Face.Start;
+            return rules.IsLucky(n) ? TrackAtlas.Face.Lucky : TrackAtlas.Face.Plain;
+        }
+
         private void BuildTrack(RuleSet rules, float boardWidth, float z)
         {
             _trackStart = Mathf.Clamp(rules.StartValue, 0, TrackAtlas.MaxNumber);
@@ -289,7 +310,7 @@ namespace LuckyStep
             int count = _trackEnd - _trackStart + 1;
             float pitch = Mathf.Min(_theme.trackSpacing, (boardWidth - 0.2f) / count);
             float size = Mathf.Min(_theme.trackSpaceSize, pitch * 0.86f);
-            const float blockTop = -0.06f; // block = tile scaled to half thickness on the plate top (-0.12)
+            const float blockTop = 0f; // block = one space slab standing on the plate top (-SlabThickness)
             _trackSpaces = new Vector3[count];
             var track = new GameObject("Score Track").transform;
             track.SetParent(_root, false);
@@ -301,15 +322,16 @@ namespace LuckyStep
                 var p = new Vector3((i - (count - 1) * 0.5f) * pitch, blockTop, z);
                 _trackSpaces[i] = p;
 
+                // The ink block shows as a thin printed border around the slightly smaller face.
                 Transform block = Place(_theme.floorTile, "Space " + n, p, track);
-                block.localScale = new Vector3(size / 0.96f, 0.5f, size / 0.96f);
+                block.localScale = new Vector3(size / SpaceFootprint, 1f, size / SpaceFootprint);
                 SetMaterial(block, _theme.trackBlock);
                 SetShadows(block, ShadowCastingMode.Off);
 
                 var face = new GameObject("Face " + n, typeof(MeshFilter), typeof(MeshRenderer));
                 face.transform.SetParent(track, false);
                 face.transform.localPosition = p + Vector3.up * 0.002f;
-                face.GetComponent<MeshFilter>().sharedMesh = SpaceQuad(size * 0.94f, TrackAtlas.CellUV(n, deadly));
+                face.GetComponent<MeshFilter>().sharedMesh = SpaceQuad(size * 0.9f, TrackAtlas.CellUV(n, TrackFace(rules, n, _trackStart)));
                 var renderer = face.GetComponent<MeshRenderer>();
                 renderer.sharedMaterial = deadly ? _theme.trackDeadly : lucky ? _theme.trackLucky : _theme.trackSpace;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -386,8 +408,9 @@ namespace LuckyStep
                     break;
                 case Tile.Flowerpot:
                     Transform pot = ModelFit.Spawn(_theme.flowerpot, baseTile, "Pot", new Vector3(0f, _theme.flowerpotHeight, 0f), true);
+                    SwapMaterial(pot, _theme.flowerpotBody, _theme.flowerpotGlaze);
                     pot.localPosition = new Vector3(0f, _theme.flowerpotHover, 0f);
-                    _pots.Add(new PotView(x, y, pot));
+                    _pots.Add(new PotView(x, y, pot, BuildPotRope(baseTile, pot)));
                     break;
                 case Tile.Mirror:
                     Place(_theme.mirror, "Mirror", Vector3.zero, baseTile).localRotation =
@@ -396,19 +419,29 @@ namespace LuckyStep
                 case Tile.Bridge:
                     BuildBridge(level, x, y, baseTile);
                     break;
+                case Tile.Wood:
+                    Place(_theme.woodPlanks, "Planks", Vector3.zero, baseTile);
+                    break;
+                case Tile.Bead:
+                    Transform beadPivot = new GameObject("Bead Pivot").transform;
+                    beadPivot.SetParent(baseTile, false);
+                    Place(_theme.bead, "Bead", Vector3.zero, beadPivot);
+                    _beads.Add(new BeadView(level.BeadIndex(x, y), beadPivot, (x * 0.37f + y * 0.61f) % 1f));
+                    break;
             }
         }
 
         /// <summary>
-        /// Plain floor alternates cream with bright colours (cycling by position); walls sit on wood; tiles that carry
-        /// an object stay cream so the object reads clearly.
+        /// Hazard spaces (spike, dice, flowerpot) are crimson hazardTile; every other non-wall space follows the
+        /// checkerboard of floorColors ((x + y) % length); walls sit on wood.
         /// </summary>
         private Material FloorMaterial(Tile tile, int x, int y)
         {
             if (tile == Tile.Wall) return _theme.wallTile;
+            if ((tile == Tile.Spike || tile == Tile.Dice || tile == Tile.Flowerpot) && _theme.hazardTile != null) return _theme.hazardTile;
             Material[] colours = _theme.floorColors;
-            if (tile != Tile.Floor || (x + y) % 2 == 0 || colours == null || colours.Length == 0) return _theme.floorLight;
-            return colours[(x + 3 * y) % colours.Length];
+            if (colours == null || colours.Length == 0) return _theme.floorLight;
+            return colours[(x + y) % colours.Length];
         }
 
         private void BuildPortal(int x, int y, Transform baseTile)
@@ -471,7 +504,7 @@ namespace LuckyStep
             deck.localPosition = new Vector3(half, _theme.bridgeYOffset, 0f);
 
             Transform coin = Place(_theme.coin, "Coin", new Vector3(0f, _theme.coinHeight, 0f), baseTile);
-            _bridges.Add(new BridgeView(level.BridgeIndex(x, y), hinge, coin, _theme));
+            _bridges.Add(new BridgeView(level.BridgeIndex(x, y), hinge, coin, baseTile, _theme));
         }
 
         private void BuildCatRoute(Level level)
@@ -557,6 +590,19 @@ namespace LuckyStep
             _figureFx = FigureFx.None;
             _figureFxT = _bumpT = 1f;
 
+            // Base disc: a flat cylinder under the feet (child of the figure, so it follows every move, tilt and fall).
+            if (_theme.figureBase != null)
+            {
+                GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                disc.name = "Base";
+                Destroy(disc.GetComponent<Collider>());
+                disc.GetComponent<Renderer>().sharedMaterial = _theme.figureBase;
+                float fit = Mathf.Max(0.0001f, figure.lossyScale.x);
+                disc.transform.SetParent(figure, false);
+                disc.transform.localScale = new Vector3(_theme.figureBaseDiameter / fit, _theme.figureBaseHeight * 0.5f / fit, _theme.figureBaseDiameter / fit);
+                disc.transform.localPosition = new Vector3(0f, _theme.figureBaseHeight * 0.5f / fit, 0f);
+            }
+
             _figureAnimation = figure.GetComponentInChildren<Animation>();
             _idleClip = FindClip(_figureAnimation, _theme.characterIdleClip);
             _walkClip = FindClip(_figureAnimation, _theme.characterWalkClip);
@@ -631,6 +677,27 @@ namespace LuckyStep
                 }
             }
 
+            // Evil-eye beads: a bead taken on this forward step flies up; undo and restart put taken/untaken at once.
+            int pickedNow = 0;
+            foreach (BeadView bead in _beads)
+            {
+                ulong beadBit = 1UL << bead.Index;
+                bool taken = (state.TakenBeads & beadBit) != 0;
+                bool takenBefore = previous != null && (previous.TakenBeads & beadBit) != 0;
+                if (isForwardStep && taken && !takenBefore)
+                {
+                    bead.Pick();
+                    pickedNow++;
+                }
+                else bead.SetTaken(taken);
+            }
+            // A bead broke on this step (it warded off a death): a puff where the figure stands.
+            if (isForwardStep && _beadPuff != null && state.Beads < previous.Beads + pickedNow)
+            {
+                _beadPuff.transform.position = _root.TransformPoint(CellPosition(state.X, state.Y) + Vector3.up * _theme.beadWardPuffHeight);
+                _beadPuff.Emit(Mathf.Max(1, _theme.catPuffCount));
+            }
+
             // The exit lets the pawn through only on a lucky step: show whether the next step would be one.
             int nextCount = state.CountingDown ? state.Counter - 1 : state.Counter + 1;
             bool exitOpen = state.IsWon
@@ -659,18 +726,18 @@ namespace LuckyStep
                     if (die.X == previous.X + dx && die.Y == previous.Y + dy) die.Roll(lucky);
                 }
 
-                if (landing == Tile.Bridge)
+                // A lucky step opens every closed bridge at once: each one tosses its coin and lowers together.
+                // Landing on a closed bridge also tosses its coin (on a normal step the toss fails and it stays up).
+                ulong opened = state.OpenBridges & ~previous.OpenBridges;
+                int landedIndex = landing == Tile.Bridge ? level.BridgeIndex(state.X, state.Y) : -1;
+                foreach (BridgeView bridge in _bridges)
                 {
-                    int index = level.BridgeIndex(state.X, state.Y);
-                    if ((previous.OpenBridges & (1UL << index)) == 0)
-                    {
-                        foreach (BridgeView bridge in _bridges)
-                        {
-                            if (bridge.Index == index) bridge.Toss();
-                        }
-                    }
+                    ulong bit = 1UL << bridge.Index;
+                    bool landedClosed = bridge.Index == landedIndex && (previous.OpenBridges & bit) == 0;
+                    if ((opened & bit) != 0 || landedClosed) bridge.Toss();
                 }
-                else if (landing == Tile.Flowerpot)
+
+                if (landing == Tile.Flowerpot)
                 {
                     foreach (PotView pot in _pots)
                     {
@@ -746,6 +813,7 @@ namespace LuckyStep
             foreach (BridgeView bridge in _bridges) bridge.Tick(dt, lowerSpeed, _theme.bridgeClosedAngle, spin);
 
             foreach (DieView die in _dice) die.Tick(dt, _theme);
+            foreach (BeadView bead in _beads) bead.Tick(dt, _theme, Time.time);
 
             for (int i = 0; i < _pots.Count; i++)
             {
@@ -787,6 +855,24 @@ namespace LuckyStep
         {
             if (material == null) return;
             foreach (Renderer r in t.GetComponentsInChildren<Renderer>()) r.sharedMaterial = material;
+        }
+
+        /// <summary>Replaces one material with another on every renderer under t, leaving the other slots alone.</summary>
+        private static void SwapMaterial(Transform t, Material from, Material to)
+        {
+            if (from == null || to == null) return;
+            foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] materials = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] != from) continue;
+                    materials[i] = to;
+                    changed = true;
+                }
+                if (changed) r.sharedMaterials = materials;
+            }
         }
 
         private static void SetShadows(Transform t, ShadowCastingMode mode)
@@ -896,24 +982,72 @@ namespace LuckyStep
             }
         }
 
-        /// <summary>Flowerpot hovering over its tile; falls onto the pawn (death) or beside it and shatters (lucky).</summary>
+        /// <summary>
+        /// Hangs a flowerpot on a rope so its hover reads as hanging: three short strings from the pot rim to a knot
+        /// above the plant (children of the pot, they fall with it) and one long rope from the knot up out of view.
+        /// Returns the rope's pivot at its top end; PotView swings it as a pendulum and the pot hangs from its end.
+        /// </summary>
+        private Transform BuildPotRope(Transform tile, Transform pot)
+        {
+            float h = _theme.flowerpotHeight;
+            float scale = pot.localScale.x; // ModelFit scales the holder uniformly
+            Vector3 knot = new Vector3(0f, h * _theme.potKnotHeight, 0f);
+            for (int i = 0; i < 3; i++)
+            {
+                float a = (30f + 120f * i) * Mathf.Deg2Rad;
+                Vector3 rim = new Vector3(Mathf.Cos(a) * h * _theme.potRimRadius, h * _theme.potRimHeight, Mathf.Sin(a) * h * _theme.potRimRadius);
+                Transform str = RopeSegment(pot, "String " + i, rim, knot);
+                str.localPosition /= scale;
+                str.localScale /= scale;
+            }
+
+            var pivot = new GameObject("Pot Rope").transform;
+            pivot.SetParent(tile, false);
+            pivot.localPosition = new Vector3(0f, _theme.flowerpotHover + knot.y + _theme.ropeLength, 0f);
+            RopeSegment(pivot, "Rope", Vector3.zero, Vector3.down * _theme.ropeLength);
+            return pivot;
+        }
+
+        /// <summary>Thin cylinder from <paramref name="from"/> to <paramref name="to"/> in <paramref name="parent"/>'s (unscaled) space.</summary>
+        private Transform RopeSegment(Transform parent, string name, Vector3 from, Vector3 to)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Destroy(go.GetComponent<Collider>());
+            go.name = name;
+            go.GetComponent<Renderer>().sharedMaterial = _theme.ropeMaterial;
+            go.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            Transform t = go.transform;
+            t.SetParent(parent, false);
+            Vector3 d = to - from;
+            t.localPosition = (from + to) * 0.5f;
+            t.localRotation = Quaternion.FromToRotation(Vector3.up, d.normalized);
+            t.localScale = new Vector3(_theme.ropeThickness, d.magnitude * 0.5f, _theme.ropeThickness); // the primitive is 2 tall
+            return t;
+        }
+
+        /// <summary>Flowerpot hanging on a rope over its tile; falls onto the pawn (death) or beside it and shatters (lucky).</summary>
         private sealed class PotView
         {
             private readonly Transform _pot;
+            private readonly Transform _rope;
             private bool _fallen;
             private bool _hit;
             private float _fall = 1f;
 
-            public PotView(int x, int y, Transform pot)
+            public PotView(int x, int y, Transform pot, Transform rope)
             {
                 X = x;
                 Y = y;
                 _pot = pot;
+                _rope = rope;
             }
 
             public int X { get; }
             public int Y { get; }
             public Vector3 Position => _pot.position;
+
+            /// <summary>The rope's pivot at its top end (the long rope only; the hanger strings belong to the pot).</summary>
+            public Transform Rope => _rope;
 
             /// <summary>True when the current or last fall lands on the pawn (a death), false when it misses.</summary>
             public bool Hit => _hit;
@@ -934,6 +1068,8 @@ namespace LuckyStep
                 _fall = 1f;
                 _pot.gameObject.SetActive(true);
                 _pot.localPosition = new Vector3(0f, theme.flowerpotHover, 0f);
+                _pot.localRotation = Quaternion.identity;
+                _rope.localRotation = Quaternion.identity;
             }
 
             /// <summary>Sways while hovering or advances the fall. Returns true on the frame the pot hits the ground or the pawn.</summary>
@@ -943,7 +1079,12 @@ namespace LuckyStep
                 {
                     float t = Time.time * theme.flowerpotSwaySpeed;
                     float a = theme.flowerpotSwayDegrees;
-                    _pot.localRotation = Quaternion.Euler(Mathf.Sin(t + index) * a, 0f, Mathf.Cos(t * 0.8f + index) * a * 0.5f);
+                    // Pendulum: the rope swings around its top end and the pot hangs from its bottom end.
+                    Quaternion swing = Quaternion.Euler(Mathf.Sin(t + index) * a, 0f, Mathf.Cos(t * 0.8f + index) * a * 0.5f);
+                    float hang = _rope.localPosition.y - theme.flowerpotHover;
+                    _rope.localRotation = swing;
+                    _pot.localPosition = _rope.localPosition + swing * (Vector3.down * hang);
+                    _pot.localRotation = swing;
                     return false;
                 }
                 if (_fall >= 1f) return false;
@@ -1037,21 +1178,82 @@ namespace LuckyStep
             }
         }
 
+        /// <summary>Evil-eye bead waiting on its space: hovers, bobs and sways; flies up and shrinks away when picked up.</summary>
+        private sealed class BeadView
+        {
+            private readonly Transform _pivot;
+            private readonly float _phase;
+            private float _pickT = 1f;
+            private bool _taken;
+
+            public BeadView(int index, Transform pivot, float phase)
+            {
+                Index = index;
+                _pivot = pivot;
+                _phase = phase;
+            }
+
+            /// <summary>The bead's bit in GameState.TakenBeads.</summary>
+            public int Index { get; }
+
+            /// <summary>Shows the bead waiting (false) or gone (true) at once.</summary>
+            public void SetTaken(bool taken)
+            {
+                _taken = taken;
+                _pickT = 1f;
+                if (_pivot.gameObject.activeSelf == taken) _pivot.gameObject.SetActive(!taken);
+            }
+
+            /// <summary>Starts the pick-up animation; the bead hides when it ends.</summary>
+            public void Pick()
+            {
+                _taken = true;
+                _pickT = 0f;
+                if (!_pivot.gameObject.activeSelf) _pivot.gameObject.SetActive(true);
+            }
+
+            /// <summary>Hover, bob and sway while waiting; rise and shrink during a pick-up (hidden when it ends).</summary>
+            public void Tick(float dt, BoardTheme theme, float time)
+            {
+                if (!_pivot.gameObject.activeSelf) return;
+                float y = theme.beadHover + theme.beadBob * Mathf.Sin((time * theme.beadBobSpeed + _phase) * 2f * Mathf.PI);
+                float scale = 1f;
+                if (_taken)
+                {
+                    _pickT = Mathf.Min(1f, _pickT + dt / Mathf.Max(0.01f, theme.beadPickupSeconds));
+                    if (_pickT >= 1f)
+                    {
+                        _pivot.gameObject.SetActive(false);
+                        return;
+                    }
+                    y += theme.beadPickupRise * _pickT;
+                    scale = 1f - _pickT * _pickT;
+                }
+                _pivot.localPosition = new Vector3(0f, y, 0f);
+                _pivot.localRotation = Quaternion.Euler(0f, theme.beadSwayDegrees * Mathf.Sin(time * theme.beadSwaySpeed + _phase * 6.28f), 0f);
+                _pivot.localScale = new Vector3(scale, scale, scale);
+            }
+        }
+
         /// <summary>Drawbridge-style coin bridge: raised while closed, lowered once opened (after the coin toss).</summary>
         private sealed class BridgeView
         {
             private readonly Transform _hinge;
             private readonly Transform _coin;
+            private readonly Transform _edge;
             private readonly BoardTheme _theme;
             private float _toss = 1f;
+            private bool _edgeHazard;
 
-            public BridgeView(int index, Transform hinge, Transform coin, BoardTheme theme)
+            public BridgeView(int index, Transform hinge, Transform coin, Transform edge, BoardTheme theme)
             {
                 Index = index;
                 _hinge = hinge;
                 _coin = coin;
+                _edge = edge;
                 _theme = theme;
                 Angle = theme.bridgeClosedAngle;
+                SetEdge(true);
             }
 
             public int Index { get; }
@@ -1064,11 +1266,21 @@ namespace LuckyStep
             /// <summary>Ends a toss at once, coin at rest.</summary>
             public void CancelToss() => _toss = 1f;
 
+            // The hole's rim is crimson while the bridge is closed or its coin is in the air, cream once it lowers.
+            private void SetEdge(bool hazard)
+            {
+                if (hazard == _edgeHazard) return;
+                _edgeHazard = hazard;
+                if (hazard) SwapMaterial(_edge, _theme.floorLight, _theme.hazardTile);
+                else SwapMaterial(_edge, _theme.hazardTile, _theme.floorLight);
+            }
+
             public void Tick(float dt, float speed, float closedAngle, float spinDegrees)
             {
                 if (_toss < 1f) _toss = Mathf.Min(1f, _toss + dt / Mathf.Max(0.01f, _theme.coinTossSeconds));
                 bool tossing = _toss < 1f;
                 Angle = Mathf.MoveTowards(Angle, Open && !tossing ? 0f : closedAngle, speed * dt);
+                SetEdge(!Open || tossing);
                 _hinge.localRotation = Quaternion.Euler(0f, 0f, Angle);
                 bool coinVisible = !Open || tossing;
                 if (_coin.gameObject.activeSelf != coinVisible) _coin.gameObject.SetActive(coinVisible);
