@@ -1,7 +1,7 @@
 # Story 009: World 5 "The Old Bazaar": wooden tile and evil-eye bead
 
 > **Epic**: Lucky Step
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: L
@@ -91,3 +91,12 @@
 
 - Depends on: `production/epics/lucky-step/story-002-chance-objects.md`, `production/epics/lucky-step/story-003-cat-and-mirror.md`, `production/epics/lucky-step/story-006-levels-and-menus.md`
 - Unlocks: none
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-10
+**Criteria**: 10/10 passing
+**Deviations**: Advisory: the spec says levels 29 and 30 combine wood and bead with earlier objects; level 30 has no wooden tile (two beads, mirror, bridge, flowerpot, cat). Level 26 has 3 shortest solutions (the others are unique).
+**Test Evidence**: `Assets/Tests/EditMode/Editor/WoodAndBeadTests.cs` (13 tests; waived at qa.level minimal); screenshots `production/qa/evidence/story-009-world5/` 01-19
+**Reviewed by**: self, no independent review (`/code-review` of 2026-11-10: APPROVED WITH SUGGESTIONS, suggestions applied)
