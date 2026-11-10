@@ -1,12 +1,12 @@
 # Story 006: 16 levels in 4 worlds, menu, level select, golden pawn, EN/TR
 
 > **Epic**: Lucky Step
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-09
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -89,3 +89,12 @@
 
 - Depends on: `production/epics/lucky-step/story-002-chance-objects.md`, `production/epics/lucky-step/story-003-cat-and-mirror.md`, `production/epics/lucky-step/story-004-bfs-solver.md`
 - Unlocks: `production/epics/lucky-step/story-007-itch-release.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-10
+**Criteria**: 8/9 passing (deferred: level 1 "aha" moment within ~10 seconds, needs a playtest)
+**Deviations**: Advisory: the criterion says 16 levels in 4 worlds; 24 levels in 4 worlds were delivered (World 5, levels 25-30, is Story 009). The `## Files` list predates levels 17-24, the audio settings and the table look.
+**Test Evidence**: `production/qa/evidence/story-006-levels-and-menus/` (32 screenshots); ProgressTests and LocalizationTests present
+**Reviewed by**: self, no independent review (`/code-review` of 2026-11-10: APPROVED WITH SUGGESTIONS)
