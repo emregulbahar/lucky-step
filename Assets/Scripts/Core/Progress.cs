@@ -89,6 +89,12 @@ namespace LuckyStep
         }
 
         /// <summary>
+        /// Developer/review switch (QA arg <c>--unlock-all</c>): every catalog level counts as unlocked without being
+        /// marked completed. Not saved.
+        /// </summary>
+        public bool UnlockAll { get; set; }
+
+        /// <summary>
         /// True if the level can be played: the first id in <paramref name="orderedLevelIds"/> always is, any other when
         /// the id before it is completed. Ids not in the list are locked.
         /// </summary>
@@ -96,7 +102,7 @@ namespace LuckyStep
         {
             for (int i = 0; i < orderedLevelIds.Count; i++)
             {
-                if (orderedLevelIds[i] == levelId) return i == 0 || _completed.Contains(orderedLevelIds[i - 1]);
+                if (orderedLevelIds[i] == levelId) return UnlockAll || i == 0 || _completed.Contains(orderedLevelIds[i - 1]);
             }
             return false;
         }

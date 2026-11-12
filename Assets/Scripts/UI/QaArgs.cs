@@ -44,7 +44,8 @@ namespace LuckyStep
         public static bool Has(string name) => Array.IndexOf(Environment.GetCommandLineArgs(), name) >= 0;
 
         /// <summary>True for any QA capture or replay run; such runs keep progress in memory and never touch the save.</summary>
-        public static bool IsQaRun => Has("--ui") || Has("--moves") || Has("--progress-demo") || Has("--screenshot");
+        public static bool IsQaRun => Has("--ui") || Has("--moves") || Has("--progress-demo") || Has("--screenshot")
+            || Has("--unlock-all");
     }
 
     /// <summary>Progress store that lives only in memory (QA runs: <c>--progress-demo</c> must not write PlayerPrefs).</summary>

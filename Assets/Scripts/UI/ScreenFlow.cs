@@ -91,6 +91,7 @@ namespace LuckyStep
             if (lang == "tr") Localization.SetLanguage(Language.Turkish);
             else if (lang == "en") Localization.SetLanguage(Language.English);
             if (QaArgs.Has("--progress-demo")) ApplyProgressDemo();
+            if (QaArgs.Has("--unlock-all")) _progress.UnlockAll = true; // review build: every level open, nothing saved
 
             TextAsset level = FindLevel(QaArgs.Value("--level"));
             string ui = QaArgs.Value("--ui");
