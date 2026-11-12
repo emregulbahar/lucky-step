@@ -248,6 +248,7 @@ namespace LuckyStep
             int world = _catalog.WorldIndexOf(level);
             int index = world >= 0 ? Array.IndexOf(_catalog.Worlds[world].levels, level) : -1;
             _hud.SetLevel(world + 1, index + 1, level != null ? _catalog.Par(level.name) : -1);
+            _hud.SetHint(level != null ? level.name : null);
             _hud.SetMoves(_controller.Moves);
             _hud.SetBeads(BeadsForHud());
         }

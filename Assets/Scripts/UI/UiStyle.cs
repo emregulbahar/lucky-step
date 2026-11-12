@@ -53,6 +53,8 @@ namespace LuckyStep
         public float menuWidth = 640f;
         /// <summary>Settings card width, and the widths of a row's name and value columns.</summary>
         public float settingsWidth = 720f;
+        /// <summary>Width of the HUD tutorial hint card (top centre, between the level card and the key legend).</summary>
+        public float hintWidth = 1060f;
         public float settingsLabelWidth = 220f;
         public float settingsValueWidth = 120f;
         public float selectWidth = 1440f;

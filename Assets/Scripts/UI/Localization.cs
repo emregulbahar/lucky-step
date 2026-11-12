@@ -115,6 +115,13 @@ namespace LuckyStep
             }
         }
 
+        /// <summary>True if the current language's table has <paramref name="key"/> (optional texts such as level hints).</summary>
+        public static bool Has(string key)
+        {
+            EnsureLoaded();
+            return _table.Contains(key);
+        }
+
         /// <summary>The string for <paramref name="key"/> in the current language, or "#key#" when missing.</summary>
         public static string Get(string key)
         {

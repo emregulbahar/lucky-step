@@ -16,6 +16,9 @@ namespace LuckyStep
         private readonly Text _steps;
         private readonly Text _par;
         private readonly Text _beads;
+        private readonly RectTransform _hintCard;
+        private readonly Text _hint;
+        private string _hintKey;
         private readonly Text _keyMove;
         private readonly Text _keyUndo;
         private readonly Text _keyRestart;
@@ -38,6 +41,14 @@ namespace LuckyStep
             _steps = ui.CreateText("Steps", info, false, s.bodySize, s.textDark, TextAnchor.UpperLeft);
             _par = ui.CreateText("Par", info, false, s.bodySize, s.goldText, TextAnchor.UpperLeft);
             _beads = ui.CreateText("Beads", info, false, s.bodySize, s.beadText, TextAnchor.UpperLeft);
+
+            // Tutorial hint (design/quick-specs/tutorial-hints-addition-2026-11-10.md): top centre, between the level
+            // card and the key legend; shown only in levels whose strings have hint.<LevelId>.
+            _hintCard = ui.CreateStack("Hint", Root, s.hintWidth, true, s.hudPadding, s.hudSpacing);
+            _hintCard.GetComponent<Image>().color = s.hudPlateColor;
+            UiRoot.Pin(_hintCard, new Vector2(0.5f, 1f), new Vector2(0f, -s.screenMargin));
+            _hint = ui.CreateText("Text", _hintCard, false, s.captionSize, s.textDark, TextAnchor.MiddleCenter);
+            _hintCard.gameObject.SetActive(false);
 
             RectTransform keys = ui.CreateStack("Keys", Root, 0f, true, s.hudPadding / 2, s.keyRowSpacing);
             keys.GetComponent<Image>().color = s.hudPlateColor;
@@ -120,6 +131,20 @@ namespace LuckyStep
             if (_beadCount >= 0) _beads.text = Localization.Format("hud.beads", _beadCount);
         }
 
+        /// <summary>Shows the tutorial hint of <paramref name="levelId"/> (key hint.LevelId), or hides it when there is none.</summary>
+        public void SetHint(string levelId)
+        {
+            _hintKey = string.IsNullOrEmpty(levelId) ? null : "hint." + levelId;
+            RefreshHint();
+        }
+
+        private void RefreshHint()
+        {
+            bool show = _hintKey != null && Localization.Has(_hintKey);
+            _hintCard.gameObject.SetActive(show);
+            if (show) _hint.text = Localization.Get(_hintKey);
+        }
+
         /// <inheritdoc />
         public override void Refresh()
         {
@@ -129,6 +154,7 @@ namespace LuckyStep
             _par.gameObject.SetActive(_parValue >= 0); // no par line where par is hidden (World 1) or unknown
             _beads.gameObject.SetActive(_beadCount >= 0);
             if (_beadCount >= 0) _beads.text = Localization.Format("hud.beads", _beadCount);
+            RefreshHint();
             _keyMove.text = Localization.Get("hud.key_move");
             _keyUndo.text = Localization.Get("hud.key_undo");
             _keyRestart.text = Localization.Get("hud.key_restart");
