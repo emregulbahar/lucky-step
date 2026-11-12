@@ -5,7 +5,7 @@ namespace LuckyStep
 {
     /// <summary>
     /// The green felt card table the board lies on (Story 005, "Felt Table" look): a felt top, a wooden rail around
-    /// it and two props (a mug and a closed game box) beside the board. Rebuilt from <see cref="BoardView.BoardBounds"/>
+    /// it and props beside the board (a mug, a closed game box with its logo, two dice, a card fan, a rule booklet). Rebuilt from <see cref="BoardView.BoardBounds"/>
     /// after every board build, so it fits every level size. Pure decoration: nothing here takes part in the game.
     /// </summary>
     public sealed class TableView : MonoBehaviour
@@ -36,8 +36,9 @@ namespace LuckyStep
             Bounds b = _board.BoardBounds;
             float top = b.min.y; // the board's plate rests on the felt
             float hx = b.extents.x + _theme.tableMarginX;
-            float hz = b.extents.z + _theme.tableMarginZ;
-            Vector3 c = new Vector3(b.center.x, top, b.center.z);
+            // Look pass 2: the felt runs on past the far rail, so the top of the frame shows table, not the dark floor.
+            float hz = b.extents.z + _theme.tableMarginZ + _theme.tableMarginFar * 0.5f;
+            Vector3 c = new Vector3(b.center.x, top, b.center.z + _theme.tableMarginFar * 0.5f);
 
             const float feltThickness = 0.1f;
             Box("Felt", c + Vector3.down * (feltThickness * 0.5f), new Vector3(hx * 2f, feltThickness, hz * 2f), _theme.tableFelt, false);
@@ -50,6 +51,9 @@ namespace LuckyStep
             Box("Rail E", new Vector3(c.x + hx + rw * 0.5f, ry, c.z), new Vector3(rw, railH, hz * 2f), _theme.tableRail, true);
             Box("Rail W", new Vector3(c.x - hx - rw * 0.5f, ry, c.z), new Vector3(rw, railH, hz * 2f), _theme.tableRail, true);
 
+            // Wide, shallow boards leave the sides off-screen but room in front: the side props move to the near edge.
+            bool wide = _board.IsWide;
+            float front = b.min.z - _theme.propGap * 0.75f;
             if (_theme.tableMug != null)
             {
                 Transform mug = ModelFit.Spawn(_theme.tableMug, _root, "Mug", new Vector3(0f, _theme.mugHeight, 0f), true);
@@ -59,9 +63,38 @@ namespace LuckyStep
             if (_theme.tableBox != null)
             {
                 Transform box = ModelFit.Spawn(_theme.tableBox, _root, "Game Box", new Vector3(_theme.boxSize, 0f, _theme.boxSize), true);
-                box.position = new Vector3(b.max.x + _theme.propGap, top, b.center.z + b.extents.z * 0.1f);
+                box.position = wide
+                    ? new Vector3(b.max.x - b.extents.x * 0.3f, top, front)
+                    : new Vector3(b.max.x + _theme.propGap, top, b.center.z + b.extents.z * 0.1f);
                 box.rotation = Quaternion.Euler(0f, _theme.boxYaw, 0f);
             }
+            // Look pass 2: game-night clutter, kept off the board (props sit beside, in front of or beyond its bounds).
+            if (_theme.tableDie != null)
+            {
+                Vector3 a = wide ? new Vector3(b.min.x + b.extents.x * 0.25f, top, front + 0.2f)
+                                 : new Vector3(b.min.x - _theme.propGap * 1.05f, top, b.center.z - b.extents.z * 0.45f);
+                Vector3 c2 = wide ? new Vector3(b.min.x + b.extents.x * 0.4f, top, front - 0.15f)
+                                  : new Vector3(b.min.x - _theme.propGap * 0.55f, top, b.center.z - b.extents.z * 0.75f);
+                Prop(_theme.tableDie, "Die A", a, 23f, _theme.tableDieSize);
+                Prop(_theme.tableDie, "Die B", c2, -38f, _theme.tableDieSize);
+            }
+            if (_theme.tableCardFan != null)
+            {
+                Vector3 at = wide ? new Vector3(b.max.x - b.extents.x * 0.75f, top, front)
+                                  : new Vector3(b.max.x + _theme.propGap * 0.9f, top, b.center.z - b.extents.z * 0.7f);
+                Prop(_theme.tableCardFan, "Card Fan", at, 12f, _theme.cardFanSize);
+            }
+            if (_theme.tableBooklet != null)
+            {
+                Prop(_theme.tableBooklet, "Rule Booklet", new Vector3(b.center.x - b.extents.x * 0.3f, top, b.max.z + _theme.propGap * 0.75f), -8f, _theme.bookletSize);
+            }
+        }
+
+        private void Prop(GameObject model, string name, Vector3 position, float yaw, float footprint)
+        {
+            Transform prop = ModelFit.Spawn(model, _root, name, new Vector3(footprint, 0f, footprint), true);
+            prop.position = position;
+            prop.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         private void Box(string name, Vector3 centre, Vector3 size, Material material, bool castShadows)

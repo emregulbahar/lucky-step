@@ -35,6 +35,7 @@ namespace LuckyStep
 
         [SerializeField] private PlayerInputController _controller;
         [SerializeField] private BoardTheme _theme;
+        [SerializeField] private LevelCatalog _catalog;
 
         private readonly List<BridgeView> _bridges = new List<BridgeView>();
         private readonly List<PotView> _pots = new List<PotView>();
@@ -43,6 +44,7 @@ namespace LuckyStep
         private readonly List<BeadView> _beads = new List<BeadView>();
         private readonly List<Mesh> _spaceMeshes = new List<Mesh>();
         private Level _builtLevel;
+        private Material _worldTint;
         private GameState _shown;
         private Transform _root;
         private Mover _figure;
@@ -100,6 +102,15 @@ namespace LuckyStep
 
         /// <summary>World-space bounds of the built board (tiles, rim and pieces), for camera framing.</summary>
         public Bounds BoardBounds { get; private set; }
+
+        /// <summary>
+        /// True if the built level's grid is wide (BoardTheme.wideBoardAspect): the table props then lie in front of
+        /// the board instead of beside it.
+        /// </summary>
+        public bool IsWide { get; private set; }
+
+        /// <summary>What the camera frames: BoardBounds, widened by BoardTheme.framePropPad per side unless IsWide.</summary>
+        public Bounds FrameBounds { get; private set; }
 
         private void OnEnable()
         {
@@ -218,6 +229,7 @@ namespace LuckyStep
             _portals.Clear();
             _beads.Clear();
             _builtLevel = level;
+            _worldTint = WorldTint();
             _shown = null;
             _root = new GameObject("Board").transform;
             _root.SetParent(transform, false);
@@ -255,6 +267,10 @@ namespace LuckyStep
             foreach (PotView pot in _pots) pot.Rope.gameObject.SetActive(false);
             BoardBounds = ModelFit.WorldBounds(_root.gameObject);
             foreach (PotView pot in _pots) pot.Rope.gameObject.SetActive(true);
+            IsWide = level.Width >= level.Height * _theme.wideBoardAspect;
+            Bounds frame = BoardBounds;
+            if (!IsWide) frame.Expand(new Vector3(2f * _theme.framePropPad, 0f, 0f));
+            FrameBounds = frame;
             Built?.Invoke();
         }
 
@@ -439,9 +455,19 @@ namespace LuckyStep
         {
             if (tile == Tile.Wall) return _theme.wallTile;
             if ((tile == Tile.Spike || tile == Tile.Dice || tile == Tile.Flowerpot) && _theme.hazardTile != null) return _theme.hazardTile;
+            if (_worldTint != null) return (x + y) % 2 == 0 ? _theme.floorLight : _worldTint;
             Material[] colours = _theme.floorColors;
             if (colours == null || colours.Length == 0) return _theme.floorLight;
             return colours[(x + y) % colours.Length];
+        }
+
+        /// <summary>The theme's tint for the current level's world, or null (no catalog, unknown level, no tint).</summary>
+        private Material WorldTint()
+        {
+            Material[] tints = _theme.worldTints;
+            if (_catalog == null || tints == null || tints.Length == 0) return null;
+            int world = _catalog.WorldIndexOf(_controller.CurrentLevelFile);
+            return world >= 0 ? tints[world % tints.Length] : null;
         }
 
         private void BuildPortal(int x, int y, Transform baseTile)

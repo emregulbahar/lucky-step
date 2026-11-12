@@ -4,6 +4,7 @@ Writes into <repo>/Assets/Art/Generated/:
     PrintSpace.png   white paper face with a printed ink border, inset from the edge
     PrintHazard.png  the same plus a red hazard band across the top (image top = far side of the board)
     TableFelt.png    grey felt for the card table: a soft lamp pool (bright centre, darker edges) and a faint fixed grain
+    BoxLogo.png      printed "Lucky Step" logo for the game-box lid prop (look pass 2), full colour (material tint white)
 
 The paper is pure white so the Unity material's colour tints it to the two paper tones (#FFF6E0 / #EDE0C2).
 UV contract with tools/blender/make_models.py (INK_UV): the slab top maps 0..1 onto the whole image and the slab
@@ -16,6 +17,7 @@ Run: python -I tools/textures/make_print_textures.py [<output_dir>]
 import os
 import sys
 
+import math
 import random
 
 from PIL import Image, ImageDraw, ImageFilter
@@ -76,6 +78,37 @@ def draw_felt():
     return img
 
 
+LOGO_SIZE = 512
+CREAM = (0xFF, 0xF6, 0xE0)
+CARD_RED = (0xA3, 0x26, 0x2E)
+GOLD = (0xFF, 0xC2, 0x1A)
+FONT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                    "Assets", "Art", "UI", "Fonts", "Fredoka-Bold.ttf")
+
+
+def draw_logo():
+    """Box-lid logo: red field in a cream and ink frame, "LUCKY" / "STEP" in gold with an ink outline, a gold 7 star."""
+    from PIL import ImageFont
+    s = 2
+    n = LOGO_SIZE * s
+    img = Image.new("RGB", (n, n), CREAM)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((18 * s, 18 * s, n - 18 * s, n - 18 * s), radius=36 * s, fill=INK)
+    d.rounded_rectangle((30 * s, 30 * s, n - 30 * s, n - 30 * s), radius=28 * s, fill=CARD_RED)
+    d.rounded_rectangle((52 * s, 52 * s, n - 52 * s, n - 52 * s), radius=20 * s, outline=CREAM, width=8 * s)
+    font = ImageFont.truetype(FONT, 118 * s)
+    for text, cy in (("LUCKY", 0.36), ("STEP", 0.60)):
+        d.text((n / 2, n * cy), text, font=font, fill=GOLD, anchor="mm", stroke_width=9 * s, stroke_fill=INK)
+    cx, cy, r = n / 2, n * 0.80, 34 * s
+    star = []
+    for k in range(10):
+        a = math.pi / 2 + k * math.pi / 5
+        rr = r if k % 2 == 0 else r * 0.45
+        star.append((cx + rr * math.cos(a), cy - rr * math.sin(a)))
+    d.polygon(star, fill=GOLD, outline=INK, width=4 * s)
+    return img.resize((LOGO_SIZE, LOGO_SIZE), Image.Resampling.LANCZOS)
+
+
 def check_ink_spot(img):
     """The slab sides sample UV (0.5, 8/256): image column SIZE/2, row SIZE-1-8 (rows run top-down)."""
     for dx in (-1, 0, 1):
@@ -96,6 +129,9 @@ def main():
         print("WROTE", path)
     path = os.path.join(out, "TableFelt.png")
     draw_felt().save(path, optimize=True)
+    print("WROTE", path)
+    path = os.path.join(out, "BoxLogo.png")
+    draw_logo().save(path, optimize=True)
     print("WROTE", path)
 
 

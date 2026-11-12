@@ -46,6 +46,11 @@ namespace LuckyStep
         public Material floorLight;
         /// <summary>Floor materials of the checkerboard: (x + y) % length picks the material of a non-wall space.</summary>
         public Material[] floorColors;
+        /// <summary>
+        /// Per-world tint of the checkerboard (index = world index in the LevelCatalog): when set, non-wall spaces
+        /// alternate floorLight and worldTints[world]; otherwise floorColors is used.
+        /// </summary>
+        public Material[] worldTints;
         /// <summary>Tile under interior wall pieces (tiles carrying other objects use the cream floorLight).</summary>
         public Material wallTile;
         /// <summary>Crimson base of hazard spaces (spike, dice, flowerpot) and of a coin bridge's edge while it is closed.</summary>
@@ -333,6 +338,24 @@ namespace LuckyStep
         public GameObject tableMug;
         /// <summary>Closed game box prop right of the board.</summary>
         public GameObject tableBox;
+        /// <summary>Die props (two) in front of the mug.</summary>
+        public GameObject tableDie;
+        /// <summary>Fan of face-down cards in front of the game box.</summary>
+        public GameObject tableCardFan;
+        /// <summary>Rule booklet beyond the board's far edge.</summary>
+        public GameObject tableBooklet;
+        /// <summary>Die prop edge length.</summary>
+        public float tableDieSize = 0.42f;
+        /// <summary>Card fan footprint (longest side).</summary>
+        public float cardFanSize = 1.15f;
+        /// <summary>Rule booklet footprint (longest side).</summary>
+        public float bookletSize = 1.25f;
+        /// <summary>Grid width / height (walls included) from which a board counts as wide: its side props move in front.</summary>
+        public float wideBoardAspect = 2.3f;
+        /// <summary>Felt the camera keeps beside a non-wide board, per side, so the side props stay in frame.</summary>
+        public float framePropPad = 1.4f;
+        /// <summary>Extra felt beyond the far rail, so the top of the frame shows table instead of the dark floor.</summary>
+        public float tableMarginFar = 6f;
         /// <summary>Felt beyond the board's bounds on the left and right, in world units.</summary>
         public float tableMarginX = 4.2f;
         /// <summary>Felt beyond the board's bounds at the far and near sides, in world units.</summary>
@@ -342,7 +365,7 @@ namespace LuckyStep
         /// <summary>Height of the rail's top above the felt.</summary>
         public float tableRailHeight = 0.16f;
         /// <summary>Distance from the board's side to a prop's centre.</summary>
-        public float propGap = 1.3f;
+        public float propGap = 1.0f;
         /// <summary>Mug height.</summary>
         public float mugHeight = 0.8f;
         /// <summary>Mug yaw in degrees (turns the handle).</summary>

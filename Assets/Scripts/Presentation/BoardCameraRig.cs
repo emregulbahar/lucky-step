@@ -94,10 +94,10 @@ namespace LuckyStep
             _shakeT = 0f;
         }
 
-        /// <summary>Places the camera so the whole board fits and sets the Depth of Field distances.</summary>
+        /// <summary>Places the camera so the board and its side props (BoardView.FrameBounds) fit and sets the Depth of Field distances.</summary>
         public void Frame()
         {
-            Bounds b = _board.BoardBounds;
+            Bounds b = _board.FrameBounds;
             _camera.fieldOfView = _fieldOfView;
             Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             Vector3 right = rotation * Vector3.right, up = rotation * Vector3.up, forward = rotation * Vector3.forward;

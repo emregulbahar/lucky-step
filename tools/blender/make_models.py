@@ -2,7 +2,7 @@
 
 Builds the low-poly board pieces and exports one FBX per piece:
 die, coin, spike, tile_floor, tile_gap, rim_bar, wall_cards, wall_chips, wall_box, mirror,
-portal_frame, portal_disc, paw_print, mug (table prop; and pawn, kept but no longer used by the game),
+portal_frame, portal_disc, paw_print, mug, card_fan, rule_booklet (table props; and pawn, kept but no longer used by the game),
 bead (evil-eye bead, World 5) and tile_wood (three nailed planks laid on a space, World 5).
 
 Run headless (Blender 5.1):
@@ -45,10 +45,12 @@ PREVIEW_COLOURS = {
     "Hole": (0.08, 0.10, 0.20),
     "Rim": (0.15, 0.20, 0.36),
     "CardFace": (0.95, 0.94, 0.90),
-    "CardBack": (0.65, 0.12, 0.12),
+    "CardBack": (0.64, 0.15, 0.18),
     "ChipRed": (0.75, 0.12, 0.10),
     "ChipWhite": (0.92, 0.90, 0.85),
-    "ChipBlue": (0.15, 0.28, 0.62),
+    "ChipGreen": (0.18, 0.54, 0.36),
+    "CardTrim": (1.00, 0.96, 0.88),
+    "BoxLogo": (1.00, 0.96, 0.88),
     "ChipLine": (0.30, 0.33, 0.45),
     "BoxBody": (0.20, 0.32, 0.55),
     "BoxLid": (0.90, 0.72, 0.25),
@@ -233,6 +235,16 @@ class Piece:
                     q = (grid[r][k], grid[r + 1][k], grid[r + 1][k2], grid[r][k2])
                     self.bm.faces.new(q if side > 0 else tuple(reversed(q))).material_index = idx[arm]
 
+    def decal(self, mat_name, w, d, z):
+        """Flat upward quad w x d at height z, UV 0..1 over the whole image, upright in Unity (see slab_uv)."""
+        bm = self.bm
+        uv = bm.loops.layers.uv.verify()
+        verts = [bm.verts.new((x, y, z)) for x, y in ((-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2))]
+        f = bm.faces.new(verts)
+        f.material_index = self._slot(mat_name)
+        for loop in f.loops:
+            loop[uv].uv = (0.5 - loop.vert.co.x / w, 0.5 - loop.vert.co.y / d)
+
     def slab(self, cuts, slot_of):
         """Card slab TILE x TILE x SLAB, top at z=0, its top split on the grid `cuts` (same coordinates on x and y).
 
@@ -369,7 +381,7 @@ def make_rim_bar():
 
 
 def make_wall_cards():
-    """Blocking piece: one squared-up deck of playing cards, its blue back on top (one clean silhouette).
+    """Blocking piece: one squared-up deck of playing cards, its red printed back on top (one clean silhouette).
 
     The deck is a banded prism (see Piece.banded_prism): its middle rings carry pure sideways outline normals, so
     the outline keeps its width along the tall sides (a plain box only has corner normals tilted up or down).
@@ -378,6 +390,15 @@ def make_wall_cards():
     w, d = 0.28, 0.4
     p.banded_prism([(-w, -d), (w, -d), (w, d), (-w, d)], [(0.0, 0.1, "CardFace"), (0.1, 0.2, "CardFace"), (0.2, 0.3, "CardFace")])
     p.box("CardBack", (0.46, 0.7, 0.006), (0, 0, 0.3 + 0.003))
+    # Printed back (look pass 2): cream inset border and a long diamond with a red core, flat on the red back.
+    top, t, inset, line = 0.306, 0.0012, 0.04, 0.016
+    hw, hd = 0.23 - inset, 0.35 - inset
+    for size, centre in (((2 * hw, line, t), (0, hd, top)), ((2 * hw, line, t), (0, -hd, top)),
+                         ((line, 2 * hd, t), (hw, 0, top)), ((line, 2 * hd, t), (-hw, 0, top))):
+        p.box("CardTrim", size, centre)
+    stretch = Matrix.Diagonal((1.0, 1.55, 1.0, 1.0)) @ Matrix.Rotation(math.radians(45), 4, 'Z')
+    for side, mat, z in ((0.15, "CardTrim", top), (0.11, "CardBack", top + t), (0.05, "CardTrim", top + 2 * t)):
+        p.box(mat, (side, side, t), (0, 0, z), rot=stretch)
     return p.build(sharp_angle_deg=30.0, outline=True)
 
 
@@ -389,7 +410,7 @@ def make_wall_chips():
     p = Piece("wall_chips")
     chip, line, seg, r = 0.039, 0.006, 24, 0.16
     circle = [(r * math.cos(2 * math.pi * k / seg), r * math.sin(2 * math.pi * k / seg)) for k in range(seg)]
-    stacks = [("ChipRed", -0.17, -0.14, 9), ("ChipWhite", 0.18, -0.1, 7), ("ChipBlue", 0.0, 0.2, 11)]
+    stacks = [("ChipRed", -0.17, -0.14, 9), ("ChipWhite", 0.18, -0.1, 7), ("ChipGreen", 0.0, 0.2, 11)]
     for mat, x, y, n in stacks:
         bands, z = [], 0.0
         for i in range(n):
@@ -407,7 +428,49 @@ def make_wall_box():
     p = Piece("wall_box")
     p.box("BoxBody", (0.78, 0.78, 0.26), (0, 0, 0.13), bevel=0.015)
     p.box("BoxLid", (0.82, 0.82, 0.1), (0, 0, 0.26 + 0.03), bevel=0.02)
-    p.box("BoxBody", (0.4, 0.4, 0.006), (0, 0, 0.34 + 0.003))
+    # Look pass 2: the lid carries the printed "Lucky Step" logo (BoxLogo.png, tools/textures/make_print_textures.py).
+    p.decal("BoxLogo", 0.7, 0.7, 0.34 + 0.001)
+    return p.build(sharp_angle_deg=30.0, outline=True)
+
+
+def card_back(p, x, y, z, yaw):
+    """One playing card lying face down at (x, y), bottom at z, turned by yaw degrees: red back, cream print."""
+    turn = Matrix.Rotation(math.radians(yaw), 4, 'Z')
+
+    def at(dx, dy, dz):
+        v = turn @ Vector((dx, dy, 0.0))
+        return (x + v.x, y + v.y, z + dz)
+
+    p.box("CardFace", (0.46, 0.7, 0.012), at(0, 0, 0.006), rot=turn)
+    top, t, inset, line = 0.0125, 0.0012, 0.04, 0.016
+    hw, hd = 0.23 - inset, 0.35 - inset
+    for size, (dx, dy) in (((2 * hw, line, t), (0, hd)), ((2 * hw, line, t), (0, -hd)),
+                           ((line, 2 * hd, t), (hw, 0)), ((line, 2 * hd, t), (-hw, 0))):
+        p.box("CardTrim", size, at(dx, dy, top + t), rot=turn)
+    p.box("CardBack", (0.44, 0.68, t), at(0, 0, top), rot=turn)
+    stretch = turn @ Matrix.Diagonal((1.0, 1.55, 1.0, 1.0)) @ Matrix.Rotation(math.radians(45), 4, 'Z')
+    for side, mat, k in ((0.15, "CardTrim", 2), (0.11, "CardBack", 3), (0.05, "CardTrim", 4)):
+        p.box(mat, (side, side, t), at(0, 0, top + k * t), rot=stretch)
+
+
+def make_card_fan():
+    """Table prop: four cards fanned out face down from a common corner; bottom at z=0."""
+    p = Piece("card_fan")
+    for k, yaw in enumerate((-33.0, -12.0, 9.0, 30.0)):
+        v = Matrix.Rotation(math.radians(yaw), 4, 'Z') @ Vector((0.0, 0.3, 0.0))
+        card_back(p, v.x, v.y, 0.013 * k, yaw)
+    return p.build(sharp_angle_deg=30.0, outline=True)
+
+
+def make_rule_booklet():
+    """Table prop: a closed rule booklet; cream cover with a red title band and printed lines; bottom at z=0."""
+    p = Piece("rule_booklet")
+    w, d, h = 0.62, 0.86, 0.05
+    p.box("CardFace", (w, d, h), (0, 0, h * 0.5), bevel=0.01)
+    # Blender -y is Unity +z (the far side), so the title band sits at -y to read as the top of the cover.
+    p.box("CardBack", (w - 0.08, 0.2, 0.002), (0, -(d * 0.5 - 0.17), h + 0.001))
+    for k in range(4):
+        p.box("PipBlack", ((w - 0.16) * (0.9 if k % 2 else 1.0), 0.022, 0.002), (0, -0.05 + 0.09 * k, h + 0.001))
     return p.build(sharp_angle_deg=30.0, outline=True)
 
 
@@ -539,7 +602,8 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     for make in (make_pawn, make_die, make_coin, make_spike, make_tile_floor, make_tile_gap, make_rim_bar,
                  make_wall_cards, make_wall_chips, make_wall_box, make_mirror, make_portal_frame,
-                 make_portal_disc, make_paw_print, make_mug, make_bead, make_tile_wood):
+                 make_portal_disc, make_paw_print, make_mug, make_bead, make_tile_wood, make_card_fan,
+                 make_rule_booklet):
         export(make(), out_dir)
 
 

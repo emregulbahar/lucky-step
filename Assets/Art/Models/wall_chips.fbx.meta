@@ -8,7 +8,12 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: ChipBlue
-    second: {fileID: 2100000, guid: 4a04853ad63a6144d87b082080c869e0, type: 2}
+    second: {fileID: 2100000, guid: 11c684870e0bcd6459c1b7186f38d500, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ChipGreen
+    second: {fileID: 2100000, guid: 2b201cc23222819498430dc84c884e50, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

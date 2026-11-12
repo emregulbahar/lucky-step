@@ -14,6 +14,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: CardFace
     second: {fileID: 2100000, guid: 52edaff0c09d33347b65b05dd97cc210, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CardTrim
+    second: {fileID: 2100000, guid: 9b92690d5b0ee7448940b7e6d3c0eee5, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

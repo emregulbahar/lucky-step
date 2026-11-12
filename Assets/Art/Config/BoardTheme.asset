@@ -32,6 +32,12 @@ MonoBehaviour:
   floorColors:
   - {fileID: 2100000, guid: c1e077efeb5a32d45b0a76e7f888baf6, type: 2}
   - {fileID: 2100000, guid: 87a60fb2767c226459848591ccaa7b8c, type: 2}
+  worldTints:
+  - {fileID: 2100000, guid: c210f19b5ffac3d4aa334645fbc4ab2a, type: 2}
+  - {fileID: 2100000, guid: 336a2bcb84d67614b8fb51ca5162b513, type: 2}
+  - {fileID: 2100000, guid: cac94dbcb6b769345bdc40ad40e4bfd1, type: 2}
+  - {fileID: 2100000, guid: 6fa5bec17880d9144930d5d2a595ae82, type: 2}
+  - {fileID: 2100000, guid: fe406897b281d5d49a3d5c92840568d4, type: 2}
   wallTile: {fileID: 2100000, guid: 87a60fb2767c226459848591ccaa7b8c, type: 2}
   hazardTile: {fileID: 2100000, guid: 27ee3a7d3586360458a63c4596da4b1d, type: 2}
   flowerpotBody: {fileID: 2100000, guid: 11c684870e0bcd6459c1b7186f38d500, type: 2}
@@ -154,13 +160,22 @@ MonoBehaviour:
   tableRail: {fileID: 2100000, guid: 35f48b2365e13eb4dbcc9b4cb5d09fe9, type: 2}
   tableMug: {fileID: 919132149155446097, guid: 3974cfd4313fd414187367e0d6f4111c, type: 3}
   tableBox: {fileID: 919132149155446097, guid: 5920ecae22480d743992b70d6db177ea, type: 3}
+  tableDie: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
+  tableCardFan: {fileID: 919132149155446097, guid: cb0e277d102cc644d9f258f955bf730b, type: 3}
+  tableBooklet: {fileID: 919132149155446097, guid: 1df84f00eb6db7746902b7f0d0ca5924, type: 3}
+  tableDieSize: 0.42
+  cardFanSize: 1.15
+  bookletSize: 1.25
+  wideBoardAspect: 2.3
+  framePropPad: 1.4
+  tableMarginFar: 6
   tableMarginX: 4.2
   tableMarginZ: 1.4
   tableRailWidth: 0.6
   tableRailHeight: 0.16
-  propGap: 1.3
+  propGap: 1
   mugHeight: 0.8
   mugYaw: 200
   boxSize: 1.25
   boxYaw: -14
-  builderVersion: 6
+  builderVersion: 10

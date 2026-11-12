@@ -44,10 +44,11 @@ public static class BuildBoardScene
     private const string PrintSpacePath = "Assets/Art/Generated/PrintSpace.png";
     private const string PrintHazardPath = "Assets/Art/Generated/PrintHazard.png";
     private const string TableFeltPath = "Assets/Art/Generated/TableFelt.png";
+    private const string BoxLogoPath = "Assets/Art/Generated/BoxLogo.png"; // look pass 2: game-box lid logo
     private const string ToonShaderName = "LuckyStep/Toon";
 
     // Bump when BoardTheme's layout defaults change: the builder then resets the theme's tunables to the code defaults.
-    private const int ThemeVersion = 6;
+    private const int ThemeVersion = 10;
 
     // The one key light comes from the back-left, above the board (space tops at y = 0).
     private static readonly Vector3 KeyLightFrom = new Vector3(-6.2f, 2.15f, 3.8f);
@@ -63,8 +64,17 @@ public static class BuildBoardScene
     private static readonly Color RimWood = C(0.431f, 0.290f, 0.180f);    // #6E4A2E board border
     private static readonly Color Felt = C(0.180f, 0.471f, 0.302f);       // #2E784D table felt (tints TableFelt.png)
     private static readonly Color TableWood = C(0.788f, 0.545f, 0.306f);  // #C98B4E table rail
-    private static readonly Color Charcoal = C(0.290f, 0.278f, 0.318f);   // #4A4751 card backs, dark chips, game box
-    private static readonly Color ChipBrown = C(0.549f, 0.361f, 0.239f);  // #8C5C3D brown chips
+    private static readonly Color CardRed = C(0.639f, 0.149f, 0.180f);    // #A3262E card backs, red chips, game box (deeper than hazard red)
+    private static readonly Color ChipGreen = C(0.184f, 0.541f, 0.357f);  // #2F8A5B green chips (no blue: user feedback)
+    // Look pass 2: one checker tint per world (pastel, so hazard red, gold and the paw prints stay the loudest colours).
+    private static readonly Color[] WorldTint =
+    {
+        C(0.804f, 0.898f, 0.741f), // #CDE5BD W1 mint
+        C(0.965f, 0.863f, 0.557f), // #F6DC8E W2 butter
+        C(0.965f, 0.749f, 0.612f), // #F6BF9C W3 peach
+        C(0.937f, 0.690f, 0.682f), // #EFB0AE W4 rose (Chinese neighbourhood)
+        C(0.706f, 0.867f, 0.827f), // #B4DDD3 W5 turquoise tile (Old Bazaar)
+    };
     private static readonly Color Background = C(0.125f, 0.090f, 0.071f); // #201712 floor beyond the table
     private static readonly Color Red = C(0.886f, 0.231f, 0.231f);        // #E23B3B hazard
     private static readonly Color Gold = C(1f, 0.761f, 0.102f);           // #FFC21A lucky, the only bloom
@@ -112,6 +122,11 @@ public static class BuildBoardScene
         // Spaces and board: printed, no geometric outline.
         new Paint { Name = "Board_Cream", Color = Paper, BaseMap = PrintSpacePath },
         new Paint { Name = "Board_Linen", Color = PaperB, BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_W1", Color = WorldTint[0], BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_W2", Color = WorldTint[1], BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_W3", Color = WorldTint[2], BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_W4", Color = WorldTint[3], BaseMap = PrintSpacePath },
+        new Paint { Name = "Board_W5", Color = WorldTint[4], BaseMap = PrintSpacePath },
         new Paint { Name = "Space_Hazard", Color = Color.white, BaseMap = PrintHazardPath },
         new Paint { Name = "Paint_Hole", Color = C(0.07f, 0.08f, 0.15f) },
         new Paint { Name = "Wood_Plate", Color = BoardWood },
@@ -132,13 +147,15 @@ public static class BuildBoardScene
         new Paint { Name = "Paint_Hazard", Color = Red, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_Metal", Color = C(0.80f, 0.82f, 0.86f), Outline = Px },
         new Paint { Name = "Paint_CardFace", Color = Paper, Outline = Px, SmoothNormals = true },
-        new Paint { Name = "Paint_CardBack", Color = Charcoal, Outline = Px, SmoothNormals = true },
-        new Paint { Name = "Paint_ChipRed", Color = ChipBrown, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_CardBack", Color = CardRed, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_CardTrim", Color = Paper }, // printed border and diamond on the card back (flat, no outline)
+        new Paint { Name = "Paint_ChipRed", Color = CardRed, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_ChipWhite", Color = Paper, Outline = Px, SmoothNormals = true },
-        new Paint { Name = "Paint_ChipBlue", Color = Charcoal, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_ChipGreen", Color = ChipGreen, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_ChipLine", Color = C(0.62f, 0.55f, 0.47f), Outline = Px, SmoothNormals = true }, // chip edge lines; outlined too, or the stack outline breaks at every line
-        new Paint { Name = "Paint_BoxBody", Color = Charcoal, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_BoxBody", Color = CardRed, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_BoxLid", Color = Paper, Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Paint_BoxLogo", Color = Color.white, BaseMap = BoxLogoPath }, // printed lid logo (flat decal)
         new Paint { Name = "Wood_Wall", Color = BoardWood, Outline = Px, SmoothNormals = true }, // mirror and portal frames
         new Paint { Name = "Paint_MirrorGlass", Color = C(0.72f, 0.84f, 0.95f), Emission = C(0.08f, 0.10f, 0.14f), Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_MirrorCrack", Color = Ink },
@@ -191,7 +208,7 @@ public static class BuildBoardScene
         { "gold", "Paint_Gold" }, { "spikebase", "Paint_Hazard" }, { "tile", "Board_Cream" },
         { "wallwood", "Wood_Wall" }, { "hole", "Paint_Hole" }, { "rim", "Wood_Rim" },
         { "cardface", "Paint_CardFace" }, { "cardback", "Paint_CardBack" }, { "chipred", "Paint_ChipRed" },
-        { "chipwhite", "Paint_ChipWhite" }, { "chipblue", "Paint_ChipBlue" }, { "chipline", "Paint_ChipLine" }, { "boxbody", "Paint_BoxBody" },
+        { "chipwhite", "Paint_ChipWhite" }, { "chipgreen", "Paint_ChipGreen" }, { "cardtrim", "Paint_CardTrim" }, { "boxlogo", "Paint_BoxLogo" }, { "chipline", "Paint_ChipLine" }, { "boxbody", "Paint_BoxBody" },
         { "boxlid", "Paint_BoxLid" }, { "mirrorframe", "Wood_Wall" }, { "mirrorglass", "Paint_MirrorGlass" },
         { "mirrorcrack", "Paint_MirrorCrack" }, { "portalframe", "Wood_Wall" }, { "portalstone", "Portal_Stone" },
         { "portalswirla", "Portal_SwirlA" }, { "portalswirlb", "Portal_SwirlB" },
@@ -229,6 +246,7 @@ public static class BuildBoardScene
         ConfigurePrintTexture(PrintSpacePath);
         ConfigurePrintTexture(PrintHazardPath);
         ConfigurePrintTexture(TableFeltPath);
+        ConfigurePrintTexture(BoxLogoPath);
         Dictionary<string, Material> mats = CreateMaterials();
         RemapModelMaterials(mats);
         BoardTheme theme = CreateTheme(mats);
@@ -401,6 +419,7 @@ public static class BuildBoardScene
         theme.cat = Model(KenneyFolder + "/CubePets/animal-cat.fbx");
         theme.floorLight = mats["Board_Cream"];
         theme.floorColors = new[] { mats["Board_Cream"], mats["Board_Linen"] };
+        theme.worldTints = new[] { mats["Board_W1"], mats["Board_W2"], mats["Board_W3"], mats["Board_W4"], mats["Board_W5"] };
         theme.wallTile = mats["Board_Linen"];
         theme.hazardTile = mats["Space_Hazard"];
         theme.flowerpotBody = mats["Wood_Natural"]; // pottedPlant.fbx "wood" slot = the pot body
@@ -423,6 +442,9 @@ public static class BuildBoardScene
         theme.tableRail = mats["Table_Rail"];
         theme.tableMug = Model(ModelsFolder + "/mug.fbx");
         theme.tableBox = Model(ModelsFolder + "/wall_box.fbx");
+        theme.tableDie = Model(ModelsFolder + "/die.fbx");
+        theme.tableCardFan = Model(ModelsFolder + "/card_fan.fbx");
+        theme.tableBooklet = Model(ModelsFolder + "/rule_booklet.fbx");
         EditorUtility.SetDirty(theme);
         return theme;
     }
@@ -502,6 +524,7 @@ public static class BuildBoardScene
         BoardView board = presentation.AddComponent<BoardView>();
         SetRef(board, "_controller", controller);
         SetRef(board, "_theme", theme);
+        SetRef(board, "_catalog", LevelCatalogBuilder.CreateOrUpdateDefault()); // look pass 2: per-world checker tint
         var flash = new GameObject("Lucky Flash Light").AddComponent<Light>();
         flash.transform.SetParent(presentation.transform, false);
         flash.type = LightType.Point;
