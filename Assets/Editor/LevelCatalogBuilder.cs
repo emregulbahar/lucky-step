@@ -37,7 +37,7 @@ public static class LevelCatalogBuilder
             {
                 storyKey = "story.world1",
                 ruleSetName = "default",
-                levels = new[] { Load("Level01"), Load("Level17"), Load("Level02"), Load("Level18"),
+                levels = new[] { Load("Level01"), Load("Level02"), Load("Level17"), Load("Level18"),
                     Load("Level03"), Load("Level04") },
                 showPar = false, // no cat: every solution is exactly 7 moves
             },
@@ -53,14 +53,14 @@ public static class LevelCatalogBuilder
                 storyKey = "story.world3",
                 ruleSetName = "default",
                 levels = new[] { Load("Level10"), Load("Level09"), Load("Level12"), Load("Level11"),
-                    Load("Level22"), Load("Level21") },
+                    Load("Level21"), Load("Level22") },
             },
             new LevelCatalog.World
             {
                 storyKey = "story.world4",
                 ruleSetName = "world4",
                 levels = new[] { Load("Level13"), Load("Level14"), Load("Level15"), Load("Level16"),
-                    Load("Level23"), Load("Level24") },
+                    Load("Level24"), Load("Level23") },
             },
             new LevelCatalog.World
             {

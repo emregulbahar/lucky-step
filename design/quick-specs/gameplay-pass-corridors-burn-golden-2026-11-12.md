@@ -68,3 +68,18 @@ Hints follow the teaching level (text unchanged): hint.Level03 -> hint.Level17,
 hint.Level09 -> hint.Level10. Level08 (World 2) had an untaught, unused mirror:
 it is now floor (solver par 17 unchanged). Save data is keyed by level id, so
 existing progress is kept. Evidence: production/qa/evidence/gameplay-pass-2026-11-12/order-*.png, select-order.png.
+
+## Addendum 2 (2026-11-12): puzzle-quality pass
+
+User direction: levels must make you think; easy at the start, rising after;
+do not crop unused board areas. level-designer audit scored every level 1-5
+("makes you think"); 9 weakest redesigned inside their existing grid size:
+07, 09, 11, 15, 17, 21, 23, 24, 27 (each: the naive shortest walk fails, the
+world's mechanic is required, one clear "aha"). BFS solver: 30/30, all par
+headers match, no shortcuts. Difficulty re-sorted with the same score:
+W1 01,02,17,18,03,04 / W2 05,06,07,19,20,08 / W3 10,09,12,11,21,22 /
+W4 13,14,15,16,24,23 / W5 25,27,28,26,29,30 (every world rising).
+Known limit: in World 1 (no cat, par 7) hazards act like walls, so 02 stays a
+gentle hazard intro (score 2/5). Board blockers are now low, muted card/chip
+stacks (wallPieceScale, muted materials). Evidence:
+production/qa/evidence/puzzle-pass-2026-11-12/.

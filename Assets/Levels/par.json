@@ -33,7 +33,7 @@
         {
             "level": "Level07",
             "par": 15,
-            "moves": "RLRLRRRDURRRRRR"
+            "moves": "DUDURRRDURRRRRR"
         },
         {
             "level": "Level08",
@@ -42,8 +42,8 @@
         },
         {
             "level": "Level09",
-            "par": 11,
-            "moves": "RRDURRRRRRR"
+            "par": 13,
+            "moves": "DUDRRRRRRRRRU"
         },
         {
             "level": "Level10",
@@ -53,7 +53,7 @@
         {
             "level": "Level11",
             "par": 17,
-            "moves": "RRRRRRDDDLLLDDRRR"
+            "moves": "RRRRRRDDDLLDULLLL"
         },
         {
             "level": "Level12",
@@ -73,7 +73,7 @@
         {
             "level": "Level15",
             "par": 13,
-            "moves": "RRRRRRDDLLLLL"
+            "moves": "RRRRDUDRLDLLL"
         },
         {
             "level": "Level16",
@@ -83,7 +83,7 @@
         {
             "level": "Level17",
             "par": 7,
-            "moves": "DRRDDLL"
+            "moves": "DRRRURR"
         },
         {
             "level": "Level18",
@@ -102,8 +102,8 @@
         },
         {
             "level": "Level21",
-            "par": 23,
-            "moves": "DUDUDUDDURRRRRRDDDUDUDD"
+            "par": 15,
+            "moves": "UUDURRRRRDLRRRD"
         },
         {
             "level": "Level22",
@@ -112,13 +112,13 @@
         },
         {
             "level": "Level23",
-            "par": 18,
-            "moves": "RLRLDDRRRRRRLLRDRR"
+            "par": 13,
+            "moves": "URURRDDDDLLLL"
         },
         {
             "level": "Level24",
-            "par": 24,
-            "moves": "RRRLRLLLDDDDRRUURRRRDDRR"
+            "par": 19,
+            "moves": "RRRRRURRLLDLLDDLLLD"
         },
         {
             "level": "Level25",
@@ -133,7 +133,7 @@
         {
             "level": "Level27",
             "par": 7,
-            "moves": "RDRRRRR"
+            "moves": "DURRRRR"
         },
         {
             "level": "Level28",
