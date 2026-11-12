@@ -49,3 +49,22 @@ No rule changes. Per level:
 
 ## GDD Update Required?
 No (no GDD at this tier).
+
+## Addendum (2026-11-12): difficulty order inside each world
+
+User request: a world's level N must not be harder than level N+1. Difficulty
+score = 0.5 * par + 4 * log10(BFS states) + 1.5 * mechanic count (from the
+solver run after the pass). New play order (LevelCatalogBuilder):
+
+| World | Order (score) |
+|---|---|
+| 1 | 01 (9.5), 17 (11.3, teaches dice), 02 (12.0), 18 (13.5), 03 (16.0), 04 (16.3) |
+| 2 | 05 (13.8), 06 (17.7), 07 (17.9), 19 (21.6), 20 (24.1), 08 (28.1) |
+| 3 | 10 (13.4, teaches mirror), 09 (15.7), 12 (18.2), 11 (18.8), 22 (22.3), 21 (26.1) |
+| 4 | 13, 14, 15, 16, 23, 24 (unchanged, already rising) |
+| 5 | 25 (12.7), 27 (13.6), 28 (18.0), 26 (20.6), 29 (31.0), 30 (33.1) |
+
+Hints follow the teaching level (text unchanged): hint.Level03 -> hint.Level17,
+hint.Level09 -> hint.Level10. Level08 (World 2) had an untaught, unused mirror:
+it is now floor (solver par 17 unchanged). Save data is keyed by level id, so
+existing progress is kept. Evidence: production/qa/evidence/gameplay-pass-2026-11-12/order-*.png, select-order.png.

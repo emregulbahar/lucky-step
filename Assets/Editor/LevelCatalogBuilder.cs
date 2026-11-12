@@ -3,8 +3,9 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Creates or updates Assets/Levels/LevelCatalog.asset (Story 006): five worlds of six levels in play order (worlds 1-4:
-/// first four Level01..Level16, last two Level17..Level24; World 5 "The Old Bazaar" Level25..Level30; World 1 hides par), par.json assigned. Safe to run again; it overwrites the worlds list.
+/// Creates or updates Assets/Levels/LevelCatalog.asset (Story 006): five worlds of six levels in play order, sorted by
+/// difficulty inside each world (see the list below; World 5 "The Old Bazaar" is Level25..Level30; World 1 hides par),
+/// par.json assigned. Safe to run again; it overwrites the worlds list.
 /// </summary>
 /// <example>
 /// Menu "Lucky Step/Create Level Catalog", or from another editor script:
@@ -28,29 +29,31 @@ public static class LevelCatalogBuilder
             AssetDatabase.CreateAsset(catalog, CatalogPath);
         }
 
+        // Play order inside each world rises in difficulty (par, BFS states, mechanic count; balance pass
+        // 2026-11-12), and each world's first use of a mechanic is the level carrying its hint.
         catalog.worlds = new[]
         {
             new LevelCatalog.World
             {
                 storyKey = "story.world1",
                 ruleSetName = "default",
-                levels = new[] { Load("Level01"), Load("Level02"), Load("Level03"), Load("Level04"),
-                    Load("Level17"), Load("Level18") },
+                levels = new[] { Load("Level01"), Load("Level17"), Load("Level02"), Load("Level18"),
+                    Load("Level03"), Load("Level04") },
                 showPar = false, // no cat: every solution is exactly 7 moves
             },
             new LevelCatalog.World
             {
                 storyKey = "story.world2",
                 ruleSetName = "default",
-                levels = new[] { Load("Level05"), Load("Level06"), Load("Level07"), Load("Level08"),
-                    Load("Level19"), Load("Level20") },
+                levels = new[] { Load("Level05"), Load("Level06"), Load("Level07"), Load("Level19"),
+                    Load("Level20"), Load("Level08") },
             },
             new LevelCatalog.World
             {
                 storyKey = "story.world3",
                 ruleSetName = "default",
-                levels = new[] { Load("Level09"), Load("Level10"), Load("Level11"), Load("Level12"),
-                    Load("Level21"), Load("Level22") },
+                levels = new[] { Load("Level10"), Load("Level09"), Load("Level12"), Load("Level11"),
+                    Load("Level22"), Load("Level21") },
             },
             new LevelCatalog.World
             {
@@ -63,7 +66,7 @@ public static class LevelCatalogBuilder
             {
                 storyKey = "story.world5",
                 ruleSetName = "default",
-                levels = new[] { Load("Level25"), Load("Level26"), Load("Level27"), Load("Level28"),
+                levels = new[] { Load("Level25"), Load("Level27"), Load("Level28"), Load("Level26"),
                     Load("Level29"), Load("Level30") },
             },
         };
