@@ -1,17 +1,34 @@
 using System;
+using System.Globalization;
 
 namespace LuckyStep
 {
     /// <summary>
     /// Command-line QA capture arguments (run-and-observe, Story 006), same pattern as ScreenshotOnArg:
     /// <c>--ui menu|select|settings|story|hud|win</c>, <c>--lang en|tr</c>, <c>--level LevelId</c>, <c>--progress-demo</c>,
-    /// plus the Story 005 <c>--moves</c> replay. Read once at startup (allocates).
+    /// <c>--win-delay seconds</c> (with <c>--ui win</c>), plus the Story 005 <c>--moves</c> replay. Read once at startup
+    /// (allocates). Screenshot runs advance a fixed 1/<see cref="CaptureFrameRate"/> s per frame, so <c>--after N</c>
+    /// frames is N/60 s of UI time however long the real frames take.
     /// </summary>
     /// <example>
     /// <code>Game.exe --ui select --progress-demo --lang tr --screenshot C:/qa/select_tr.png --after 60</code>
     /// </example>
     public static class QaArgs
     {
+        /// <summary>Frame rate of QA runs; screenshot runs also step time by exactly one frame of it.</summary>
+        public const int CaptureFrameRate = 60;
+
+        /// <summary>Default for <see cref="WinDelaySeconds"/>: long enough for the first slow frames (shader warm-up) to pass.</summary>
+        public const float DefaultWinDelaySeconds = 1f;
+
+        /// <summary>
+        /// Seconds before <c>--ui win</c> opens the win panel: <c>--win-delay</c> (invariant culture, clamped to 0 or more),
+        /// else <see cref="DefaultWinDelaySeconds"/>.
+        /// </summary>
+        public static float WinDelaySeconds =>
+            float.TryParse(Value("--win-delay"), NumberStyles.Float, CultureInfo.InvariantCulture, out float seconds)
+                ? Math.Max(0f, seconds) : DefaultWinDelaySeconds;
+
         /// <summary>The value after <paramref name="name"/>, or null if absent.</summary>
         public static string Value(string name)
         {

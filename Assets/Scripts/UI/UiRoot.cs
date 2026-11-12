@@ -39,6 +39,12 @@ namespace LuckyStep
         /// <summary>Raised when any UI button is pressed (sound hooks in here; the UI does not know about audio).</summary>
         public event System.Action ButtonClicked;
 
+        /// <summary>Raised when the win panel plays the Golden pawn moment (the bell hooks in here).</summary>
+        public event System.Action GoldenPawnShown;
+
+        /// <summary>Raises <see cref="GoldenPawnShown"/>.</summary>
+        public void NotifyGoldenPawnShown() => GoldenPawnShown?.Invoke();
+
         /// <summary>The player's music and effects volume (saved, except in QA runs).</summary>
         public VolumeSettings Volume { get; private set; }
 
@@ -83,14 +89,31 @@ namespace LuckyStep
             BuildCanvas();
             IProgressStore store = QaArgs.IsQaRun ? new MemoryProgressStore() : (IProgressStore)new PlayerPrefsProgressStore();
             Volume = new VolumeSettings(!QaArgs.IsQaRun);
-            // QA captures count frames; with runInBackground off (the player setting) an unfocused window stalls them.
-            if (QaArgs.IsQaRun) Application.runInBackground = true;
+            if (QaArgs.IsQaRun)
+            {
+                // QA captures count frames; with runInBackground off (the player setting) an unfocused window stalls them.
+                Application.runInBackground = true;
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = QaArgs.CaptureFrameRate;
+                // Screenshot runs: every frame advances exactly 1/60 s (also unscaled time), so the long first frames
+                // (shader warm-up) cannot swallow the win panel animation and --after N frames maps to a fixed moment.
+                if (QaArgs.Has("--screenshot"))
+                {
+                    Time.captureDeltaTime = 1f / QaArgs.CaptureFrameRate;
+                    // Observed 2026-11-12: captureDeltaTime did not fix unscaledDeltaTime, so the UI clock uses the
+                    // fixed step directly in screenshot runs.
+                    _fixedUiStep = 1f / QaArgs.CaptureFrameRate;
+                }
+            }
             _flow = new ScreenFlow(this, _controller, _catalog, new Progress(store));
         }
 
         private void Start() => _flow.Begin();
 
-        private void Update() => _flow.Tick(Time.unscaledDeltaTime);
+        private void Update() => _flow.Tick(_fixedUiStep > 0f ? _fixedUiStep : Time.unscaledDeltaTime);
+
+        // Screenshot runs only: the UI clock's fixed step (0 = real unscaled time).
+        private float _fixedUiStep;
 
         private void OnDestroy() => _flow?.Dispose();
 

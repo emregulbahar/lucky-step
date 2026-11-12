@@ -134,5 +134,52 @@ namespace LuckyStep
         public float fadeInSeconds = 0.2f;
 
         public float buttonFadeSeconds = 0.08f;
+
+        /// <summary>Golden pawn moment on the win panel: wait after the panel opens (lets the fade-in finish).</summary>
+        [Header("Golden pawn moment (win panel)")]
+        public float goldenDelaySeconds = 0.2f;
+
+        /// <summary>Length of the scale punch (overshoot, then settle); 0 turns the punch and sparkles off (reduced motion).</summary>
+        public float goldenPopSeconds = 0.35f;
+
+        /// <summary>Scale the golden row starts from.</summary>
+        public float goldenStartScale = 0.2f;
+
+        /// <summary>Overshoot scale reached at <see cref="goldenPeakFraction"/> of the punch; it then settles to 1.</summary>
+        public float goldenPeakScale = 1.25f;
+
+        /// <summary>Fraction (0..1) of the punch spent growing to the peak.</summary>
+        [Range(0.1f, 0.9f)] public float goldenPeakFraction = 0.6f;
+
+        /// <summary>Number of gold sparks in the burst.</summary>
+        public int sparkCount = 10;
+
+        /// <summary>Spark square size in px (drawn as a 45 degree diamond).</summary>
+        public float sparkSize = 28f;
+
+        /// <summary>Distance in px a spark travels outward from the banner edge (sparks start on the banner's outline).</summary>
+        public float sparkRadius = 96f;
+
+        /// <summary>Seconds the burst lasts (spark flies out, shrinks and fades).</summary>
+        public float sparkSeconds = 0.55f;
+
+        /// <summary>Spark colour (bright gold, alpha is the starting opacity).</summary>
+        public Color sparkColor = new Color(1f, 0.72f, 0.05f, 1f);
+
+        /// <summary>
+        /// Tint on the cream panel sprite behind the Golden pawn row (same ink rim and shadow as the HUD plates); this
+        /// value turns the cream face #FFF6E0 into gold #FFC21A.
+        /// </summary>
+        public Color goldenBannerColor = new Color(1f, 0.789f, 0.116f);
+
+        /// <summary>Pawn icon colour on the gold banner (pale gold; its ink outline and hard shadow separate it from the banner).</summary>
+        public Color goldenIconColor = new Color(1f, 0.93f, 0.62f);
+
+        /// <summary>Pawn icon size on the banner (about 1.6x <see cref="rewardIconSize"/>, on the 8 px grid).</summary>
+        public float goldenIconSize = 104f;
+
+        /// <summary>Banner padding in px, left/right and top/bottom (the card shadow inset is added on the right and bottom).</summary>
+        public int goldenBannerPaddingX = 40;
+        public int goldenBannerPaddingY = 8;
     }
 }

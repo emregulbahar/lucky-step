@@ -60,6 +60,7 @@ namespace LuckyStep
             if (_board != null) _board.StateChanged += OnStateChanged;
             if (_controller != null) _controller.MoveBlocked += OnMoveBlocked;
             if (_ui != null) _ui.ButtonClicked += OnButtonClicked;
+            if (_ui != null) _ui.GoldenPawnShown += OnGoldenPawnShown;
         }
 
         private void OnDisable()
@@ -67,6 +68,7 @@ namespace LuckyStep
             if (_board != null) _board.StateChanged -= OnStateChanged;
             if (_controller != null) _controller.MoveBlocked -= OnMoveBlocked;
             if (_ui != null) _ui.ButtonClicked -= OnButtonClicked;
+            if (_ui != null) _ui.GoldenPawnShown -= OnGoldenPawnShown;
         }
 
         private void Update()
@@ -101,6 +103,11 @@ namespace LuckyStep
         private void OnMoveBlocked(Direction direction)
         {
             if (_config != null) Play(_config.blocked, false);
+        }
+
+        private void OnGoldenPawnShown()
+        {
+            if (_config != null) Play(_config.lucky, false); // the lucky bell marks the Golden pawn
         }
 
         private void OnButtonClicked()

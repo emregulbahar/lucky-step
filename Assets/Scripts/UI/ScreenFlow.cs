@@ -125,7 +125,7 @@ namespace LuckyStep
                     break;
                 case "win":
                     int par = _catalog.Par(level.name);
-                    ShowWinAfter(0f, Mathf.Max(par, 0), par, par >= 0);
+                    ShowWinAfter(QaArgs.WinDelaySeconds, Mathf.Max(par, 0), par, par >= 0);
                     break;
                 default:
                     Enter(State.Menu);

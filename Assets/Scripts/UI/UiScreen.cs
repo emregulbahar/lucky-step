@@ -55,7 +55,7 @@ namespace LuckyStep
         public void Hide() => Root.gameObject.SetActive(false);
 
         /// <summary>Advances the fade-in (unscaled seconds).</summary>
-        public void Tick(float deltaTime)
+        public virtual void Tick(float deltaTime)
         {
             if (_group.alpha >= 1f) return;
             float fade = Ui.Style.fadeInSeconds;
