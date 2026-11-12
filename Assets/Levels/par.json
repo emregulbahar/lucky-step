@@ -13,7 +13,7 @@
         {
             "level": "Level03",
             "par": 7,
-            "moves": "RRRRRRR"
+            "moves": "DURRRRR"
         },
         {
             "level": "Level04",
@@ -27,8 +27,8 @@
         },
         {
             "level": "Level06",
-            "par": 17,
-            "moves": "RLRLRRRRRRRLRLRRR"
+            "par": 15,
+            "moves": "DUDRRRRRRRRRDDL"
         },
         {
             "level": "Level07",
@@ -43,7 +43,7 @@
         {
             "level": "Level09",
             "par": 11,
-            "moves": "RRLRRRRRRRR"
+            "moves": "RRDURRRRRRR"
         },
         {
             "level": "Level10",
@@ -57,8 +57,8 @@
         },
         {
             "level": "Level12",
-            "par": 27,
-            "moves": "RLRLRLRRRRLRRRDDLLLLLLDDRRR"
+            "par": 13,
+            "moves": "DUDRRRRRRRRRU"
         },
         {
             "level": "Level13",
@@ -107,8 +107,8 @@
         },
         {
             "level": "Level22",
-            "par": 25,
-            "moves": "RLRLRLDDRRRRDRRUUURRDDDDD"
+            "par": 17,
+            "moves": "DUDRRRRRRRRRDDLLL"
         },
         {
             "level": "Level23",
@@ -123,22 +123,22 @@
         {
             "level": "Level25",
             "par": 8,
-            "moves": "RRRRRRRR"
+            "moves": "RRRRDRRR"
         },
         {
             "level": "Level26",
-            "par": 23,
-            "moves": "RLRLRRLRRRDDUUDUDURRRRR"
+            "par": 16,
+            "moves": "DUDDRRRRRRRRUULL"
         },
         {
             "level": "Level27",
             "par": 7,
-            "moves": "RRRRRRR"
+            "moves": "RDRRRRR"
         },
         {
             "level": "Level28",
             "par": 14,
-            "moves": "RRRRRRRRRRRRRR"
+            "moves": "DURRRRRRRRDDLL"
         },
         {
             "level": "Level29",
