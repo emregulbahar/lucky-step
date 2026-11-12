@@ -91,6 +91,19 @@ public sealed class TrackAtlasTests
         Assert.AreEqual(13, BoardView.TrackEnd(RuleSet.Default, 30));
     }
 
+    [Test]
+    public void TrackEnd_DefaultRulesWithOneBead_RunsPastThirteenToFourteen()
+    {
+        // A bead survives 13, so the marker must be able to move on to the next lucky count (bug 2026-11-12).
+        Assert.AreEqual(14, BoardView.TrackEnd(RuleSet.Default, 30, 1));
+    }
+
+    [Test]
+    public void TrackEnd_World4WithOneBead_RunsPastFourteenToSixteen()
+    {
+        Assert.AreEqual(16, BoardView.TrackEnd(RuleSet.World4, 30, 1));
+    }
+
     private static Color32 Corner(Texture2D atlas, int n, TrackAtlas.Face face)
     {
         Vector4 uv = TrackAtlas.CellUV(n, face);

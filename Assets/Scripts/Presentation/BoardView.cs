@@ -297,16 +297,30 @@ namespace LuckyStep
             Rim("Rim E", new Vector3((w + rw) * 0.5f, PlateBottom, centreZ), new Vector3(rw, h, depth));
             Rim("Rim W", new Vector3(-(w + rw) * 0.5f, PlateBottom, centreZ), new Vector3(rw, h, depth));
 
-            BuildTrack(level.Rules, w, -d * 0.5f - strip * 0.5f);
+            BuildTrack(level.Rules, level.BeadCount, w, -d * 0.5f - strip * 0.5f);
         }
 
-        /// <summary>Last count shown on the score track: the first deadly count from StartValue upwards, else the cap.</summary>
-        public static int TrackEnd(RuleSet rules, int cap)
+        /// <summary>
+        /// Last count shown on the score track: the first deadly count from StartValue upwards, else the cap. With
+        /// <paramref name="beads"/> evil-eye beads in the level, that many deadly counts can be survived, so the track
+        /// runs past them to the next lucky count (the bead's reward), so the marker never parks on a passed 13.
+        /// </summary>
+        public static int TrackEnd(RuleSet rules, int cap, int beads = 0)
         {
             cap = Mathf.Min(cap, TrackAtlas.MaxNumber);
+            bool survivedDeadly = false;
             for (int n = rules.StartValue; n <= cap; n++)
             {
-                if (rules.IsDeadly(n)) return n;
+                if (rules.IsDeadly(n))
+                {
+                    if (beads <= 0) return n;
+                    beads--;
+                    survivedDeadly = true;
+                }
+                else if (survivedDeadly && rules.IsLucky(n))
+                {
+                    return n;
+                }
             }
             return Mathf.Max(rules.StartValue, cap);
         }
@@ -319,10 +333,10 @@ namespace LuckyStep
             return rules.IsLucky(n) ? TrackAtlas.Face.Lucky : TrackAtlas.Face.Plain;
         }
 
-        private void BuildTrack(RuleSet rules, float boardWidth, float z)
+        private void BuildTrack(RuleSet rules, int beads, float boardWidth, float z)
         {
             _trackStart = Mathf.Clamp(rules.StartValue, 0, TrackAtlas.MaxNumber);
-            _trackEnd = TrackEnd(rules, _theme.trackCap);
+            _trackEnd = TrackEnd(rules, _theme.trackCap, beads);
             int count = _trackEnd - _trackStart + 1;
             float pitch = Mathf.Min(_theme.trackSpacing, (boardWidth - 0.2f) / count);
             float size = Mathf.Min(_theme.trackSpaceSize, pitch * 0.86f);
