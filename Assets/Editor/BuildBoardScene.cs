@@ -156,6 +156,11 @@ public static class BuildBoardScene
         new Paint { Name = "Paint_BoxBody", Color = CardRed, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_BoxLid", Color = Paper, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_BoxLogo", Color = Color.white, BaseMap = BoxLogoPath }, // printed lid logo (flat decal)
+        // Muted twins for the card/chip stacks ON the board (wall tiles): softer, closer to the printed board, so the
+        // blockers stay quiet next to the hazards (user feedback 2026-11-12). Table props keep the vivid originals.
+        new Paint { Name = "Board_CardBackMuted", Color = C(0.769f, 0.541f, 0.525f), Outline = Px, SmoothNormals = true }, // #C48A86 dusty rose
+        new Paint { Name = "Board_ChipRedMuted", Color = C(0.769f, 0.541f, 0.525f), Outline = Px, SmoothNormals = true },
+        new Paint { Name = "Board_ChipGreenMuted", Color = C(0.584f, 0.714f, 0.627f), Outline = Px, SmoothNormals = true }, // #95B6A0 sage
         new Paint { Name = "Wood_Wall", Color = BoardWood, Outline = Px, SmoothNormals = true }, // mirror and portal frames
         new Paint { Name = "Paint_MirrorGlass", Color = C(0.72f, 0.84f, 0.95f), Emission = C(0.08f, 0.10f, 0.14f), Outline = Px, SmoothNormals = true },
         new Paint { Name = "Paint_MirrorCrack", Color = Ink },
@@ -405,6 +410,8 @@ public static class BuildBoardScene
         {
             Model(ModelsFolder + "/wall_cards.fbx"), Model(ModelsFolder + "/wall_chips.fbx"),
         };
+        theme.wallMutedFrom = new[] { mats["Paint_CardBack"], mats["Paint_ChipRed"], mats["Paint_ChipGreen"] };
+        theme.wallMutedTo = new[] { mats["Board_CardBackMuted"], mats["Board_ChipRedMuted"], mats["Board_ChipGreenMuted"] };
         theme.spike = Model(ModelsFolder + "/spike.fbx");
         theme.die = Model(ModelsFolder + "/die.fbx");
         theme.coin = Model(ModelsFolder + "/coin.fbx");

@@ -18,6 +18,17 @@ namespace LuckyStep
         public GameObject rimBar;
         /// <summary>Board-game pieces shown on interior wall tiles; one is picked per tile from its position.</summary>
         public GameObject[] wallPieces;
+        /// <summary>
+        /// Scale of a wall piece on the board (x/z footprint, y height): lower and smaller than the table props so the
+        /// card and chip stacks read as quiet blockers, not the loudest thing on the board (user feedback 2026-11-12).
+        /// </summary>
+        public Vector3 wallPieceScale = new Vector3(0.8f, 0.45f, 0.8f);
+        /// <summary>Whether wall pieces cast shadows (off keeps the board calm; they still receive shadows).</summary>
+        public bool wallPieceShadows = false;
+        /// <summary>Materials swapped on board wall pieces (wallMutedFrom[i] becomes wallMutedTo[i]); table props keep the originals.</summary>
+        public Material[] wallMutedFrom;
+        /// <summary>Muted counterparts of <see cref="wallMutedFrom"/>, same order.</summary>
+        public Material[] wallMutedTo;
         /// <summary>Spike cluster placed on a floor tile.</summary>
         public GameObject spike;
         /// <summary>Six-sided die placed on a dice tile.</summary>

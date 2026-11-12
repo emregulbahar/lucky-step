@@ -18,6 +18,16 @@ MonoBehaviour:
   wallPieces:
   - {fileID: 919132149155446097, guid: a7f3121ab0754b64bbdb736ec05e0b38, type: 3}
   - {fileID: 919132149155446097, guid: 06af64b5dc4e9dc4a8b5303c99d259d1, type: 3}
+  wallPieceScale: {x: 0.8, y: 0.45, z: 0.8}
+  wallPieceShadows: 0
+  wallMutedFrom:
+  - {fileID: 2100000, guid: 5fc76eda05800ea46a03179d61ea8a54, type: 2}
+  - {fileID: 2100000, guid: daf3837c3bef54e46b452e94456859cc, type: 2}
+  - {fileID: 2100000, guid: 2b201cc23222819498430dc84c884e50, type: 2}
+  wallMutedTo:
+  - {fileID: 2100000, guid: 89228c601a494fd4ca9a2e05a66235f8, type: 2}
+  - {fileID: 2100000, guid: 8f4a66d101940a948a7d18d5f232bbee, type: 2}
+  - {fileID: 2100000, guid: dc469bf3e6536b54abc3922b5b6e467d, type: 2}
   spike: {fileID: 919132149155446097, guid: 65602462165ed144d8a5f99a659c6e8a, type: 3}
   die: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
   coin: {fileID: 919132149155446097, guid: fac1414cfc1590d4f87215e764ded900, type: 3}

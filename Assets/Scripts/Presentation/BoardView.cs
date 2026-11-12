@@ -405,7 +405,15 @@ namespace LuckyStep
                     if (_theme.wallPieces == null || _theme.wallPieces.Length == 0) break;
                     int pick = (x * 7 + y * 13) % _theme.wallPieces.Length;
                     float yaw = ((x * 37 + y * 11) % 7 - 3) * 7f;
-                    Place(_theme.wallPieces[pick], "Piece", Vector3.zero, baseTile).localRotation = Quaternion.Euler(0f, yaw, 0f);
+                    Transform piece = Place(_theme.wallPieces[pick], "Piece", Vector3.zero, baseTile);
+                    piece.localRotation = Quaternion.Euler(0f, yaw, 0f);
+                    piece.localScale = Vector3.Scale(piece.localScale, _theme.wallPieceScale);
+                    if (!_theme.wallPieceShadows) SetShadows(piece, ShadowCastingMode.Off);
+                    if (_theme.wallMutedFrom != null && _theme.wallMutedTo != null)
+                    {
+                        int n = Mathf.Min(_theme.wallMutedFrom.Length, _theme.wallMutedTo.Length);
+                        for (int i = 0; i < n; i++) SwapMaterial(piece, _theme.wallMutedFrom[i], _theme.wallMutedTo[i]);
+                    }
                     break;
                 case Tile.Exit:
                     BuildPortal(x, y, baseTile);
