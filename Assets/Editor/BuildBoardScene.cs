@@ -212,7 +212,7 @@ public static class BuildBoardScene
         new Paint { Name = "Base_Silver", Color = C(0.74f, 0.75f, 0.78f), Emission = C(0.05f, 0.05f, 0.05f), Outline = Px },
         new Paint { Name = "Base_Gold", Color = Gold, Outline = Px },
         new Paint { Name = "Base_GoldGlow", Color = Gold, Emission = Hdr(1.2f, 0.05f, 0f), Outline = Px }, // gentler than GoldGlow
-        new Paint { Name = "Rank_Star", Color = Gold, Emission = GoldGlow, Outline = Px, SmoothNormals = true }, // StarMesh carries smoothed normals
+        new Paint { Name = "Base_Diamond", Color = C(0.70f, 0.92f, 0.98f), Emission = C(0.10f, 0.18f, 0.22f), Outline = Px }, // top rank, under the bloom threshold
         new Paint { Name = "Character_Paint", Color = Color.white, BaseMap = CharacterTexturePath, Outline = Px },
         new Paint { Name = "Cat_Black", Color = C(0.14f, 0.13f, 0.16f), BaseMap = CatTexturePath, Outline = Px, OutlineColor = Paper },
         new Paint { Name = "Paint_PotGlaze", Color = Red, Outline = Px },
@@ -512,12 +512,11 @@ public static class BuildBoardScene
         theme.boardPlate = mats["Wood_Plate"];
         theme.portalSpark = mats["Portal_Spark"];
         theme.figureBase = mats["Token_Base"];
-        theme.figureRanks = new[] { mats["Base_Wood"], mats["Base_Bronze"], mats["Base_Silver"], mats["Base_Gold"], mats["Base_GoldGlow"], mats["Base_GoldGlow"] };
-        theme.rankStarMaterial = mats["Rank_Star"];
+        theme.figureRanks = new[] { mats["Base_Wood"], mats["Base_Bronze"], mats["Base_Silver"], mats["Base_Gold"], mats["Base_GoldGlow"], mats["Base_Diamond"] };
+        theme.guideMarkerMaterial = mats["Paw_PrintNext"]; // the same gold "step here" glow as the cat's next paw print
         theme.confettiSize = 0.16f; // 0.09 vanished at board distance (screenshot 2026-11-12)
         theme.confettiSpeed = 4.2f;
         theme.confettiBurst = 40;
-        theme.rankStarSize = 0.2f; // 0.12 read as a speck at board distance (screenshot 2026-11-12)
         theme.confettiMaterial = CreateConfettiMaterial();
         theme.pawPrint = Model(ModelsFolder + "/paw_print.fbx");
         theme.pawPrintMaterial = mats["Paw_Print"];
@@ -764,6 +763,17 @@ public static class BuildBoardScene
         SetRef(ui, "_pawnIcon", Load<Sprite>(UiSpritesFolder + "/icon_pawn.png"));
         SetRef(ui, "_arrowIcon", Load<Sprite>(UiSpritesFolder + "/icon_arrow.png"));
         SetRef(ui, "_baseIcon", Load<Sprite>(UiSpritesFolder + "/icon_base.png"));
+        // New-mechanic card icons (tools/ui/make_ui_sprites.py "tips"), looked up by name.
+        var tips = new SerializedObject(ui);
+        SerializedProperty tipIcons = tips.FindProperty("_tipIcons");
+        tipIcons.arraySize = LevelMechanics.All.Length;
+        for (int i = 0; i < LevelMechanics.All.Length; i++)
+        {
+            Sprite icon = Load<Sprite>(UiSpritesFolder + "/tip_" + LevelMechanics.All[i] + ".png");
+            if (icon == null) throw new FileNotFoundException("Tip icon missing", "tip_" + LevelMechanics.All[i]);
+            tipIcons.GetArrayElementAtIndex(i).objectReferenceValue = icon;
+        }
+        tips.ApplyModifiedPropertiesWithoutUndo();
         return ui;
     }
 

@@ -76,8 +76,8 @@ namespace LuckyStep
         private bool _tokenBeyond;
         private int _rank;
         private Renderer _baseDisc;
-        private Transform _star;
-        private Mesh _starMesh;
+        private float _figureTop;
+        private Transform _guideMarker;
         private ParticleSystem _confetti;
 
         /// <summary>
@@ -126,8 +126,8 @@ namespace LuckyStep
 
         /// <summary>
         /// Figure rank (progression spec 2026-11-12): worlds completed, 0-5. Picks the base disc's material and size
-        /// (BoardTheme.figureRanks) and, from BoardTheme.rankStarFromRank, the star above the head. Applies at once to
-        /// the figure on the board and to every later build; the UI sets it from Progress.
+        /// (BoardTheme.figureRanks). Applies at once to the figure on the board and to every later build; the UI sets
+        /// it from Progress.
         /// </summary>
         /// <example><code>board.Rank = progress.CompletedWorlds(catalog.WorldLevelIds);</code></example>
         public int Rank
@@ -138,6 +138,41 @@ namespace LuckyStep
                 _rank = Mathf.Max(0, value);
                 ApplyRank();
             }
+        }
+
+        /// <summary>
+        /// World point just above the figure's head, where the tutorial guide's speech bubble points (follows every
+        /// move). Zero before the first build.
+        /// </summary>
+        public Vector3 GuideAnchor => _figure != null ? _figure.Root.position + Vector3.up * (_figureTop + _theme.guideBubbleGap) : Vector3.zero;
+
+        /// <summary>
+        /// Shows the tutorial guide's pulsing marker on grid space (<paramref name="x"/>, <paramref name="y"/>) of the
+        /// built level (spec tutorial-guide-and-tips-addition-2026-11-13). A rebuild removes it.
+        /// </summary>
+        /// <example><code>if (step.HasTarget) board.ShowGuide(step.TargetX, step.TargetY); else board.HideGuide();</code></example>
+        public void ShowGuide(int x, int y)
+        {
+            if (_root == null || _builtLevel == null || _theme.guideMarkerMaterial == null) return;
+            if (_guideMarker == null)
+            {
+                GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                disc.name = "GuideMarker";
+                Destroy(disc.GetComponent<Collider>());
+                var renderer = disc.GetComponent<Renderer>();
+                renderer.sharedMaterial = _theme.guideMarkerMaterial;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                disc.transform.SetParent(_root, false);
+                _guideMarker = disc.transform;
+            }
+            _guideMarker.localPosition = CellPosition(x, y) + Vector3.up * _theme.guideMarkerHeight;
+            _guideMarker.gameObject.SetActive(true);
+        }
+
+        /// <summary>Hides the tutorial guide's marker.</summary>
+        public void HideGuide()
+        {
+            if (_guideMarker != null) _guideMarker.gameObject.SetActive(false);
         }
 
         private void OnEnable()
@@ -239,7 +274,6 @@ namespace LuckyStep
         private void OnDestroy()
         {
             DestroySpaceMeshes();
-            if (_starMesh != null) Destroy(_starMesh);
         }
 
         private void DestroySpaceMeshes()
@@ -251,6 +285,7 @@ namespace LuckyStep
         private void Build(Level level)
         {
             if (_root != null) Destroy(_root.gameObject);
+            _guideMarker = null; // destroyed with the old root at the end of this frame; ShowGuide makes a new one
             DestroySpaceMeshes();
             _bridges.Clear();
             _pots.Clear();
@@ -671,7 +706,6 @@ namespace LuckyStep
             // Base disc: a flat cylinder under the feet (child of the figure, so it follows every move, tilt and fall).
             // Its material and width come from the rank (ApplyRank).
             _baseDisc = null;
-            _star = null;
             _figureFit = Mathf.Max(0.0001f, figure.lossyScale.x);
             if (_theme.figureBase != null || (_theme.figureRanks != null && _theme.figureRanks.Length > 0))
             {
@@ -682,23 +716,10 @@ namespace LuckyStep
                 _baseDisc = disc.GetComponent<Renderer>();
             }
 
-            // Rank star: floats upright above the head and spins (shown from rankStarFromRank).
-            if (_theme.rankStarMaterial != null)
-            {
-                Bounds body = FigureRenderers.Length > 0 ? FigureRenderers[0].bounds : new Bounds(figure.position, Vector3.zero);
-                foreach (Renderer r in FigureRenderers) body.Encapsulate(r.bounds);
-                if (_starMesh == null) _starMesh = StarMesh.Create(1f, 0.45f, 0.36f);
-                var star = new GameObject("RankStar");
-                star.AddComponent<MeshFilter>().sharedMesh = _starMesh;
-                var starRenderer = star.AddComponent<MeshRenderer>();
-                starRenderer.sharedMaterial = _theme.rankStarMaterial;
-                starRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                star.transform.SetParent(figure, false);
-                star.transform.localScale = Vector3.one * (_theme.rankStarSize / _figureFit);
-                float top = body.max.y - figure.position.y + _theme.rankStarGap + _theme.rankStarSize;
-                star.transform.localPosition = new Vector3(0f, top / _figureFit, 0f);
-                _star = star.transform;
-            }
+            // Head height above the figure's root, for the guide bubble's anchor.
+            Bounds body = FigureRenderers.Length > 0 ? FigureRenderers[0].bounds : new Bounds(figure.position, Vector3.zero);
+            foreach (Renderer r in FigureRenderers) body.Encapsulate(r.bounds);
+            _figureTop = body.max.y - figure.position.y;
             ApplyRank();
 
             _figureAnimation = figure.GetComponentInChildren<Animation>();
@@ -708,7 +729,7 @@ namespace LuckyStep
             if (_idleClip != null) _figureAnimation.Play(_idleClip);
         }
 
-        /// <summary>Puts the rank's material and width on the base disc and shows or hides the star.</summary>
+        /// <summary>Puts the rank's material and width on the base disc.</summary>
         private void ApplyRank()
         {
             if (_theme == null) return;
@@ -722,7 +743,6 @@ namespace LuckyStep
                 _baseDisc.transform.localScale = new Vector3(d, h, d);
                 _baseDisc.transform.localPosition = new Vector3(0f, h, 0f);
             }
-            if (_star != null) _star.gameObject.SetActive(_rank >= _theme.rankStarFromRank);
         }
 
         /// <summary>One-shot confetti emitter for the win (pieces in the theme's colours, falling with gravity).</summary>
@@ -968,11 +988,11 @@ namespace LuckyStep
             _figure.Offset = offset;
             _figure.Tick(dt);
             _figure.Root.localScale = _figureScale * fxScale;
-            // The star faces the camera side (-Z) whatever way the figure looks, and sways gently; a full spin would
-            // show it edge-on half the time.
-            if (_star != null && _star.gameObject.activeSelf)
+            // Guide marker: a flat gold disc that breathes, so the eye finds the next space.
+            if (_guideMarker != null && _guideMarker.gameObject.activeSelf)
             {
-                _star.rotation = transform.rotation * Quaternion.Euler(0f, Mathf.Sin(Time.time * _theme.rankStarSwaySpeed) * _theme.rankStarSwayDegrees, 0f);
+                float d = _theme.guideMarkerDiameter * (1f + _theme.guideMarkerPulse * Mathf.Sin(Time.time * _theme.guideMarkerPulseSpeed));
+                _guideMarker.localScale = new Vector3(d, _theme.guideMarkerThickness * 0.5f, d);
             }
 
             _token.Tick(dt);

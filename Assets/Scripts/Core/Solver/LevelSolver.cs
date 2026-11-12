@@ -106,7 +106,18 @@ namespace LuckyStep
         /// <param name="maxStates">Most distinct live states stored before giving up.</param>
         public static SolveResult Solve(Level level, int maxDepth = DefaultMaxDepth, int maxStates = DefaultMaxStates)
         {
-            GameState start = level.CreateInitialState();
+            return SolveFrom(level, level.CreateInitialState(), maxDepth, maxStates);
+        }
+
+        /// <summary>
+        /// Finds a shortest winning move sequence from <paramref name="start"/> (any reachable state; the tutorial
+        /// guide asks it for the next move). Same caps and outcomes as <see cref="Solve"/>; a start that is already
+        /// won or dead gives ProvenUnsolvable with no moves.
+        /// </summary>
+        /// <example><code>Direction next = LevelSolver.SolveFrom(level, controller.State).Moves[0];</code></example>
+        public static SolveResult SolveFrom(Level level, GameState start, int maxDepth = DefaultMaxDepth, int maxStates = DefaultMaxStates)
+        {
+            if (start.Status != GameStatus.Playing) return new SolveResult(SolveOutcome.ProvenUnsolvable, new Direction[0], 0);
             var visited = new HashSet<GameState> { start };
             // The list doubles as the BFS queue (head index); parents/moves/depths are parallel to it.
             var states = new List<GameState> { start };

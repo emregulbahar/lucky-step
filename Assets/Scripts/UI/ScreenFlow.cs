@@ -12,7 +12,8 @@ namespace LuckyStep
     /// <item><term>Menu</term><description>Play: Story (first level of its world) or Playing, at the continue level. Level select: LevelSelect. Settings: Settings.</description></item>
     /// <item><term>Settings</term><description>Music and effects volume. Back, Esc or gamepad East: Menu.</description></item>
     /// <item><term>LevelSelect</term><description>Unlocked level: Story or Playing. Back, Esc or gamepad East: Menu.</description></item>
-    /// <item><term>Story</term><description>Any key, click or gamepad South/Start: Playing.</description></item>
+    /// <item><term>Story</term><description>Any key, click or gamepad South/Start: Tips (if the level has unseen mechanics) or Playing.</description></item>
+    /// <item><term>Tips</term><description>New-mechanic card. Got it, Esc or gamepad East: Playing.</description></item>
     /// <item><term>Playing</term><description>LevelWon: Won (progress saved, panel after <see cref="UiStyle.winPanelDelay"/>). Esc or gamepad East: Menu.</description></item>
     /// <item><term>Won</term><description>Next: Story or Playing (next level). Retry: Playing (same level). Level select: LevelSelect. Esc or East: Menu.</description></item>
     /// </list>
@@ -20,12 +21,14 @@ namespace LuckyStep
     /// not also move the pawn. Every screen re-reads its text on <see cref="Localization.LanguageChanged"/>.
     /// The figure rank (worlds completed, <see cref="Progress.CompletedWorlds"/>) is pushed to the board on every level
     /// load; a win that raises it shows the promotion banner (progression spec 2026-11-12).
+    /// Guided levels (<see cref="LevelCatalog.guidedLevels"/>) show the tutorial guide: a marker on the next space and a
+    /// bubble over the figure, re-evaluated when the state changes (spec tutorial-guide-and-tips-addition-2026-11-13).
     /// </summary>
     /// <example><code>var flow = new ScreenFlow(ui, controller, catalog, progress, board); flow.Begin(); /* Update: */ flow.Tick(Time.unscaledDeltaTime);</code></example>
     public sealed class ScreenFlow : IDisposable
     {
         /// <summary>Screen states.</summary>
-        public enum State { Menu, LevelSelect, Story, Playing, Won, Settings }
+        public enum State { Menu, LevelSelect, Story, Tips, Playing, Won, Settings }
 
         private readonly UiRoot _ui;
         private readonly PlayerInputController _controller;
@@ -36,6 +39,7 @@ namespace LuckyStep
         private readonly MainMenu _menu;
         private readonly LevelSelect _select;
         private readonly StoryCard _story;
+        private readonly TipCard _tips;
         private readonly WinPanel _win;
         private readonly SettingsPanel _settings;
         private readonly UiScreen[] _screens;
@@ -53,6 +57,10 @@ namespace LuckyStep
         private int _winRankBefore;
         private int _winRankAfter;
         private int _rankOverride = -1;
+        private bool _guided;
+        private GameState _guideState;
+        private Level _guideBoardLevel;
+        private Camera _camera;
 
         /// <summary>
         /// Builds every screen (hidden, HUD lowest) and subscribes to the controller and localization.
@@ -69,9 +77,10 @@ namespace LuckyStep
             _menu = new MainMenu(ui);
             _select = new LevelSelect(ui, catalog, progress, Rank);
             _story = new StoryCard(ui);
+            _tips = new TipCard(ui);
             _win = new WinPanel(ui);
             _settings = new SettingsPanel(ui, ui.Volume);
-            _screens = new UiScreen[] { _hud, _menu, _select, _story, _win, _settings };
+            _screens = new UiScreen[] { _hud, _menu, _select, _story, _tips, _win, _settings };
 
             _menu.PlayClicked += () => StartLevel(ContinueLevel());
             _menu.LevelSelectClicked += () => Enter(State.LevelSelect);
@@ -82,6 +91,7 @@ namespace LuckyStep
             _win.NextClicked += () => StartLevel(_catalog.Next(_controller.CurrentLevelFile));
             _win.RetryClicked += Retry;
             _win.LevelSelectClicked += () => Enter(State.LevelSelect);
+            _tips.Closed += () => Enter(State.Playing);
 
             _controller.LevelLoaded += OnLevelLoaded;
             _controller.LevelWon += OnLevelWon;
@@ -102,7 +112,7 @@ namespace LuckyStep
             else if (lang == "en") Localization.SetLanguage(Language.English);
             if (QaArgs.Has("--progress-demo")) ApplyProgressDemo();
             if (QaArgs.Has("--unlock-all")) _progress.UnlockAll = true; // review build: every level open, nothing saved
-            // QA: show the figure at this rank (base, star) without changing progress.
+            // QA: show the figure at this rank (its base) without changing progress.
             if (int.TryParse(QaArgs.Value("--rank"), out int rank)) _rankOverride = Mathf.Max(0, rank);
             ApplyRank();
 
@@ -134,6 +144,11 @@ namespace LuckyStep
                 case "story":
                     EnterStory(_catalog.WorldIndexOf(level));
                     break;
+                case "tips":
+                    // QA: the level's card whatever has been seen.
+                    _tips.SetMechanics(LevelMechanics.Find(_controller.Level));
+                    Enter(State.Tips);
+                    break;
                 case "hud":
                     Enter(State.Playing);
                     break;
@@ -164,6 +179,7 @@ namespace LuckyStep
                 case State.Playing:
                     _hud.SetMoves(_controller.Moves);
                     _hud.SetBeads(BeadsForHud());
+                    UpdateGuide();
                     if (entered) break;
                     _controller.InputEnabled = true;
                     if (BackPressed()) Enter(State.Menu); // Esc in a level opens the main menu (user request 2026-11-10)
@@ -173,11 +189,15 @@ namespace LuckyStep
                     if (!entered && BackPressed()) Enter(State.Menu);
                     break;
                 case State.Story:
-                    if (!entered && AnyPressed()) Enter(State.Playing);
+                    if (!entered && AnyPressed()) EnterTipsOrPlay();
+                    break;
+                case State.Tips:
+                    if (!entered && BackPressed()) Enter(State.Playing);
                     break;
                 case State.Won:
                     _hud.SetMoves(_controller.Moves);
                     _hud.SetBeads(BeadsForHud());
+                    UpdateGuide();
                     if (_winTimer >= 0f)
                     {
                         _winTimer -= deltaTime;
@@ -211,12 +231,18 @@ namespace LuckyStep
             _enteredFrame = Time.frameCount;
             _winTimer = -1f;
             _controller.InputEnabled = false;
+            if (state != State.Playing && state != State.Won && _board != null)
+            {
+                _board.HideGuide(); // no marker behind menus; the guide re-evaluates when play resumes
+                _guideState = null;
+            }
             foreach (UiScreen screen in _screens) screen.Hide();
             switch (state)
             {
                 case State.Menu: _top = _menu; break;
                 case State.LevelSelect: _top = _select; break;
                 case State.Story: _top = _story; break;
+                case State.Tips: _top = _tips; break;
                 case State.Settings: _top = _settings; break;
                 default: _top = null; break; // Playing; Won opens its panel after the delay
             }
@@ -228,7 +254,71 @@ namespace LuckyStep
         {
             if (level == null || !_controller.LoadLevel(level)) return;
             if (_catalog.IsFirstOfWorld(level)) EnterStory(_catalog.WorldIndexOf(level));
-            else Enter(State.Playing);
+            else EnterTipsOrPlay();
+        }
+
+        /// <summary>Opens the new-mechanic card for this level's unseen mechanics (marking them seen), else plays.</summary>
+        private void EnterTipsOrPlay()
+        {
+            var unseen = new List<string>();
+            if (_controller.Level != null)
+            {
+                foreach (string id in LevelMechanics.Find(_controller.Level))
+                {
+                    if (!_progress.HasSeenTip(id) && unseen.Count < TipCard.MaxRows) unseen.Add(id);
+                }
+            }
+            if (unseen.Count == 0)
+            {
+                Enter(State.Playing);
+                return;
+            }
+            foreach (string id in unseen) _progress.MarkTipSeen(id);
+            _tips.SetMechanics(unseen);
+            Enter(State.Tips);
+        }
+
+        /// <summary>
+        /// Tutorial guide: re-evaluates when the state or the built board changes (the solver allocates, so not every
+        /// frame), then keeps the bubble on the figure.
+        /// </summary>
+        private void UpdateGuide()
+        {
+            if (!_guided || _board == null || _controller.Level == null || _controller.State == null) return;
+            GameState state = _controller.State;
+            if (!ReferenceEquals(state, _guideState) || !ReferenceEquals(_board.Level, _guideBoardLevel))
+            {
+                _guideState = state;
+                _guideBoardLevel = _board.Level;
+                GuideStep step = TutorialGuide.Evaluate(_controller.Level, state, _controller.Moves);
+                if (step.HasTarget && _board.Level != null) _board.ShowGuide(step.TargetX, step.TargetY);
+                else _board.HideGuide();
+                _hud.SetGuide(GuideText(_controller.Level, step));
+            }
+            if (_camera == null) _camera = Camera.main;
+            if (_camera != null && _board.Figure != null) _hud.PlaceGuide(_camera.WorldToScreenPoint(_board.GuideAnchor));
+        }
+
+        private static string GuideText(Level level, GuideStep step)
+        {
+            switch (step.Phase)
+            {
+                case GuidePhase.Start: return Localization.Get("guide.start");
+                case GuidePhase.Counting: return Localization.Format("guide.counting", step.Counter, NextLucky(level, step.Counter));
+                case GuidePhase.LuckyNext: return Localization.Format("guide.lucky", step.Counter + 1);
+                case GuidePhase.Dead: return Localization.Get("guide.dead");
+                default: return null; // won: the bubble goes away
+            }
+        }
+
+        /// <summary>The first lucky, not deadly count above <paramref name="counter"/> (counting up).</summary>
+        private static int NextLucky(Level level, int counter)
+        {
+            for (int c = counter + 1; c < counter + 100; c++)
+            {
+                if (!level.Rules.IsDeadly(c) && level.Rules.IsLucky(c)) return c;
+            }
+            return counter + 1;
         }
 
         private void Retry()
@@ -278,7 +368,12 @@ namespace LuckyStep
             int world = _catalog.WorldIndexOf(level);
             int index = world >= 0 ? Array.IndexOf(_catalog.Worlds[world].levels, level) : -1;
             _hud.SetLevel(world + 1, index + 1, level != null ? _catalog.Par(level.name) : -1);
-            _hud.SetHint(level != null ? level.name : null);
+            _guided = level != null && _catalog.IsGuided(level.name);
+            _guideState = null;
+            _guideBoardLevel = null;
+            _hud.SetGuide(null);
+            if (_board != null) _board.HideGuide();
+            _hud.SetHint(level != null && !_guided ? level.name : null); // guided levels: the bubble replaces the strip
             _hud.SetMoves(_controller.Moves);
             _hud.SetBeads(BeadsForHud());
         }
@@ -286,6 +381,7 @@ namespace LuckyStep
         private void OnLanguageChanged()
         {
             foreach (UiScreen screen in _screens) screen.Refresh();
+            _guideState = null; // the guide bubble re-reads its text too
         }
 
         private TextAsset ContinueLevel()

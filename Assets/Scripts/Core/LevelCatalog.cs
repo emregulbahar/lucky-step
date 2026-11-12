@@ -42,6 +42,15 @@ namespace LuckyStep
         /// <summary>Worlds in play order.</summary>
         public World[] worlds = new World[0];
 
+        /// <summary>
+        /// Level ids played with the tutorial guide (marker on the next space, speech bubble over the figure; spec
+        /// tutorial-guide-and-tips-addition-2026-11-13). Their top hint strip is hidden.
+        /// </summary>
+        public string[] guidedLevels = { "Level01" };
+
+        /// <summary>True if <paramref name="levelId"/> is in <see cref="guidedLevels"/>.</summary>
+        public bool IsGuided(string levelId) => levelId != null && guidedLevels != null && Array.IndexOf(guidedLevels, levelId) >= 0;
+
         /// <summary>Assets/Levels/par.json (written by the editor solver).</summary>
         public TextAsset parTable;
 

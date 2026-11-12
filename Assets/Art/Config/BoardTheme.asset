@@ -63,14 +63,15 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 780ec9bf56728b44d922066be7b6e8b3, type: 2}
   - {fileID: 2100000, guid: a292eec68c4072c4c8030df39a9368ee, type: 2}
   - {fileID: 2100000, guid: b8296396a163c6f47888576a3cc8e5ce, type: 2}
-  - {fileID: 2100000, guid: b8296396a163c6f47888576a3cc8e5ce, type: 2}
+  - {fileID: 2100000, guid: 57081cc875c58f143b51b365f5c310e0, type: 2}
   figureBaseRankGrowth: 0.02
-  rankStarFromRank: 5
-  rankStarMaterial: {fileID: 2100000, guid: 7a6693b6d39115242b152741878fc724, type: 2}
-  rankStarSize: 0.2
-  rankStarGap: 0.06
-  rankStarSwayDegrees: 30
-  rankStarSwaySpeed: 2
+  guideMarkerMaterial: {fileID: 2100000, guid: 5f49e216ac1557c4f914839ab013a994, type: 2}
+  guideMarkerDiameter: 0.62
+  guideMarkerThickness: 0.02
+  guideMarkerHeight: 0.015
+  guideMarkerPulse: 0.12
+  guideMarkerPulseSpeed: 4
+  guideBubbleGap: 0.12
   confettiMaterial: {fileID: 2100000, guid: 05c15147f07b9c54e823ec11b1b9dbff, type: 2}
   confettiBurst: 40
   confettiSpeed: 4.2

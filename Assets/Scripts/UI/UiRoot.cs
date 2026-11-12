@@ -33,6 +33,7 @@ namespace LuckyStep
         [SerializeField] private Sprite _pawnIcon;
         [SerializeField] private Sprite _arrowIcon;
         [SerializeField] private Sprite _baseIcon;
+        [SerializeField] private Sprite[] _tipIcons = new Sprite[0];
         [SerializeField] private BoardView _board;
         [SerializeField] private UiStyle _style = new UiStyle();
 
@@ -88,6 +89,17 @@ namespace LuckyStep
 
         /// <summary>White figure base icon (tinted with the rank colour).</summary>
         public Sprite BaseIcon => _baseIcon;
+
+        /// <summary>Full-colour icon of a new-mechanic card (sprite "tip_" + LevelMechanics id), or null.</summary>
+        public Sprite TipIcon(string mechanicId)
+        {
+            string name = "tip_" + mechanicId;
+            foreach (Sprite sprite in _tipIcons)
+            {
+                if (sprite != null && sprite.name == name) return sprite;
+            }
+            return null;
+        }
 
         private void Awake()
         {

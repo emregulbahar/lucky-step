@@ -92,23 +92,28 @@ namespace LuckyStep
         /// <summary>Extra base diameter per rank, in grid cells (the base widens as the player climbs).</summary>
         [Tooltip("Extra base diameter per rank, in grid cells.")]
         public float figureBaseRankGrowth = 0.02f;
-        /// <summary>Lowest rank that shows the star above the figure's head.</summary>
-        [Tooltip("Lowest rank that shows the star above the figure's head.")]
-        public int rankStarFromRank = 5;
-        /// <summary>Material of the rank star (gold, smoothed-normal outline).</summary>
-        public Material rankStarMaterial;
-        /// <summary>Tip radius of the rank star, in world units.</summary>
-        [Tooltip("Tip radius of the rank star, in world units.")]
-        public float rankStarSize = 0.12f;
-        /// <summary>Gap between the top of the figure and the star's lowest point, in world units.</summary>
-        [Tooltip("Gap between the top of the figure and the star's lowest point, in world units.")]
-        public float rankStarGap = 0.06f;
-        /// <summary>How far the star sways left and right, in degrees (it always faces the camera side).</summary>
-        [Tooltip("How far the star sways left and right, in degrees (it always faces the camera side).")]
-        public float rankStarSwayDegrees = 30f;
-        /// <summary>Star sway speed in radians per second.</summary>
-        [Tooltip("Star sway speed in radians per second.")]
-        public float rankStarSwaySpeed = 2f;
+
+        /// <summary>Material of the tutorial guide's marker on the next space (gold, glowing).</summary>
+        [Header("Tutorial guide (marker on the next space)")]
+        public Material guideMarkerMaterial;
+        /// <summary>Marker diameter in grid cells.</summary>
+        [Tooltip("Marker diameter in grid cells.")]
+        public float guideMarkerDiameter = 0.62f;
+        /// <summary>Marker thickness in world units.</summary>
+        [Tooltip("Marker thickness in world units.")]
+        public float guideMarkerThickness = 0.02f;
+        /// <summary>Height of the marker's centre above the space top (just clear of the printed space).</summary>
+        [Tooltip("Height of the marker's centre above the space top.")]
+        public float guideMarkerHeight = 0.015f;
+        /// <summary>Fraction the marker grows and shrinks by while it breathes.</summary>
+        [Tooltip("Fraction the marker grows and shrinks by while it breathes.")]
+        public float guideMarkerPulse = 0.12f;
+        /// <summary>Breathing speed in radians per second.</summary>
+        [Tooltip("Breathing speed in radians per second.")]
+        public float guideMarkerPulseSpeed = 4f;
+        /// <summary>Gap between the figure's head and the point the speech bubble's tail touches, in world units.</summary>
+        [Tooltip("Gap between the figure's head and the speech bubble's tail, in world units.")]
+        public float guideBubbleGap = 0.12f;
 
         /// <summary>Material of the win confetti (a vertex-coloured particle material; null = no confetti).</summary>
         [Header("Win confetti")]

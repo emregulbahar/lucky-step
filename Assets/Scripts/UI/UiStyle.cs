@@ -76,6 +76,17 @@ namespace LuckyStep
 
         /// <summary>Width of the completed count ("4/6") at the end of each world row.</summary>
         public float worldCountWidth = 96f;
+
+        /// <summary>Tutorial guide bubble width, its text size and the ink pointer's square size.</summary>
+        public float guideBubbleWidth = 520f;
+        public int guideTextSize = 30;
+        public float guidePointerSize = 28f;
+
+        /// <summary>New-mechanic card: width, icon size, text column width, and how long clicks are ignored after it opens.</summary>
+        public float tipWidth = 1000f;
+        public float tipIconSize = 128f;
+        public float tipTextWidth = 720f;
+        public float tipInputDelaySeconds = 0.35f;
         public float rewardIconSize = 64f;
         public float dividerHeight = 8f;
         public float buttonLabelPadding = 16f;
@@ -186,14 +197,14 @@ namespace LuckyStep
         public int goldenBannerPaddingY = 8;
 
         /// <summary>
-        /// Figure rank colours for the base icon (index = rank: wood, bronze, silver, gold, glowing gold, star gold),
+        /// Figure rank colours for the base icon (index = rank: wood, bronze, silver, gold, glowing gold, diamond),
         /// matching BoardTheme.figureRanks on the board (progression spec 2026-11-12).
         /// </summary>
         [Header("Figure rank (progression)")]
         public Color[] rankColors =
         {
             new Color(0.80f, 0.58f, 0.36f), new Color(0.80f, 0.47f, 0.22f), new Color(0.74f, 0.75f, 0.78f),
-            new Color(1f, 0.761f, 0.102f), new Color(1f, 0.84f, 0.30f), new Color(1f, 0.90f, 0.45f),
+            new Color(1f, 0.761f, 0.102f), new Color(1f, 0.84f, 0.30f), new Color(0.70f, 0.92f, 0.98f),
         };
 
         /// <summary>Promotion banner tint on the cream plate sprite (light teal: apart from the gold Golden pawn banner).</summary>

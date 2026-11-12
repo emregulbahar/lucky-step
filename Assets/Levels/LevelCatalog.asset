@@ -63,4 +63,6 @@ MonoBehaviour:
     - {fileID: 4900000, guid: 560ad1041430ed749b7799ac32580486, type: 3}
     - {fileID: 4900000, guid: 1c8648af58a9e84479d6492f9cf30193, type: 3}
     showPar: 1
+  guidedLevels:
+  - Level01
   parTable: {fileID: 4900000, guid: 56634fce48beb0f4689a12e8c53ed568, type: 3}

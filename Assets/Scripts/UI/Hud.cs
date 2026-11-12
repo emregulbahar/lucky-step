@@ -8,6 +8,8 @@ namespace LuckyStep
     /// evil-eye beads carried, in levels that have beads), and a
     /// key legend in the top-right: drawn key caps (arrow keys, Z, R, Esc) each followed by what the key does. Nothing is placed in the bottom of the screen, where the board's score track
     /// sits. Text only changes when a value changes (no per-frame allocation).
+    /// In guided levels a speech bubble with a pointer follows the figure (<see cref="SetGuide"/>, <see cref="PlaceGuide"/>;
+    /// spec tutorial-guide-and-tips-addition-2026-11-13).
     /// </summary>
     /// <example><code>hud.SetLevel(1, 3, catalog.Par("Level03")); hud.SetMoves(controller.Moves);</code></example>
     public sealed class Hud : UiScreen
@@ -19,6 +21,9 @@ namespace LuckyStep
         private readonly RectTransform _hintCard;
         private readonly Text _hint;
         private string _hintKey;
+        private readonly RectTransform _guide;
+        private readonly RectTransform _guideCard;
+        private readonly Text _guideText;
         private readonly Text _keyMove;
         private readonly Text _keyUndo;
         private readonly Text _keyRestart;
@@ -49,6 +54,23 @@ namespace LuckyStep
             UiRoot.Pin(_hintCard, new Vector2(0.5f, 1f), new Vector2(0f, -s.screenMargin));
             _hint = ui.CreateText("Text", _hintCard, false, s.captionSize, s.textDark, TextAnchor.MiddleCenter);
             _hintCard.gameObject.SetActive(false);
+
+            // Guide bubble: a zero-size root placed at the figure's head each frame; the ink pointer (a diamond, half
+            // hidden behind the card) sits on the root and the card stands on top of it.
+            _guide = ui.CreateRect("Guide", Root);
+            _guide.anchorMin = _guide.anchorMax = new Vector2(0.5f, 0.5f);
+            _guide.sizeDelta = Vector2.zero;
+            Image pointer = ui.CreateImage("Pointer", _guide, null, s.outlineColor);
+            pointer.rectTransform.sizeDelta = new Vector2(s.guidePointerSize, s.guidePointerSize);
+            pointer.rectTransform.anchoredPosition = new Vector2(0f, s.guidePointerSize * 0.75f);
+            pointer.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            _guideCard = ui.CreateStack("Card", _guide, s.guideBubbleWidth, true, s.hudPadding, s.hudSpacing);
+            _guideCard.GetComponent<Image>().color = s.hudPlateColor;
+            _guideCard.anchorMin = _guideCard.anchorMax = new Vector2(0.5f, 0.5f);
+            _guideCard.pivot = new Vector2(0.5f, 0f);
+            _guideCard.anchoredPosition = new Vector2(0f, s.guidePointerSize);
+            _guideText = ui.CreateText("Text", _guideCard, true, s.guideTextSize, s.textDark, TextAnchor.MiddleCenter);
+            _guide.gameObject.SetActive(false);
 
             RectTransform keys = ui.CreateStack("Keys", Root, 0f, true, s.hudPadding / 2, s.keyRowSpacing);
             keys.GetComponent<Image>().color = s.hudPlateColor;
@@ -129,6 +151,28 @@ namespace LuckyStep
             _beadCount = carried;
             _beads.gameObject.SetActive(_beadCount >= 0);
             if (_beadCount >= 0) _beads.text = Localization.Format("hud.beads", _beadCount);
+        }
+
+        /// <summary>Shows the guide bubble with <paramref name="text"/> (already localized); null or empty hides it.</summary>
+        public void SetGuide(string text)
+        {
+            bool show = !string.IsNullOrEmpty(text);
+            _guide.gameObject.SetActive(show);
+            if (show) _guideText.text = text;
+        }
+
+        /// <summary>
+        /// Moves the guide bubble so its pointer touches <paramref name="screenPoint"/> (pixels), kept inside the screen
+        /// sideways. No allocation.
+        /// </summary>
+        public void PlaceGuide(Vector2 screenPoint)
+        {
+            if (!_guide.gameObject.activeSelf) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(Root, screenPoint, null, out Vector2 local)) return;
+            float half = Root.rect.width * 0.5f - Ui.Style.screenMargin - _guideCard.rect.width * 0.5f;
+            float shift = half > 0f ? Mathf.Clamp(local.x, -half, half) - local.x : 0f;
+            _guide.anchoredPosition = local;
+            _guideCard.anchoredPosition = new Vector2(shift, Ui.Style.guidePointerSize);
         }
 
         /// <summary>Shows the tutorial hint of <paramref name="levelId"/> (key hint.LevelId), or hides it when there is none.</summary>
