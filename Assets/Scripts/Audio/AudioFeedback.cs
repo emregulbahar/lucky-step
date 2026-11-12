@@ -61,6 +61,7 @@ namespace LuckyStep
             if (_controller != null) _controller.MoveBlocked += OnMoveBlocked;
             if (_ui != null) _ui.ButtonClicked += OnButtonClicked;
             if (_ui != null) _ui.GoldenPawnShown += OnGoldenPawnShown;
+            if (_ui != null) _ui.PromotionShown += OnGoldenPawnShown; // same bell for a new figure rank
         }
 
         private void OnDisable()
@@ -69,6 +70,7 @@ namespace LuckyStep
             if (_controller != null) _controller.MoveBlocked -= OnMoveBlocked;
             if (_ui != null) _ui.ButtonClicked -= OnButtonClicked;
             if (_ui != null) _ui.GoldenPawnShown -= OnGoldenPawnShown;
+            if (_ui != null) _ui.PromotionShown -= OnGoldenPawnShown;
         }
 
         private void Update()

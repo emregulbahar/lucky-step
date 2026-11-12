@@ -70,6 +70,25 @@ namespace LuckyStep
         /// <summary>Level ids in play order, for <see cref="Progress.IsUnlocked"/> (allocates).</summary>
         public List<string> LevelIds => Levels.ConvertAll(level => level.name);
 
+        /// <summary>Each world's level ids in play order, for <see cref="Progress.CompletedWorlds"/> (allocates).</summary>
+        public List<List<string>> WorldLevelIds
+        {
+            get
+            {
+                var result = new List<List<string>>();
+                foreach (World world in worlds)
+                {
+                    var ids = new List<string>();
+                    foreach (TextAsset level in world.levels)
+                    {
+                        if (level != null) ids.Add(level.name);
+                    }
+                    result.Add(ids);
+                }
+                return result;
+            }
+        }
+
         /// <summary>First level of the game, or null if the catalog is empty.</summary>
         public TextAsset First
         {

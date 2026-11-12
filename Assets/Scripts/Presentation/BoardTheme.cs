@@ -81,6 +81,60 @@ namespace LuckyStep
         /// <summary>World height of the figure's base disc.</summary>
         public float figureBaseHeight = 0.04f;
 
+        /// <summary>
+        /// Figure rank (progression spec 2026-11-12): base disc material per rank, index = worlds completed (wood,
+        /// bronze, silver, gold, glowing gold, glowing gold + star). Ranks past the end use the last entry; empty
+        /// falls back to <see cref="figureBase"/>.
+        /// </summary>
+        [Header("Figure rank (progression)")]
+        [Tooltip("Base disc material per rank (index = worlds completed).")]
+        public Material[] figureRanks;
+        /// <summary>Extra base diameter per rank, in grid cells (the base widens as the player climbs).</summary>
+        [Tooltip("Extra base diameter per rank, in grid cells.")]
+        public float figureBaseRankGrowth = 0.02f;
+        /// <summary>Lowest rank that shows the star above the figure's head.</summary>
+        [Tooltip("Lowest rank that shows the star above the figure's head.")]
+        public int rankStarFromRank = 5;
+        /// <summary>Material of the rank star (gold, smoothed-normal outline).</summary>
+        public Material rankStarMaterial;
+        /// <summary>Tip radius of the rank star, in world units.</summary>
+        [Tooltip("Tip radius of the rank star, in world units.")]
+        public float rankStarSize = 0.12f;
+        /// <summary>Gap between the top of the figure and the star's lowest point, in world units.</summary>
+        [Tooltip("Gap between the top of the figure and the star's lowest point, in world units.")]
+        public float rankStarGap = 0.06f;
+        /// <summary>How far the star sways left and right, in degrees (it always faces the camera side).</summary>
+        [Tooltip("How far the star sways left and right, in degrees (it always faces the camera side).")]
+        public float rankStarSwayDegrees = 30f;
+        /// <summary>Star sway speed in radians per second.</summary>
+        [Tooltip("Star sway speed in radians per second.")]
+        public float rankStarSwaySpeed = 2f;
+
+        /// <summary>Material of the win confetti (a vertex-coloured particle material; null = no confetti).</summary>
+        [Header("Win confetti")]
+        public Material confettiMaterial;
+        /// <summary>Confetti pieces per win burst (keep low for WebGL).</summary>
+        [Tooltip("Confetti pieces per win burst (keep low for WebGL).")]
+        public int confettiBurst = 36;
+        /// <summary>Start speed of a confetti piece.</summary>
+        [Tooltip("Start speed of a confetti piece.")]
+        public float confettiSpeed = 2.6f;
+        /// <summary>Width of a confetti piece (its height is half of it).</summary>
+        [Tooltip("Width of a confetti piece (its height is half of it).")]
+        public float confettiSize = 0.09f;
+        /// <summary>Lifetime of a confetti piece in seconds.</summary>
+        [Tooltip("Lifetime of a confetti piece in seconds.")]
+        public float confettiLifetime = 1.5f;
+        /// <summary>Gravity on the confetti (fraction of Physics.gravity).</summary>
+        [Tooltip("Gravity on the confetti (fraction of Physics.gravity).")]
+        public float confettiGravity = 0.45f;
+        /// <summary>Confetti colours; each piece picks one at random.</summary>
+        public Color[] confettiColors =
+        {
+            new Color(1f, 0.76f, 0.10f), new Color(0.09f, 0.65f, 0.63f), new Color(0.85f, 0.25f, 0.25f),
+            new Color(1f, 0.96f, 0.88f), new Color(0.40f, 0.55f, 0.95f),
+        };
+
         /// <summary>World size of one grid cell.</summary>
         [Header("Layout")]
         public float tileSize = 1f;

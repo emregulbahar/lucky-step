@@ -140,4 +140,44 @@ public sealed class ProgressTests
         Assert.IsFalse(progress.IsCompleted("Level01"));
         Assert.AreEqual(0, progress.GoldenPawnCount);
     }
+
+    private static readonly List<List<string>> Worlds = new List<List<string>>
+    {
+        new List<string> { "Level01", "Level02" },
+        new List<string> { "Level03", "Level04" },
+        new List<string>(),
+    };
+
+    [Test]
+    public void CompletedWorlds_NothingDone_Zero()
+    {
+        var progress = new Progress(new MemoryStore());
+
+        Assert.AreEqual(0, progress.CompletedWorlds(Worlds));
+    }
+
+    [Test]
+    public void CompletedWorlds_PartlyDoneWorld_NotCounted()
+    {
+        var progress = new Progress(new MemoryStore());
+
+        progress.MarkCompleted("Level01", 9, -1);
+        progress.MarkCompleted("Level03", 9, -1);
+
+        Assert.AreEqual(0, progress.CompletedWorlds(Worlds));
+    }
+
+    [Test]
+    public void CompletedWorlds_LaterWorldFirst_CountsAnyOrder()
+    {
+        var progress = new Progress(new MemoryStore());
+
+        progress.MarkCompleted("Level03", 9, -1);
+        progress.MarkCompleted("Level04", 9, -1);
+        Assert.AreEqual(1, progress.CompletedWorlds(Worlds));
+
+        progress.MarkCompleted("Level01", 9, -1);
+        progress.MarkCompleted("Level02", 9, -1);
+        Assert.AreEqual(2, progress.CompletedWorlds(Worlds), "an empty world never counts");
+    }
 }

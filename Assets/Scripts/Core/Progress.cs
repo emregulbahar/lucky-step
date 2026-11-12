@@ -89,6 +89,28 @@ namespace LuckyStep
         }
 
         /// <summary>
+        /// Figure rank (progression spec 2026-11-12): how many worlds have every level completed. Each entry of
+        /// <paramref name="worldLevelIds"/> is one world's level ids; a world with no levels never counts. Order does
+        /// not matter.
+        /// </summary>
+        public int CompletedWorlds(IEnumerable<IEnumerable<string>> worldLevelIds)
+        {
+            int count = 0;
+            foreach (IEnumerable<string> world in worldLevelIds)
+            {
+                bool any = false;
+                bool all = true;
+                foreach (string id in world)
+                {
+                    any = true;
+                    if (!_completed.Contains(id)) { all = false; break; }
+                }
+                if (any && all) count++;
+            }
+            return count;
+        }
+
+        /// <summary>
         /// Developer/review switch (QA arg <c>--unlock-all</c>): every catalog level counts as unlocked without being
         /// marked completed. Not saved.
         /// </summary>

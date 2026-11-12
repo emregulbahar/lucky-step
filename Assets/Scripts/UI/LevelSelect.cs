@@ -9,10 +9,12 @@ namespace LuckyStep
     /// <summary>
     /// Level select (Story 006): one row per world (its name, then a square button per level). Unlocked levels are gold
     /// with their number; locked ones are greyed cream with a lock and cannot be pressed; completed levels carry a tick
-    /// badge and Golden pawn levels a gold pawn badge. A world with no levels yet shows only its name. Back returns to
-    /// the menu. Built once from the catalog; <see cref="Refresh"/> re-reads progress and text.
+    /// badge and Golden pawn levels a gold pawn badge. A world with no levels yet shows only its name. Each world row
+    /// ends with its completed count ("4/6"); the legend shows Golden pawns earned out of those possible and the
+    /// figure's current base (progression spec 2026-11-12). Back returns to the menu. Built once from the catalog;
+    /// <see cref="Refresh"/> re-reads progress and text.
     /// </summary>
-    /// <example><code>var select = new LevelSelect(ui, catalog, progress); select.LevelChosen += StartLevel;</code></example>
+    /// <example><code>var select = new LevelSelect(ui, catalog, progress, () => rank); select.LevelChosen += StartLevel;</code></example>
     public sealed class LevelSelect : UiScreen
     {
         private sealed class Slot
@@ -30,6 +32,10 @@ namespace LuckyStep
         private readonly Progress _progress;
         private readonly List<Slot> _slots = new List<Slot>();
         private readonly List<Text> _worldLabels = new List<Text>();
+        private readonly List<Text> _worldCounts = new List<Text>();
+        private readonly Func<int> _rank;
+        private readonly Image _rankIcon;
+        private readonly Text _rankText;
         private readonly Text _title;
         private readonly Text _legend;
         private readonly Text _back;
@@ -41,11 +47,15 @@ namespace LuckyStep
         /// <summary>Back pressed.</summary>
         public event Action BackClicked;
 
-        /// <summary>Builds the screen (hidden) for every world and level in <paramref name="catalog"/>.</summary>
-        public LevelSelect(UiRoot ui, LevelCatalog catalog, Progress progress) : base(ui, "LevelSelect", ui.Style.dimColor)
+        /// <summary>
+        /// Builds the screen (hidden) for every world and level in <paramref name="catalog"/>; <paramref name="rank"/>
+        /// returns the figure rank shown in the legend.
+        /// </summary>
+        public LevelSelect(UiRoot ui, LevelCatalog catalog, Progress progress, Func<int> rank) : base(ui, "LevelSelect", ui.Style.dimColor)
         {
             _catalog = catalog;
             _progress = progress;
+            _rank = rank;
             UiStyle s = ui.Style;
             RectTransform card = ui.CreateStack("Card", Root, s.selectWidth, true, s.cardPadding, s.spacing);
             _title = ui.CreateText("Title", card, true, s.headingSize, s.goldText, TextAnchor.MiddleCenter);
@@ -63,11 +73,18 @@ namespace LuckyStep
                 {
                     if (level != null) _slots.Add(CreateSlot(row, level, ++number));
                 }
+                // Completed count: a numeral pair, not a translatable string.
+                Text count = ui.CreateText("Count", row, true, s.bodySize, s.goldText, TextAnchor.MiddleRight);
+                UiRoot.Size(count, s.worldCountWidth, -1f);
+                _worldCounts.Add(count);
             }
 
             RectTransform legend = ui.CreateRow("Legend", card, s.smallSpacing, TextAnchor.MiddleCenter);
             ui.CreateIcon("Pawn", legend, ui.PawnIcon, s.gold, s.legendIconSize, true);
             _legend = ui.CreateText("Text", legend, false, s.captionSize, s.textDark, TextAnchor.MiddleLeft);
+            UiRoot.Size(ui.CreateRect("Gap", legend), s.spacing * 2f, -1f);
+            _rankIcon = ui.CreateIcon("Base", legend, ui.BaseIcon, Color.white, s.rankIconSize, true);
+            _rankText = ui.CreateText("Rank", legend, true, s.captionSize, s.textDark, TextAnchor.MiddleLeft);
 
             RectTransform footer = ui.CreateRow("Footer", card, s.spacing, TextAnchor.MiddleCenter);
             _backButton = ui.CreateButton("Back", footer, false, s.smallButtonSize, out _back);
@@ -99,7 +116,27 @@ namespace LuckyStep
                 string name = Localization.Get("world." + (w + 1) + ".name");
                 _worldLabels[w].text = Localization.Format("levelselect.world_format", w + 1, name);
             }
+            for (int w = 0; w < _worldCounts.Count; w++)
+            {
+                int done = 0;
+                int total = 0;
+                foreach (TextAsset level in _catalog.Worlds[w].levels)
+                {
+                    if (level == null) continue;
+                    total++;
+                    if (_progress.IsCompleted(level.name)) done++;
+                }
+                _worldCounts[w].text = total > 0 ? done.ToString(CultureInfo.InvariantCulture) + "/" + total.ToString(CultureInfo.InvariantCulture) : string.Empty;
+            }
             List<string> ids = _catalog.LevelIds;
+            int pawns = 0;
+            int pawnsPossible = 0;
+            foreach (string id in ids)
+            {
+                if (_catalog.Par(id) < 0) continue; // worlds that hide par give no Golden pawn
+                pawnsPossible++;
+                if (_progress.HasGoldenPawn(id)) pawns++;
+            }
             foreach (Slot slot in _slots)
             {
                 string id = slot.Level.name;
@@ -111,7 +148,10 @@ namespace LuckyStep
                 slot.Tick.gameObject.SetActive(_progress.IsCompleted(id));
                 slot.Pawn.gameObject.SetActive(_progress.HasGoldenPawn(id));
             }
-            _legend.text = Localization.Get("levelselect.legend_golden_pawn");
+            _legend.text = Localization.Format("levelselect.legend_golden_pawn", pawns, pawnsPossible);
+            int rank = _rank != null ? _rank() : 0;
+            _rankIcon.color = Ui.Style.RankColor(rank);
+            _rankText.text = Localization.Format("levelselect.rank", Localization.Get("rank." + Mathf.Clamp(rank, 0, 5)));
             _back.text = Localization.Get("common.back");
         }
 

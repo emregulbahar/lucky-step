@@ -73,6 +73,9 @@ namespace LuckyStep
         public float badgeOffset = 12f;
         public float lockIconSize = 56f;
         public float legendIconSize = 40f;
+
+        /// <summary>Width of the completed count ("4/6") at the end of each world row.</summary>
+        public float worldCountWidth = 96f;
         public float rewardIconSize = 64f;
         public float dividerHeight = 8f;
         public float buttonLabelPadding = 16f;
@@ -128,7 +131,7 @@ namespace LuckyStep
 
         /// <summary>Wait after the winning move before the win panel opens, so the win animation plays.</summary>
         [Header("Timing (seconds, unscaled)")]
-        public float winPanelDelay = 1.0f;
+        public float winPanelDelay = 1.4f; // 1.0 hid the win confetti (progression spec 2026-11-12)
 
         /// <summary>Screen fade-in; 0 turns it off (reduced motion).</summary>
         public float fadeInSeconds = 0.2f;
@@ -181,5 +184,41 @@ namespace LuckyStep
         /// <summary>Banner padding in px, left/right and top/bottom (the card shadow inset is added on the right and bottom).</summary>
         public int goldenBannerPaddingX = 40;
         public int goldenBannerPaddingY = 8;
+
+        /// <summary>
+        /// Figure rank colours for the base icon (index = rank: wood, bronze, silver, gold, glowing gold, star gold),
+        /// matching BoardTheme.figureRanks on the board (progression spec 2026-11-12).
+        /// </summary>
+        [Header("Figure rank (progression)")]
+        public Color[] rankColors =
+        {
+            new Color(0.80f, 0.58f, 0.36f), new Color(0.80f, 0.47f, 0.22f), new Color(0.74f, 0.75f, 0.78f),
+            new Color(1f, 0.761f, 0.102f), new Color(1f, 0.84f, 0.30f), new Color(1f, 0.90f, 0.45f),
+        };
+
+        /// <summary>Promotion banner tint on the cream plate sprite (light teal: apart from the gold Golden pawn banner).</summary>
+        public Color promotionBannerColor = new Color(0.62f, 0.88f, 0.85f);
+
+        /// <summary>Base icon size on the promotion banner.</summary>
+        public float promotionIconSize = 96f;
+
+        /// <summary>Base icon size in the level select legend.</summary>
+        public float rankIconSize = 40f;
+
+        /// <summary>Wait after the panel opens before the promotion punch.</summary>
+        public float promotionDelaySeconds = 0.2f;
+
+        /// <summary>Extra wait when the Golden pawn banner plays first.</summary>
+        public float promotionAfterGoldenSeconds = 0.7f;
+
+        /// <summary>Seconds the base icon takes to change from the old rank's colour to the new one (after the punch).</summary>
+        public float promotionColorSeconds = 0.45f;
+
+        /// <summary>Returns the icon colour of <paramref name="rank"/> (clamped to the table; white if it is empty).</summary>
+        public Color RankColor(int rank)
+        {
+            if (rankColors == null || rankColors.Length == 0) return Color.white;
+            return rankColors[Mathf.Clamp(rank, 0, rankColors.Length - 1)];
+        }
     }
 }

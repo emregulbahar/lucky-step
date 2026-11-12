@@ -5,11 +5,11 @@
    radius) for UiStyle.slicedPixelsPerUnitMultiplier = 2, so they show at the stated sizes at 1080p. File names
    and sizes match the Kenney sprites they replace, so the 9-slice borders in BuildBoardScene.UiSpriteBorders
    (32 px; 40 px at the bottom of buttons) still fit: every corner, border and shadow lies inside 32 px.
-2. Three white 128x128 icons: a lock (locked level), a pawn (Golden pawn reward) and an up arrow (HUD arrow-key
+2. White 128x128 icons: a lock (locked level), a pawn (Golden pawn reward), a figure base (rank) and an up arrow (HUD arrow-key
    caps, rotated for the other directions); the UI tints them.
 Everything is drawn at 4x and box-downsampled for smooth edges.
 
-Usage: python -I tools/ui/make_ui_sprites.py Assets/Art/UI/Sprites
+Usage: python -I tools/ui/make_ui_sprites.py Assets/Art/UI/Sprites [base]
 """
 import sys
 from pathlib import Path
@@ -69,10 +69,25 @@ def arrow(path):
     img.resize((OUT, OUT), Image.LANCZOS).save(path)
 
 
+def base(path):
+    """Figure base disc seen from above at an angle: white top, light grey rim (the rank colour tints both)."""
+    rim = (196, 196, 196, 255)
+    img = Image.new("RGBA", (BIG, BIG), CLEAR)
+    d = ImageDraw.Draw(img)
+    d.ellipse((40, 196, 472, 412), fill=rim)  # bottom edge of the rim
+    d.rectangle((40, 250, 472, 304), fill=rim)
+    d.ellipse((40, 142, 472, 358), fill=WHITE)  # top face
+    img.resize((OUT, OUT), Image.LANCZOS).save(path)
+
+
 if __name__ == "__main__":
     out = Path(sys.argv[1])
-    for name, (size, face) in CARDS.items():
-        card(out / name, size, face)
-    lock(out / "icon_lock.png")
-    pawn(out / "icon_pawn.png")
-    arrow(out / "icon_arrow.png")
+    only = sys.argv[2] if len(sys.argv) > 2 else None  # e.g. "base": draw just that icon
+    if only is None:
+        for name, (size, face) in CARDS.items():
+            card(out / name, size, face)
+        lock(out / "icon_lock.png")
+        pawn(out / "icon_pawn.png")
+        arrow(out / "icon_arrow.png")
+    if only in (None, "base"):
+        base(out / "icon_base.png")

@@ -32,6 +32,8 @@ namespace LuckyStep
         [SerializeField] private Sprite _tickIcon;
         [SerializeField] private Sprite _pawnIcon;
         [SerializeField] private Sprite _arrowIcon;
+        [SerializeField] private Sprite _baseIcon;
+        [SerializeField] private BoardView _board;
         [SerializeField] private UiStyle _style = new UiStyle();
 
         private ScreenFlow _flow;
@@ -44,6 +46,12 @@ namespace LuckyStep
 
         /// <summary>Raises <see cref="GoldenPawnShown"/>.</summary>
         public void NotifyGoldenPawnShown() => GoldenPawnShown?.Invoke();
+
+        /// <summary>Raised when the win panel plays the promotion moment (a new figure rank; the bell hooks in here).</summary>
+        public event System.Action PromotionShown;
+
+        /// <summary>Raises <see cref="PromotionShown"/>.</summary>
+        public void NotifyPromotionShown() => PromotionShown?.Invoke();
 
         /// <summary>The player's music and effects volume (saved, except in QA runs).</summary>
         public VolumeSettings Volume { get; private set; }
@@ -78,6 +86,9 @@ namespace LuckyStep
         /// <summary>White up arrow (HUD arrow-key caps; rotate for other directions).</summary>
         public Sprite ArrowIcon => _arrowIcon;
 
+        /// <summary>White figure base icon (tinted with the rank colour).</summary>
+        public Sprite BaseIcon => _baseIcon;
+
         private void Awake()
         {
             if (_controller == null || _catalog == null || _titleFont == null || _bodyFont == null)
@@ -105,7 +116,7 @@ namespace LuckyStep
                     _fixedUiStep = 1f / QaArgs.CaptureFrameRate;
                 }
             }
-            _flow = new ScreenFlow(this, _controller, _catalog, new Progress(store));
+            _flow = new ScreenFlow(this, _controller, _catalog, new Progress(store), _board);
         }
 
         private void Start() => _flow.Begin();

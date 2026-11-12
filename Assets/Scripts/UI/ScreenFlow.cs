@@ -18,8 +18,10 @@ namespace LuckyStep
     /// </list>
     /// Player input is enabled only in Playing, from the frame after entering it, so the key that closed a screen does
     /// not also move the pawn. Every screen re-reads its text on <see cref="Localization.LanguageChanged"/>.
+    /// The figure rank (worlds completed, <see cref="Progress.CompletedWorlds"/>) is pushed to the board on every level
+    /// load; a win that raises it shows the promotion banner (progression spec 2026-11-12).
     /// </summary>
-    /// <example><code>var flow = new ScreenFlow(ui, controller, catalog, progress); flow.Begin(); /* Update: */ flow.Tick(Time.unscaledDeltaTime);</code></example>
+    /// <example><code>var flow = new ScreenFlow(ui, controller, catalog, progress, board); flow.Begin(); /* Update: */ flow.Tick(Time.unscaledDeltaTime);</code></example>
     public sealed class ScreenFlow : IDisposable
     {
         /// <summary>Screen states.</summary>
@@ -29,6 +31,7 @@ namespace LuckyStep
         private readonly PlayerInputController _controller;
         private readonly LevelCatalog _catalog;
         private readonly Progress _progress;
+        private readonly BoardView _board;
         private readonly Hud _hud;
         private readonly MainMenu _menu;
         private readonly LevelSelect _select;
@@ -47,17 +50,24 @@ namespace LuckyStep
         private int _winMoves;
         private int _winPar;
         private bool _winGolden;
+        private int _winRankBefore;
+        private int _winRankAfter;
+        private int _rankOverride = -1;
 
-        /// <summary>Builds every screen (hidden, HUD lowest) and subscribes to the controller and localization.</summary>
-        public ScreenFlow(UiRoot ui, PlayerInputController controller, LevelCatalog catalog, Progress progress)
+        /// <summary>
+        /// Builds every screen (hidden, HUD lowest) and subscribes to the controller and localization.
+        /// <paramref name="board"/> may be null (no figure rank on screen).
+        /// </summary>
+        public ScreenFlow(UiRoot ui, PlayerInputController controller, LevelCatalog catalog, Progress progress, BoardView board)
         {
             _ui = ui;
             _controller = controller;
             _catalog = catalog;
             _progress = progress;
+            _board = board;
             _hud = new Hud(ui);
             _menu = new MainMenu(ui);
-            _select = new LevelSelect(ui, catalog, progress);
+            _select = new LevelSelect(ui, catalog, progress, Rank);
             _story = new StoryCard(ui);
             _win = new WinPanel(ui);
             _settings = new SettingsPanel(ui, ui.Volume);
@@ -92,6 +102,9 @@ namespace LuckyStep
             else if (lang == "en") Localization.SetLanguage(Language.English);
             if (QaArgs.Has("--progress-demo")) ApplyProgressDemo();
             if (QaArgs.Has("--unlock-all")) _progress.UnlockAll = true; // review build: every level open, nothing saved
+            // QA: show the figure at this rank (base, star) without changing progress.
+            if (int.TryParse(QaArgs.Value("--rank"), out int rank)) _rankOverride = Mathf.Max(0, rank);
+            ApplyRank();
 
             TextAsset level = FindLevel(QaArgs.Value("--level"));
             string ui = QaArgs.Value("--ui");
@@ -126,6 +139,10 @@ namespace LuckyStep
                     break;
                 case "win":
                     int par = _catalog.Par(level.name);
+                    int now = Rank();
+                    // QA --promote: the panel shows the promotion from the rank below to the current one.
+                    _winRankBefore = QaArgs.Has("--promote") ? Mathf.Max(0, now - 1) : now;
+                    _winRankAfter = now;
                     ShowWinAfter(QaArgs.WinDelaySeconds, Mathf.Max(par, 0), par, par >= 0);
                     break;
                 default:
@@ -167,7 +184,8 @@ namespace LuckyStep
                         if (_winTimer < 0f)
                         {
                             _top = _win;
-                            _win.Show(_winMoves, _winPar, _winGolden, _catalog.Next(_controller.CurrentLevelFile) == null);
+                            _win.Show(_winMoves, _winPar, _winGolden, _catalog.Next(_controller.CurrentLevelFile) == null,
+                                _winRankBefore, _winRankAfter);
                         }
                     }
                     else if (_top == _win && !entered && BackPressed())
@@ -239,12 +257,23 @@ namespace LuckyStep
             if (_state != State.Playing) return;
             string id = _controller.CurrentLevelFile.name;
             int par = _catalog.Par(id);
+            _winRankBefore = Rank();
             bool golden = _progress.MarkCompleted(id, _controller.Moves, par);
+            _winRankAfter = Rank();
             ShowWinAfter(_ui.Style.winPanelDelay, _controller.Moves, par, golden);
+        }
+
+        /// <summary>Figure rank: worlds completed (or the QA <c>--rank</c> override).</summary>
+        private int Rank() => _rankOverride >= 0 ? _rankOverride : _progress.CompletedWorlds(_catalog.WorldLevelIds);
+
+        private void ApplyRank()
+        {
+            if (_board != null) _board.Rank = Rank();
         }
 
         private void OnLevelLoaded()
         {
+            ApplyRank(); // the new figure is built with the rank earned so far (a promotion shows from the next level)
             TextAsset level = _controller.CurrentLevelFile;
             int world = _catalog.WorldIndexOf(level);
             int index = world >= 0 ? Array.IndexOf(_catalog.Worlds[world].levels, level) : -1;

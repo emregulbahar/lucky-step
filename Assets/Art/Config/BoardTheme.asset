@@ -57,6 +57,32 @@ MonoBehaviour:
   figureBase: {fileID: 2100000, guid: 0a0338d4a6b050342a5b666ee30a8f2c, type: 2}
   figureBaseDiameter: 0.55
   figureBaseHeight: 0.04
+  figureRanks:
+  - {fileID: 2100000, guid: 8ad08639037970148a1ad543ec250ba1, type: 2}
+  - {fileID: 2100000, guid: 1aafc7ebf1ac30c43b3efb0a07c35e14, type: 2}
+  - {fileID: 2100000, guid: 780ec9bf56728b44d922066be7b6e8b3, type: 2}
+  - {fileID: 2100000, guid: a292eec68c4072c4c8030df39a9368ee, type: 2}
+  - {fileID: 2100000, guid: b8296396a163c6f47888576a3cc8e5ce, type: 2}
+  - {fileID: 2100000, guid: b8296396a163c6f47888576a3cc8e5ce, type: 2}
+  figureBaseRankGrowth: 0.02
+  rankStarFromRank: 5
+  rankStarMaterial: {fileID: 2100000, guid: 7a6693b6d39115242b152741878fc724, type: 2}
+  rankStarSize: 0.2
+  rankStarGap: 0.06
+  rankStarSwayDegrees: 30
+  rankStarSwaySpeed: 2
+  confettiMaterial: {fileID: 2100000, guid: 05c15147f07b9c54e823ec11b1b9dbff, type: 2}
+  confettiBurst: 40
+  confettiSpeed: 4.2
+  confettiSize: 0.16
+  confettiLifetime: 1.5
+  confettiGravity: 0.45
+  confettiColors:
+  - {r: 1, g: 0.76, b: 0.1, a: 1}
+  - {r: 0.09, g: 0.65, b: 0.63, a: 1}
+  - {r: 0.85, g: 0.25, b: 0.25, a: 1}
+  - {r: 1, g: 0.96, b: 0.88, a: 1}
+  - {r: 0.4, g: 0.55, b: 0.95, a: 1}
   tileSize: 1
   plateMargin: 0.22
   rimWidth: 0.16

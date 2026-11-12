@@ -206,6 +206,13 @@ public static class BuildBoardScene
         new Paint { Name = "Prop_Rope", Color = C(0.72f, 0.58f, 0.40f), Outline = 2f }, // flowerpot rope (Unity cylinders)
         // Kenney pieces and Unity primitives: outlined along mesh normals.
         new Paint { Name = "Token_Base", Color = Teal, Outline = Px }, // figure base disc (Unity cylinder)
+        // Figure rank bases (progression spec 2026-11-12), index = worlds completed; Unity cylinder, mesh-normal outline.
+        new Paint { Name = "Base_Wood", Color = C(0.80f, 0.58f, 0.36f), Outline = Px },
+        new Paint { Name = "Base_Bronze", Color = C(0.80f, 0.47f, 0.22f), Emission = C(0.06f, 0.03f, 0f), Outline = Px },
+        new Paint { Name = "Base_Silver", Color = C(0.74f, 0.75f, 0.78f), Emission = C(0.05f, 0.05f, 0.05f), Outline = Px },
+        new Paint { Name = "Base_Gold", Color = Gold, Outline = Px },
+        new Paint { Name = "Base_GoldGlow", Color = Gold, Emission = Hdr(1.2f, 0.05f, 0f), Outline = Px }, // gentler than GoldGlow
+        new Paint { Name = "Rank_Star", Color = Gold, Emission = GoldGlow, Outline = Px, SmoothNormals = true }, // StarMesh carries smoothed normals
         new Paint { Name = "Character_Paint", Color = Color.white, BaseMap = CharacterTexturePath, Outline = Px },
         new Paint { Name = "Cat_Black", Color = C(0.14f, 0.13f, 0.16f), BaseMap = CatTexturePath, Outline = Px, OutlineColor = Paper },
         new Paint { Name = "Paint_PotGlaze", Color = Red, Outline = Px },
@@ -505,6 +512,13 @@ public static class BuildBoardScene
         theme.boardPlate = mats["Wood_Plate"];
         theme.portalSpark = mats["Portal_Spark"];
         theme.figureBase = mats["Token_Base"];
+        theme.figureRanks = new[] { mats["Base_Wood"], mats["Base_Bronze"], mats["Base_Silver"], mats["Base_Gold"], mats["Base_GoldGlow"], mats["Base_GoldGlow"] };
+        theme.rankStarMaterial = mats["Rank_Star"];
+        theme.confettiSize = 0.16f; // 0.09 vanished at board distance (screenshot 2026-11-12)
+        theme.confettiSpeed = 4.2f;
+        theme.confettiBurst = 40;
+        theme.rankStarSize = 0.2f; // 0.12 read as a speck at board distance (screenshot 2026-11-12)
+        theme.confettiMaterial = CreateConfettiMaterial();
         theme.pawPrint = Model(ModelsFolder + "/paw_print.fbx");
         theme.pawPrintMaterial = mats["Paw_Print"];
         theme.pawPrintNextMaterial = mats["Paw_PrintNext"];
@@ -718,6 +732,7 @@ public static class BuildBoardScene
         SetRef(rig, "_volume", volume);
 
         UiRoot ui = BuildUi(controller);
+        SetRef(ui, "_board", board); // figure rank (progression)
         AudioFeedback sound = presentation.AddComponent<AudioFeedback>();
         SetRef(sound, "_board", board);
         SetRef(sound, "_controller", controller);
@@ -748,7 +763,31 @@ public static class BuildBoardScene
         SetRef(ui, "_tickIcon", Load<Sprite>(UiSpritesFolder + "/green_icon_checkmark.png"));
         SetRef(ui, "_pawnIcon", Load<Sprite>(UiSpritesFolder + "/icon_pawn.png"));
         SetRef(ui, "_arrowIcon", Load<Sprite>(UiSpritesFolder + "/icon_arrow.png"));
+        SetRef(ui, "_baseIcon", Load<Sprite>(UiSpritesFolder + "/icon_base.png"));
         return ui;
+    }
+
+    /// <summary>
+    /// Win confetti material: URP Particles/Unlit (opaque, white), so each piece shows its particle colour. The
+    /// LuckyStep/Toon and URP/Unlit palette materials ignore vertex colour, so this one is made apart from the palette.
+    /// </summary>
+    private static Material CreateConfettiMaterial()
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) throw new InvalidOperationException("URP Particles/Unlit shader not found.");
+        string path = MaterialsFolder + "/Confetti.mat";
+        Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null)
+        {
+            m = new Material(shader);
+            AssetDatabase.CreateAsset(m, path);
+        }
+        m.shader = shader;
+        m.SetColor("_BaseColor", Color.white);
+        m.SetFloat("_Cull", 0f); // paper: both sides
+        m.enableInstancing = true;
+        EditorUtility.SetDirty(m);
+        return m;
     }
 
     /// <summary>

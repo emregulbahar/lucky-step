@@ -57,6 +57,7 @@ namespace LuckyStep
         private float _figureTiltTarget;
         private bool _awaitingPotImpact;
         private Vector3 _figureScale = Vector3.one;
+        private float _figureFit = 1f;
         private FigureFx _figureFx;
         private float _figureFxT = 1f;
         private float _bumpT = 1f;
@@ -73,6 +74,11 @@ namespace LuckyStep
         private int _trackEnd;
         private Mover _token;
         private bool _tokenBeyond;
+        private int _rank;
+        private Renderer _baseDisc;
+        private Transform _star;
+        private Mesh _starMesh;
+        private ParticleSystem _confetti;
 
         /// <summary>
         /// Raised after the shown state changes: (previous, current, isForwardStep). previous is null for the first
@@ -117,6 +123,22 @@ namespace LuckyStep
         /// <see cref="Built"/> is raised; TableView picks the world's table decor from it.
         /// </summary>
         public int WorldIndex { get; private set; } = -1;
+
+        /// <summary>
+        /// Figure rank (progression spec 2026-11-12): worlds completed, 0-5. Picks the base disc's material and size
+        /// (BoardTheme.figureRanks) and, from BoardTheme.rankStarFromRank, the star above the head. Applies at once to
+        /// the figure on the board and to every later build; the UI sets it from Progress.
+        /// </summary>
+        /// <example><code>board.Rank = progress.CompletedWorlds(catalog.WorldLevelIds);</code></example>
+        public int Rank
+        {
+            get => _rank;
+            set
+            {
+                _rank = Mathf.Max(0, value);
+                ApplyRank();
+            }
+        }
 
         private void OnEnable()
         {
@@ -217,6 +239,7 @@ namespace LuckyStep
         private void OnDestroy()
         {
             DestroySpaceMeshes();
+            if (_starMesh != null) Destroy(_starMesh);
         }
 
         private void DestroySpaceMeshes()
@@ -250,6 +273,7 @@ namespace LuckyStep
             }
 
             BuildFigure(level);
+            _confetti = _portals.Count > 0 && _theme.confettiMaterial != null ? BuildConfetti() : null;
             _potDust = _pots.Count > 0 ? BuildCatPuff("Pot Dust") : null;
             _beadPuff = _beads.Count > 0 ? BuildCatPuff("Bead Puff") : null;
 
@@ -645,23 +669,119 @@ namespace LuckyStep
             _figureFxT = _bumpT = 1f;
 
             // Base disc: a flat cylinder under the feet (child of the figure, so it follows every move, tilt and fall).
-            if (_theme.figureBase != null)
+            // Its material and width come from the rank (ApplyRank).
+            _baseDisc = null;
+            _star = null;
+            _figureFit = Mathf.Max(0.0001f, figure.lossyScale.x);
+            if (_theme.figureBase != null || (_theme.figureRanks != null && _theme.figureRanks.Length > 0))
             {
                 GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "Base";
                 Destroy(disc.GetComponent<Collider>());
-                disc.GetComponent<Renderer>().sharedMaterial = _theme.figureBase;
-                float fit = Mathf.Max(0.0001f, figure.lossyScale.x);
                 disc.transform.SetParent(figure, false);
-                disc.transform.localScale = new Vector3(_theme.figureBaseDiameter / fit, _theme.figureBaseHeight * 0.5f / fit, _theme.figureBaseDiameter / fit);
-                disc.transform.localPosition = new Vector3(0f, _theme.figureBaseHeight * 0.5f / fit, 0f);
+                _baseDisc = disc.GetComponent<Renderer>();
             }
+
+            // Rank star: floats upright above the head and spins (shown from rankStarFromRank).
+            if (_theme.rankStarMaterial != null)
+            {
+                Bounds body = FigureRenderers.Length > 0 ? FigureRenderers[0].bounds : new Bounds(figure.position, Vector3.zero);
+                foreach (Renderer r in FigureRenderers) body.Encapsulate(r.bounds);
+                if (_starMesh == null) _starMesh = StarMesh.Create(1f, 0.45f, 0.36f);
+                var star = new GameObject("RankStar");
+                star.AddComponent<MeshFilter>().sharedMesh = _starMesh;
+                var starRenderer = star.AddComponent<MeshRenderer>();
+                starRenderer.sharedMaterial = _theme.rankStarMaterial;
+                starRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                star.transform.SetParent(figure, false);
+                star.transform.localScale = Vector3.one * (_theme.rankStarSize / _figureFit);
+                float top = body.max.y - figure.position.y + _theme.rankStarGap + _theme.rankStarSize;
+                star.transform.localPosition = new Vector3(0f, top / _figureFit, 0f);
+                _star = star.transform;
+            }
+            ApplyRank();
 
             _figureAnimation = figure.GetComponentInChildren<Animation>();
             _idleClip = FindClip(_figureAnimation, _theme.characterIdleClip);
             _walkClip = FindClip(_figureAnimation, _theme.characterWalkClip);
             _figureWalking = false;
             if (_idleClip != null) _figureAnimation.Play(_idleClip);
+        }
+
+        /// <summary>Puts the rank's material and width on the base disc and shows or hides the star.</summary>
+        private void ApplyRank()
+        {
+            if (_theme == null) return;
+            if (_baseDisc != null)
+            {
+                Material[] ranks = _theme.figureRanks;
+                Material m = ranks != null && ranks.Length > 0 ? ranks[Mathf.Min(_rank, ranks.Length - 1)] : _theme.figureBase;
+                if (m != null) _baseDisc.sharedMaterial = m;
+                float d = (_theme.figureBaseDiameter + _theme.figureBaseRankGrowth * _rank) / _figureFit;
+                float h = _theme.figureBaseHeight * 0.5f / _figureFit;
+                _baseDisc.transform.localScale = new Vector3(d, h, d);
+                _baseDisc.transform.localPosition = new Vector3(0f, h, 0f);
+            }
+            if (_star != null) _star.gameObject.SetActive(_rank >= _theme.rankStarFromRank);
+        }
+
+        /// <summary>One-shot confetti emitter for the win (pieces in the theme's colours, falling with gravity).</summary>
+        private ParticleSystem BuildConfetti()
+        {
+            var go = new GameObject("Confetti");
+            go.transform.SetParent(_root, false);
+            go.transform.rotation = Quaternion.Euler(-90f, 0f, 0f); // the cone opens upwards
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ParticleSystem.MainModule main = ps.main;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(_theme.confettiLifetime * 0.7f, _theme.confettiLifetime);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(_theme.confettiSpeed * 0.6f, _theme.confettiSpeed);
+            main.startSize3D = true;
+            main.startSizeX = new ParticleSystem.MinMaxCurve(_theme.confettiSize * 0.7f, _theme.confettiSize);
+            main.startSizeY = new ParticleSystem.MinMaxCurve(_theme.confettiSize * 0.35f, _theme.confettiSize * 0.5f);
+            main.startSizeZ = 1f;
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
+            main.maxParticles = Mathf.Max(1, _theme.confettiBurst);
+            main.gravityModifier = _theme.confettiGravity;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            Color[] colors = _theme.confettiColors;
+            if (colors != null && colors.Length > 0)
+            {
+                // Fixed-mode gradient sampled at random: every piece takes one of the listed colours exactly.
+                int n = Mathf.Min(8, colors.Length);
+                var keys = new GradientColorKey[n];
+                for (int i = 0; i < n; i++) keys[i] = new GradientColorKey(colors[i], (i + 1f) / n);
+                var gradient = new Gradient { mode = GradientMode.Fixed };
+                gradient.SetKeys(keys, new[] { new GradientAlphaKey(1f, 0f) });
+                main.startColor = new ParticleSystem.MinMaxGradient(gradient) { mode = ParticleSystemGradientMode.RandomColor };
+            }
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.rateOverTime = 0f;
+            ParticleSystem.ShapeModule shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 28f;
+            shape.radius = 0.15f;
+            ParticleSystem.RotationOverLifetimeModule spin = ps.rotationOverLifetime;
+            spin.enabled = true;
+            spin.z = new ParticleSystem.MinMaxCurve(-6f, 6f);
+            ParticleSystem.LimitVelocityOverLifetimeModule drag = ps.limitVelocityOverLifetime;
+            drag.enabled = true;
+            drag.limit = 1000f; // drag only: no speed cap (the module caps at 1 unit/s by default)
+            drag.dampen = 0f;
+            drag.multiplyDragByParticleSize = false;
+            drag.drag = 0.9f; // paper: slows quickly and flutters down
+            // Opaque material: pieces shrink away at the end instead of fading.
+            ParticleSystem.SizeOverLifetimeModule shrink = ps.sizeOverLifetime;
+            shrink.enabled = true;
+            shrink.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.8f, 1f), new Keyframe(1f, 0f)));
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = _theme.confettiMaterial;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            ps.Play();
+            return ps;
         }
 
         /// <summary>Name of the first legacy clip whose name contains <paramref name="part"/> (set to loop), or null.</summary>
@@ -828,7 +948,13 @@ namespace LuckyStep
                     {
                         foreach (PortalView portal in _portals)
                         {
-                            if (portal.X == _shown.X && portal.Y == _shown.Y) portal.Burst(_theme);
+                            if (portal.X != _shown.X || portal.Y != _shown.Y) continue;
+                            portal.Burst(_theme);
+                            if (_confetti != null)
+                            {
+                                _confetti.transform.position = portal.BurstPoint;
+                                _confetti.Emit(Mathf.Max(1, _theme.confettiBurst));
+                            }
                         }
                     }
                 }
@@ -842,6 +968,12 @@ namespace LuckyStep
             _figure.Offset = offset;
             _figure.Tick(dt);
             _figure.Root.localScale = _figureScale * fxScale;
+            // The star faces the camera side (-Z) whatever way the figure looks, and sways gently; a full spin would
+            // show it edge-on half the time.
+            if (_star != null && _star.gameObject.activeSelf)
+            {
+                _star.rotation = transform.rotation * Quaternion.Euler(0f, Mathf.Sin(Time.time * _theme.rankStarSwaySpeed) * _theme.rankStarSwayDegrees, 0f);
+            }
 
             _token.Tick(dt);
             float pulse = _tokenBeyond ? 1f + _theme.tokenPulseAmount * Mathf.Abs(Mathf.Sin(Time.time * _theme.tokenPulseSpeed)) : 1f;
@@ -1190,6 +1322,9 @@ namespace LuckyStep
 
             /// <summary>Ends a flicker at once; the disc is back to full size on the next Tick.</summary>
             public void CancelFlicker() => _flicker = 1f;
+
+            /// <summary>World position of the swirl's centre (where the win confetti starts).</summary>
+            public Vector3 BurstPoint => _disc.position;
 
             /// <summary>Sparks fly out of the ring in one burst (the figure has gone through).</summary>
             public void Burst(BoardTheme theme)
