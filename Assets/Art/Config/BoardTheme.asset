@@ -166,16 +166,263 @@ MonoBehaviour:
   portalBlockedSeconds: 0.35
   portalBlockedShrink: 0.35
   portalBlockedPulses: 3
-  tableFelt: {fileID: 2100000, guid: e67e2e3e754ea5842a73cccb049128e3, type: 2}
   tableRail: {fileID: 2100000, guid: 35f48b2365e13eb4dbcc9b4cb5d09fe9, type: 2}
-  tableMug: {fileID: 919132149155446097, guid: 3974cfd4313fd414187367e0d6f4111c, type: 3}
-  tableBox: {fileID: 919132149155446097, guid: 5920ecae22480d743992b70d6db177ea, type: 3}
-  tableDie: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
-  tableCardFan: {fileID: 919132149155446097, guid: cb0e277d102cc644d9f258f955bf730b, type: 3}
-  tableBooklet: {fileID: 919132149155446097, guid: 1df84f00eb6db7746902b7f0d0ca5924, type: 3}
-  tableDieSize: 0.42
-  cardFanSize: 1.15
-  bookletSize: 1.25
+  worldDecor:
+  - name: 1 Starting Square
+    surface: {fileID: 2100000, guid: e67e2e3e754ea5842a73cccb049128e3, type: 2}
+    surfaceTile: 0
+    keyColor: {r: 1, g: 1, b: 1, a: 1}
+    keyIntensity: 0.925
+    ambient: {r: 0.735, g: 0.735, b: 0.735, a: 1}
+    props:
+    - model: {fileID: 919132149155446097, guid: 3974cfd4313fd414187367e0d6f4111c, type: 3}
+      side: 0
+      gap: 1
+      along: 0.35
+      size: 0.8
+      sizeIsHeight: 1
+      yaw: 200
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 5920ecae22480d743992b70d6db177ea, type: 3}
+      side: 1
+      gap: 1
+      along: 0.1
+      size: 1.25
+      sizeIsHeight: 0
+      yaw: -14
+      frontWhenWide: 1
+      wideAlong: 0.7
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
+      side: 0
+      gap: 1.05
+      along: -0.45
+      size: 0.42
+      sizeIsHeight: 0
+      yaw: 23
+      frontWhenWide: 1
+      wideAlong: -0.75
+      wideFront: 0.2
+    - model: {fileID: 919132149155446097, guid: a86e9b7217714e542a637107604d68cd, type: 3}
+      side: 0
+      gap: 0.55
+      along: -0.75
+      size: 0.42
+      sizeIsHeight: 0
+      yaw: -38
+      frontWhenWide: 1
+      wideAlong: -0.6
+      wideFront: -0.15
+    - model: {fileID: 919132149155446097, guid: cb0e277d102cc644d9f258f955bf730b, type: 3}
+      side: 1
+      gap: 0.9
+      along: -0.7
+      size: 1.15
+      sizeIsHeight: 0
+      yaw: 12
+      frontWhenWide: 1
+      wideAlong: 0.25
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 1df84f00eb6db7746902b7f0d0ca5924, type: 3}
+      side: 2
+      gap: 0.75
+      along: -0.3
+      size: 1.25
+      sizeIsHeight: 0
+      yaw: -8
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+  - name: 2 Black Cat Alley
+    surface: {fileID: 2100000, guid: 5fd5e6c5a03c8024c9206036b1b1de77, type: 2}
+    surfaceTile: 0
+    keyColor: {r: 0.86, g: 0.91, b: 1, a: 1}
+    keyIntensity: 0.95
+    ambient: {r: 0.86, g: 0.72, b: 0.54, a: 1}
+    props:
+    - model: {fileID: 919132149155446097, guid: 4480244b48a5dbb4cad2130339f7d878, type: 3}
+      side: 0
+      gap: 1
+      along: 0.2
+      size: 0.62
+      sizeIsHeight: 0
+      yaw: 0
+      frontWhenWide: 1
+      wideAlong: -0.6
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: bb0cb575d15528f4a8f48133ad6eb51b, type: 3}
+      side: 1
+      gap: 1
+      along: -0.3
+      size: 0.44
+      sizeIsHeight: 0
+      yaw: 35
+      frontWhenWide: 1
+      wideAlong: 0.6
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: f45815b1dc88de444b96fbb7a2be6e5e, type: 3}
+      side: 2
+      gap: 0.9
+      along: 0.7
+      size: 1.1
+      sizeIsHeight: 1
+      yaw: 20
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+  - name: 3 Hall of Mirrors
+    surface: {fileID: 2100000, guid: 97271335ef2f97f42b87b31396e3eae4, type: 2}
+    surfaceTile: 0
+    keyColor: {r: 1, g: 0.89, b: 0.7, a: 1}
+    keyIntensity: 0.82
+    ambient: {r: 0.72, g: 0.6, b: 0.48, a: 1}
+    props:
+    - model: {fileID: 919132149155446097, guid: 92bff28f65dadd24bb1031d6814c7b08, type: 3}
+      side: 0
+      gap: 0.9
+      along: 0.4
+      size: 0.7
+      sizeIsHeight: 1
+      yaw: 0
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 1ef2315ed8c421d46a540170901a8149, type: 3}
+      side: 2
+      gap: 0.9
+      along: 0.6
+      size: 0.75
+      sizeIsHeight: 1
+      yaw: -20
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: ba57ccbc97454ae48b5a91987e6cefe2, type: 3}
+      side: 2
+      gap: 0.8
+      along: -0.55
+      size: 0.75
+      sizeIsHeight: 1
+      yaw: 0
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 79fe900ea662c2343a5dd656a429825c, type: 3}
+      side: 1
+      gap: 1
+      along: -0.3
+      size: 0.75
+      sizeIsHeight: 0
+      yaw: 30
+      frontWhenWide: 1
+      wideAlong: 0.55
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 92bff28f65dadd24bb1031d6814c7b08, type: 3}
+      side: 1
+      gap: 0.9
+      along: 0.5
+      size: 0.6
+      sizeIsHeight: 1
+      yaw: 40
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+  - name: 4 Chinese Neighbourhood
+    surface: {fileID: 2100000, guid: 747c3cc0216d9714eb48bf0e2d65b6f7, type: 2}
+    surfaceTile: 0
+    keyColor: {r: 1, g: 0.88, b: 0.82, a: 1}
+    keyIntensity: 0.92
+    ambient: {r: 0.82, g: 0.64, b: 0.57, a: 1}
+    props:
+    - model: {fileID: 919132149155446097, guid: d6049a61b61147846b7d723f94ba248b, type: 3}
+      side: 0
+      gap: 1
+      along: 0.3
+      size: 0.75
+      sizeIsHeight: 0
+      yaw: 10
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 4e30b2fec83aaa644893eaa7ab8324d5, type: 3}
+      side: 1
+      gap: 1
+      along: 0
+      size: 0.6
+      sizeIsHeight: 0
+      yaw: 15
+      frontWhenWide: 1
+      wideAlong: 0.6
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: cd088fa950581984a89fc6f6ac2ab4ec, type: 3}
+      side: 1
+      gap: 1.05
+      along: -0.45
+      size: 0.6
+      sizeIsHeight: 0
+      yaw: 80
+      frontWhenWide: 1
+      wideAlong: 0.35
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: cd088fa950581984a89fc6f6ac2ab4ec, type: 3}
+      side: 1
+      gap: 1.15
+      along: -0.5
+      size: 0.6
+      sizeIsHeight: 0
+      yaw: 86
+      frontWhenWide: 1
+      wideAlong: 0.38
+      wideFront: -0.08
+    - model: {fileID: 919132149155446097, guid: 5791519c9b1191f43bcda59df157a870, type: 3}
+      side: 0
+      gap: 0.8
+      along: -0.5
+      size: 0.38
+      sizeIsHeight: 0
+      yaw: -30
+      frontWhenWide: 1
+      wideAlong: -0.6
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 8fba3dde82ca3384bae5958a9a09351b, type: 3}
+      side: 2
+      gap: 0.9
+      along: -0.5
+      size: 0.75
+      sizeIsHeight: 1
+      yaw: 0
+      frontWhenWide: 0
+      wideAlong: 0
+      wideFront: 0
+  - name: 5 Old Bazaar
+    surface: {fileID: 2100000, guid: ac635a393225b9646a97b50302e7ac17, type: 2}
+    surfaceTile: 1.4
+    keyColor: {r: 1, g: 0.9, b: 0.72, a: 1}
+    keyIntensity: 0.92
+    ambient: {r: 0.82, g: 0.7, b: 0.52, a: 1}
+    props:
+    - model: {fileID: 919132149155446097, guid: 0a35295e8846d0d4c9d909b674687e1c, type: 3}
+      side: 1
+      gap: 1.05
+      along: 0
+      size: 1
+      sizeIsHeight: 0
+      yaw: 0
+      frontWhenWide: 1
+      wideAlong: 0.55
+      wideFront: 0
+    - model: {fileID: 919132149155446097, guid: 5a9a19e80cc9f034abc41e4b40c71d96, type: 3}
+      side: 0
+      gap: 1
+      along: -0.4
+      size: 0.45
+      sizeIsHeight: 0
+      yaw: 15
+      frontWhenWide: 1
+      wideAlong: -0.6
+      wideFront: 0
   wideBoardAspect: 2.3
   framePropPad: 1.4
   tableMarginFar: 6
@@ -184,8 +431,4 @@ MonoBehaviour:
   tableRailWidth: 0.6
   tableRailHeight: 0.16
   propGap: 1
-  mugHeight: 0.8
-  mugYaw: 200
-  boxSize: 1.25
-  boxYaw: -14
   builderVersion: 10

@@ -340,27 +340,14 @@ namespace LuckyStep
         [Tooltip("Shrink pulses in one closed-exit flicker (they fade out over the flicker).")]
         public float portalBlockedPulses = 3f;
 
-        /// <summary>Green felt top of the card table (TableView).</summary>
+        /// <summary>Wooden rail around the table top (every world).</summary>
         [Header("Card table (TableView, decoration only)")]
-        public Material tableFelt;
-        /// <summary>Wooden rail around the felt.</summary>
         public Material tableRail;
-        /// <summary>Mug prop left of the board (bottom at its origin).</summary>
-        public GameObject tableMug;
-        /// <summary>Closed game box prop right of the board.</summary>
-        public GameObject tableBox;
-        /// <summary>Die props (two) in front of the mug.</summary>
-        public GameObject tableDie;
-        /// <summary>Fan of face-down cards in front of the game box.</summary>
-        public GameObject tableCardFan;
-        /// <summary>Rule booklet beyond the board's far edge.</summary>
-        public GameObject tableBooklet;
-        /// <summary>Die prop edge length.</summary>
-        public float tableDieSize = 0.42f;
-        /// <summary>Card fan footprint (longest side).</summary>
-        public float cardFanSize = 1.15f;
-        /// <summary>Rule booklet footprint (longest side).</summary>
-        public float bookletSize = 1.25f;
+        /// <summary>
+        /// Per-world table look (index = world index in the LevelCatalog; unknown levels use entry 0): table surface,
+        /// light colours and the props beside the board. Written by Assets/Editor/BuildBoardScene.cs.
+        /// </summary>
+        public WorldDecor[] worldDecor;
         /// <summary>Grid width / height (walls included) from which a board counts as wide: its side props move in front.</summary>
         public float wideBoardAspect = 2.3f;
         /// <summary>Felt the camera keeps beside a non-wide board, per side, so the side props stay in frame.</summary>
@@ -375,18 +362,82 @@ namespace LuckyStep
         public float tableRailWidth = 0.6f;
         /// <summary>Height of the rail's top above the felt.</summary>
         public float tableRailHeight = 0.16f;
-        /// <summary>Distance from the board's side to a prop's centre.</summary>
+        /// <summary>Distance from the board's side to a prop's centre (TableProp.gap multiplies it).</summary>
         public float propGap = 1.0f;
-        /// <summary>Mug height.</summary>
-        public float mugHeight = 0.8f;
-        /// <summary>Mug yaw in degrees (turns the handle).</summary>
-        public float mugYaw = 200f;
-        /// <summary>Footprint side of the game box.</summary>
-        public float boxSize = 1.25f;
-        /// <summary>Game box yaw in degrees.</summary>
-        public float boxYaw = -14f;
 
         /// <summary>Layout version last written by the scene builder; it resets tunables when the layout changes.</summary>
         [HideInInspector] public int builderVersion;
+    }
+
+    /// <summary>Side of the board a table prop stands on (Far = beyond the board's far edge, away from the camera).</summary>
+    public enum TableSide
+    {
+        Left,
+        Right,
+        Far
+    }
+
+    /// <summary>
+    /// One world's table (world table themes, design/quick-specs/world-table-themes-addition-2026-11-12.md): the
+    /// surface material, the key light and ambient (fill) colours, and the props. Pure decoration.
+    /// Example: <c>theme.worldDecor[1].keyColor</c> is Black Cat Alley's cool moonlight.
+    /// </summary>
+    [System.Serializable]
+    public sealed class WorldDecor
+    {
+        /// <summary>Inspector label only (the world's name).</summary>
+        public string name;
+        /// <summary>Table top material; its colour is the surface tint (set by the scene builder's palette).</summary>
+        public Material surface;
+        /// <summary>
+        /// World units per repeat of the surface texture (patterned cloth); 0 stretches the texture once over the
+        /// whole top (felt with its lamp pool).
+        /// </summary>
+        public float surfaceTile;
+        /// <summary>Colour of the scene's directional key light (the only light the Toon shader reads).</summary>
+        public Color keyColor = Color.white;
+        /// <summary>Intensity of the key light; key + 0.15 * ambient = 1 prints palette colours as authored.</summary>
+        public float keyIntensity = 0.925f;
+        /// <summary>
+        /// Flat ambient colour. The Toon shader ignores additional lights, so this is the world's fill: it lifts the
+        /// shade band (lit = base * key + base * ambient * 0.15).
+        /// </summary>
+        public Color ambient = new Color(0.735f, 0.735f, 0.735f);
+        /// <summary>Props beside, in front of or beyond the board (WebGL budget: at most 6).</summary>
+        public TableProp[] props;
+    }
+
+    /// <summary>
+    /// One table prop and where it goes. Left/Right props stand <c>gap * propGap</c> beside the board's side at
+    /// <c>along</c> times its half depth from the centre (+ = far, - = near: left-back is Left with along &gt; 0).
+    /// Far props stand <c>gap * propGap</c> beyond the far edge at <c>along</c> times the half width (+ = right).
+    /// On a wide board (BoardView.IsWide) a prop with <c>frontWhenWide</c> moves to the row in front of the board.
+    /// </summary>
+    [System.Serializable]
+    public sealed class TableProp
+    {
+        /// <summary>Model (bottom-centre placed on the table top by ModelFit).</summary>
+        public GameObject model;
+        /// <summary>Side of the board.</summary>
+        public TableSide side;
+        /// <summary>Distance out from the board's edge, in units of BoardTheme.propGap.</summary>
+        public float gap = 1f;
+        /// <summary>Position along the side, as a fraction of the board's half extent (see the class summary).</summary>
+        public float along;
+        /// <summary>Fitted size: the footprint's longest side, or the height if <see cref="sizeIsHeight"/>.</summary>
+        public float size = 0.5f;
+        /// <summary>True: <see cref="size"/> is the prop's height (tall props); false: its footprint.</summary>
+        public bool sizeIsHeight;
+        /// <summary>Yaw in degrees.</summary>
+        public float yaw;
+        /// <summary>
+        /// Wide boards leave the sides off-screen: move this prop to the row in front of the board. Keep it false for
+        /// tall props, which would hide the board's near edge from the camera.
+        /// </summary>
+        public bool frontWhenWide;
+        /// <summary>Front-row x, as a fraction of the board's half width from its centre (+ = right).</summary>
+        public float wideAlong;
+        /// <summary>Front-row z offset in world units (+ = towards the board).</summary>
+        public float wideFront;
     }
 }

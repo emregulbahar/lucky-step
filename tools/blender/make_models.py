@@ -3,7 +3,8 @@
 Builds the low-poly board pieces and exports one FBX per piece:
 die, coin, spike, tile_floor, tile_gap, rim_bar, wall_cards, wall_chips, wall_box, mirror,
 portal_frame, portal_disc, paw_print, mug, card_fan, rule_booklet (table props; and pawn, kept but no longer used by the game),
-bead (evil-eye bead, World 5) and tile_wood (three nailed planks laid on a space, World 5).
+bead (evil-eye bead, World 5) and tile_wood (three nailed planks laid on a space, World 5), and the world table props
+(world table themes): milk_saucer, yarn_ball, street_lantern, candlestick, hand_mirror, paper_lantern, tea_tray, nazar_charm.
 
 Run headless (Blender 5.1):
     blender.exe --background --python tools/blender/make_models.py [-- <output_dir>]
@@ -67,6 +68,19 @@ PREVIEW_COLOURS = {
     "BeadBlue": (0.12, 0.31, 0.75),
     "BeadLight": (0.49, 0.78, 0.95),
     "Plank": (0.84, 0.62, 0.38),
+    # World table props (world table themes 2026-11-12).
+    "Milk": (0.97, 0.96, 0.92),
+    "Yarn": (0.85, 0.51, 0.23),
+    "YarnLine": (0.66, 0.37, 0.13),
+    "LanternGlass": (1.00, 0.85, 0.50),
+    "MetalDark": (0.36, 0.42, 0.46),
+    "Brass": (0.71, 0.54, 0.23),
+    "Wax": (0.94, 0.89, 0.78),
+    "Flame": (1.00, 0.78, 0.35),
+    "LanternPaper": (0.77, 0.20, 0.17),
+    "Copper": (0.78, 0.45, 0.25),
+    "Tea": (0.61, 0.23, 0.10),
+    "Glass": (0.62, 0.72, 0.78),
 }
 
 
@@ -193,9 +207,10 @@ class Piece:
                               radius1=radius, radius2=radius, depth=depth, matrix=m)
         self._tag(before, mat_name)
 
-    def ring(self, mat_name, major, minor, centre, major_seg=28, minor_seg=8):
-        """Torus standing upright in the XZ plane (axis along Y)."""
+    def ring(self, mat_name, major, minor, centre, major_seg=28, minor_seg=8, rot=None):
+        """Torus standing upright in the XZ plane (axis along Y); rot (3x3) turns it about its centre."""
         before = set(self.bm.faces)
+        before_verts = set(self.bm.verts)
         grid = []
         for i in range(major_seg):
             a = 2.0 * math.pi * i / major_seg
@@ -210,7 +225,25 @@ class Piece:
             for j in range(minor_seg):
                 i2, j2 = (i + 1) % major_seg, (j + 1) % minor_seg
                 self.bm.faces.new((grid[i][j], grid[i2][j], grid[i2][j2], grid[i][j2]))
+        if rot is not None:
+            new_verts = [v for v in self.bm.verts if v not in before_verts]
+            bmesh.ops.rotate(self.bm, verts=new_verts, cent=Vector(centre), matrix=rot)
         self._tag(before, mat_name)
+
+    def lathe(self, profile, mats, top=None, x=0.0, y=0.0, seg=SEG):
+        """Turned piece as ONE closed shell: profile = [(z, r), ...] bottom to top (r > 0), mats[k] colours the band
+        from profile[k] to profile[k+1]; bottom cap takes mats[0], top cap `top` (default mats[-1]). No inner caps, so
+        the baked outline normals stay smooth across bands (like banded_prism)."""
+        bm = self.bm
+        rings = [[bm.verts.new((x + r * math.cos(2 * math.pi * k / seg), y + r * math.sin(2 * math.pi * k / seg), z))
+                  for k in range(seg)] for z, r in profile]
+        for k, mat in enumerate(mats):
+            idx = self._slot(mat)
+            lo, hi = rings[k], rings[k + 1]
+            for i in range(seg):
+                bm.faces.new((lo[i], lo[(i + 1) % seg], hi[(i + 1) % seg], hi[i])).material_index = idx
+        bm.faces.new(tuple(reversed(rings[0]))).material_index = self._slot(mats[0])
+        bm.faces.new(tuple(rings[-1])).material_index = self._slot(top or mats[-1])
 
     def swirl_disc(self, mats, radius, centre, arms=6, rings=4, twist=1.6, seg=36):
         """Double-sided flat disc in the XZ plane with spiral arms alternating between two materials."""
@@ -582,6 +615,99 @@ def make_tile_wood():
     return p.build(sharp_angle_deg=30.0, outline=True)
 
 
+# ---- World table props (world table themes 2026-11-12): decoration beside the board, bottom at z=0. ----
+
+def make_milk_saucer():
+    """World 2: a cream saucer of milk for the alley cat."""
+    p = Piece("milk_saucer")
+    p.lathe([(0.0, 0.17), (0.02, 0.24), (0.045, 0.29)], ["MugBody", "MugBody"], top="Milk", seg=28)
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_yarn_ball():
+    """World 2: a ball of yarn with wound strands and a loose end."""
+    p = Piece("yarn_ball")
+    r = 0.2
+    p.sphere("Yarn", r, (0.0, 0.0, r), u=16, v=10)
+    for axis, deg in (("X", 0.0), ("X", 60.0), ("X", -60.0), ("Z", 90.0)):
+        rot = Matrix.Rotation(math.radians(deg), 3, axis)
+        p.ring("YarnLine", r - 0.002, 0.014, (0.0, 0.0, r), major_seg=24, minor_seg=6, rot=rot)
+    p.box("YarnLine", (0.03, 0.26, 0.02), (0.05, -0.2, 0.01), rot=Matrix.Rotation(math.radians(20), 4, 'Z'))
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_street_lantern():
+    """World 2: a small street lantern (dark iron post, warm glass box, pyramid roof); about 0.9 tall."""
+    p = Piece("street_lantern")
+    p.box("MetalDark", (0.24, 0.24, 0.04), (0, 0, 0.02), bevel=0.008)
+    p.cone("MetalDark", 0.035, 0.028, 0.04, 0.56, seg=10)
+    p.box("MetalDark", (0.2, 0.2, 0.025), (0, 0, 0.5725))
+    p.box("LanternGlass", (0.15, 0.15, 0.19), (0, 0, 0.68))
+    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        p.box("MetalDark", (0.025, 0.025, 0.2), (sx * 0.08, sy * 0.08, 0.68))
+    p.cone("MetalDark", 0.17, 0.0, 0.775, 0.88, seg=4)
+    p.sphere("MetalDark", 0.025, (0, 0, 0.895), u=8, v=4)
+    return p.build(sharp_angle_deg=35.0, outline=True)
+
+
+def make_candlestick():
+    """World 3: a brass candlestick with a lit wax candle."""
+    p = Piece("candlestick")
+    p.lathe([(0.0, 0.14), (0.03, 0.13), (0.06, 0.05), (0.28, 0.03), (0.3, 0.075), (0.32, 0.075)],
+            ["Brass"] * 5, top="Brass", seg=20)
+    p.lathe([(0.32, 0.036), (0.62, 0.036)], ["Wax"], seg=16)
+    p.cone("Flame", 0.026, 0.0, 0.63, 0.72, seg=10)
+    p.sphere("Flame", 0.026, (0, 0, 0.645), u=10, v=5)
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_hand_mirror():
+    """World 3: a hand mirror lying face up: brass oval frame and handle, pale glass."""
+    p = Piece("hand_mirror")
+    oval = Matrix.Diagonal((1.0, 1.25, 1.0, 1.0))
+    p.disc("Brass", 0.2, 0.03, (0, 0.12, 0.015), "z", seg=24)
+    p.disc("MirrorGlass", 0.17, 0.034, (0, 0.12, 0.017), "z", seg=24)
+    bmesh.ops.transform(p.bm, matrix=Matrix.Translation((0, 0.12, 0)) @ oval @ Matrix.Translation((0, -0.12, 0)),
+                        verts=list(p.bm.verts))
+    p.box("Brass", (0.065, 0.34, 0.03), (0, -0.27, 0.015), bevel=0.008)
+    p.sphere("Brass", 0.045, (0, -0.46, 0.03), u=10, v=5)
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_paper_lantern():
+    """World 4: a round red paper lantern standing on a gold cap, gold top and dark ribs."""
+    p = Piece("paper_lantern")
+    p.lathe([(0.0, 0.08), (0.05, 0.08)], ["Gold"], seg=16)
+    p.lathe([(0.05, 0.1), (0.12, 0.18), (0.24, 0.215), (0.36, 0.18), (0.43, 0.1)], ["LanternPaper"] * 4, seg=16)
+    p.lathe([(0.43, 0.08), (0.48, 0.07)], ["Gold"], seg=16)
+    p.ring("Gold", 0.035, 0.01, (0, 0, 0.51), major_seg=12, minor_seg=6)
+    for z, r in ((0.12, 0.18), (0.24, 0.215), (0.36, 0.18)):
+        p.ring("PipBlack", r + 0.002, 0.007, (0, 0, z), major_seg=16, minor_seg=4,
+               rot=Matrix.Rotation(math.radians(90), 3, 'X'))
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_tea_tray():
+    """World 5: a round copper tray with three tulip tea glasses on small saucers."""
+    p = Piece("tea_tray")
+    p.lathe([(0.0, 0.4), (0.02, 0.42), (0.05, 0.44)], ["Copper", "Copper"], seg=32)
+    for gx, gy in ((-0.17, -0.08), (0.17, -0.06), (0.0, 0.17)):
+        p.lathe([(0.05, 0.07), (0.065, 0.09)], ["Ivory"], x=gx, y=gy, seg=16)
+        p.lathe([(0.065, 0.035), (0.11, 0.05), (0.16, 0.032), (0.2, 0.045), (0.23, 0.055)],
+                ["Tea", "Tea", "Glass", "Glass"], top="Tea", x=gx, y=gy, seg=16)
+    return p.build(sharp_angle_deg=40.0, outline=True)
+
+
+def make_nazar_charm():
+    """World 5: a large evil-eye charm lying flat on the table with a gold loop (flat, unlike the upright bead)."""
+    p = Piece("nazar_charm")
+    for r, depth, mat in ((0.22, 0.04, "BeadBlue"), (0.15, 0.044, "Ivory"), (0.1, 0.048, "BeadLight"), (0.05, 0.052, "PipBlack")):
+        p.disc(mat, r, depth, (0, 0, 0.02), "z", seg=28)
+    p.ring("Gold", 0.045, 0.012, (0, 0.26, 0.012), major_seg=14, minor_seg=6,
+           rot=Matrix.Rotation(math.radians(90), 3, 'X'))
+    return p.build(sharp_angle_deg=30.0, outline=True)
+
+
 def export(obj, out_dir):
     bpy.ops.object.select_all(action='DESELECT')
     obj.select_set(True)
@@ -603,7 +729,8 @@ def main():
     for make in (make_pawn, make_die, make_coin, make_spike, make_tile_floor, make_tile_gap, make_rim_bar,
                  make_wall_cards, make_wall_chips, make_wall_box, make_mirror, make_portal_frame,
                  make_portal_disc, make_paw_print, make_mug, make_bead, make_tile_wood, make_card_fan,
-                 make_rule_booklet):
+                 make_rule_booklet, make_milk_saucer, make_yarn_ball, make_street_lantern, make_candlestick,
+                 make_hand_mirror, make_paper_lantern, make_tea_tray, make_nazar_charm):
         export(make(), out_dir)
 
 

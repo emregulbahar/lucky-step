@@ -28,6 +28,7 @@ public static class BuildBoardScene
     private const string ConfigFolder = "Assets/Art/Config";
     private const string ModelsFolder = "Assets/Art/Models";
     private const string KenneyFolder = "Assets/Art/Kenney";
+    private const string KayKitFolder = "Assets/Art/KayKit"; // world table themes: KayKit Dungeon candles (CC0)
     private const string ProfilePath = "Assets/Art/Config/BoardVolumeProfile.asset";
     private const string ThemePath = "Assets/Art/Config/BoardTheme.asset";
     private const string FeedbackPath = "Assets/Art/Config/StepFeedbackConfig.asset";
@@ -37,6 +38,10 @@ public static class BuildBoardScene
     private const string CatTexturePath = "Assets/Art/Kenney/CubePets/Textures/colormap.png";
     private const string CharacterTexturePath = "Assets/Art/Kenney/MiniCharacters/Textures/colormap.png";
     private const string CharacterFolderTag = "/MiniCharacters/";
+    // World table themes: Kenney Food Kit and KayKit models use one texture atlas each (slots "colormap" / "texture").
+    private const string FoodFolderTag = "/FoodKit/";
+    private const string FoodTexturePath = "Assets/Art/Kenney/FoodKit/Textures/colormap.png";
+    private const string KayKitTexturePath = "Assets/Art/KayKit/DungeonPack/dungeon_texture.png";
     private const string GeneratedFolder = "Assets/Art/Generated";
     // Score-track numbers in Fredoka Bold (tools/textures/make_track_atlas.py), layout in TrackAtlas.
     private const string TrackAtlasPath = "Assets/Art/Generated/TrackAtlas.png";
@@ -45,6 +50,7 @@ public static class BuildBoardScene
     private const string PrintHazardPath = "Assets/Art/Generated/PrintHazard.png";
     private const string TableFeltPath = "Assets/Art/Generated/TableFelt.png";
     private const string BoxLogoPath = "Assets/Art/Generated/BoxLogo.png"; // look pass 2: game-box lid logo
+    private const string TableKilimPath = "Assets/Art/Generated/TableKilim.png"; // World 5 table cloth, tiles (Repeat)
     private const string ToonShaderName = "LuckyStep/Toon";
 
     // Bump when BoardTheme's layout defaults change: the builder then resets the theme's tunables to the code defaults.
@@ -75,6 +81,11 @@ public static class BuildBoardScene
         C(0.937f, 0.690f, 0.682f), // #EFB0AE W4 rose (Chinese neighbourhood)
         C(0.706f, 0.867f, 0.827f), // #B4DDD3 W5 turquoise tile (Old Bazaar)
     };
+    // World table themes (design/quick-specs/world-table-themes-addition-2026-11-12.md). Starting values for
+    // art-director review: table tops stay dark and muted so the printed board and its hazards stay the loudest.
+    private static readonly Color FeltNavy = C(0.153f, 0.212f, 0.341f); // #273657 W2 Black Cat Alley
+    private static readonly Color Velvet = C(0.353f, 0.192f, 0.420f);   // #5A316B W3 Hall of Mirrors
+    private static readonly Color Lacquer = C(0.431f, 0.102f, 0.102f);  // #6E1A1A W4 oxblood lacquer (darker than hazard red)
     private static readonly Color Background = C(0.125f, 0.090f, 0.071f); // #201712 floor beyond the table
     private static readonly Color Red = C(0.886f, 0.231f, 0.231f);        // #E23B3B hazard
     private static readonly Color Gold = C(1f, 0.761f, 0.102f);           // #FFC21A lucky, the only bloom
@@ -134,6 +145,12 @@ public static class BuildBoardScene
         // Card table (TableView): background surfaces, no outline.
         new Paint { Name = "Table_Felt", Color = Felt, BaseMap = TableFeltPath },
         new Paint { Name = "Table_Rail", Color = TableWood },
+        // World table themes: one table top per world (Table_Felt above is World 1). Felt-like tops reuse the felt
+        // texture's lamp pool; the kilim is a full-colour tiling texture (tint white, tiled by WorldDecor.surfaceTile).
+        new Paint { Name = "Table_FeltNavy", Color = FeltNavy, BaseMap = TableFeltPath },
+        new Paint { Name = "Table_Velvet", Color = Velvet, BaseMap = TableFeltPath },
+        new Paint { Name = "Table_Lacquer", Color = Lacquer, BaseMap = TableFeltPath },
+        new Paint { Name = "Table_Kilim", Color = C(0.70f, 0.62f, 0.56f), BaseMap = TableKilimPath }, // tinted down: the cloth must stay quieter than the board
         new Paint { Name = "Paw_Print", Color = C(0.25f, 0.27f, 0.40f) },
         new Paint { Name = "Paw_PrintNext", Color = Gold, Emission = C(0.25f, 0.17f, 0f) },
         // Score track: number atlas (lucky colours are baked into the atlas, so its tint is white).
@@ -174,6 +191,18 @@ public static class BuildBoardScene
         new Paint { Name = "Paint_Pawn", Color = Red, Outline = Px, SmoothNormals = true },
         new Paint { Name = "Prop_Mug", Color = C(0.96f, 0.93f, 0.86f), Outline = Px, SmoothNormals = true },
         new Paint { Name = "Prop_Coffee", Color = C(0.36f, 0.22f, 0.13f) },
+        // World table props (own Blender models, tools/blender/make_models.py).
+        new Paint { Name = "Prop_Milk", Color = C(0.97f, 0.96f, 0.92f) }, // flat milk surface in the saucer
+        new Paint { Name = "Prop_Yarn", Color = C(0.851f, 0.510f, 0.231f), Outline = Px, SmoothNormals = true }, // #D9823B
+        new Paint { Name = "Prop_YarnLine", Color = C(0.659f, 0.369f, 0.133f), Outline = Px, SmoothNormals = true }, // #A85E22
+        new Paint { Name = "Prop_LanternGlass", Color = C(1f, 0.85f, 0.5f), Emission = C(0.22f, 0.15f, 0.02f), Outline = Px, SmoothNormals = true }, // under the bloom threshold
+        new Paint { Name = "Prop_Flame", Color = C(1f, 0.78f, 0.35f), Emission = C(0.3f, 0.18f, 0f) }, // candle flame, under the bloom threshold
+        new Paint { Name = "Prop_LanternPaper", Color = C(0.769f, 0.200f, 0.165f), Outline = Px, SmoothNormals = true }, // #C4332A paper lantern
+        new Paint { Name = "Prop_Copper", Color = C(0.776f, 0.451f, 0.251f), Outline = Px, SmoothNormals = true }, // #C67340 tea tray
+        new Paint { Name = "Prop_Tea", Color = C(0.612f, 0.231f, 0.102f), Outline = Px, SmoothNormals = true }, // #9C3B1A tea in a tulip glass
+        // Third-party atlases (Kenney Food Kit, KayKit Dungeon): untinted texture, outlined along mesh normals.
+        new Paint { Name = "Food_Paint", Color = Color.white, BaseMap = FoodTexturePath, Outline = Px },
+        new Paint { Name = "KayKit_Paint", Color = Color.white, BaseMap = KayKitTexturePath, Outline = Px },
         new Paint { Name = "Prop_Rope", Color = C(0.72f, 0.58f, 0.40f), Outline = 2f }, // flowerpot rope (Unity cylinders)
         // Kenney pieces and Unity primitives: outlined along mesh normals.
         new Paint { Name = "Token_Base", Color = Teal, Outline = Px }, // figure base disc (Unity cylinder)
@@ -218,6 +247,9 @@ public static class BuildBoardScene
         { "mirrorcrack", "Paint_MirrorCrack" }, { "portalframe", "Wood_Wall" }, { "portalstone", "Portal_Stone" },
         { "portalswirla", "Portal_SwirlA" }, { "portalswirlb", "Portal_SwirlB" },
         { "pawprint", "Paw_Print" }, { "mugbody", "Prop_Mug" }, { "beadblue", "Paint_BeadBlue" }, { "beadlight", "Paint_BeadLight" }, { "plank", "Wood_Plank" }, { "coffee", "Prop_Coffee" }, { "brass", "Paint_Brass" }, { "wax", "Candle_Wax" },
+        { "milk", "Prop_Milk" }, { "yarn", "Prop_Yarn" }, { "yarnline", "Prop_YarnLine" }, { "lanternglass", "Prop_LanternGlass" },
+        { "flame", "Prop_Flame" }, { "lanternpaper", "Prop_LanternPaper" }, { "copper", "Prop_Copper" }, { "tea", "Prop_Tea" },
+        { "texture", "KayKit_Paint" }, // KayKit Dungeon models (only KayKit uses this slot name)
     };
 
     /// <summary>Menu entry: builds the board scene in the open editor.</summary>
@@ -252,6 +284,8 @@ public static class BuildBoardScene
         ConfigurePrintTexture(PrintHazardPath);
         ConfigurePrintTexture(TableFeltPath);
         ConfigurePrintTexture(BoxLogoPath);
+        ConfigureTiledTexture(TableKilimPath);
+        LimitTextureSize(KayKitTexturePath, 512); // 1024 atlas in the pack; 512 keeps the WebGL texture budget
         Dictionary<string, Material> mats = CreateMaterials();
         RemapModelMaterials(mats);
         BoardTheme theme = CreateTheme(mats);
@@ -299,6 +333,33 @@ public static class BuildBoardScene
         importer.SaveAndReimport();
     }
 
+    /// <summary>Tiling cloth texture (World 5 kilim): like a print texture, but wrapped (Repeat) so it can tile.</summary>
+    private static void ConfigureTiledTexture(string path)
+    {
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) throw new FileNotFoundException("Table texture not imported (run tools/textures/make_print_textures.py)", path);
+        if (importer.textureCompression == TextureImporterCompression.Uncompressed && importer.wrapMode == TextureWrapMode.Repeat
+            && importer.mipmapEnabled && importer.sRGBTexture) return;
+        importer.textureType = TextureImporterType.Default;
+        importer.sRGBTexture = true;
+        importer.mipmapEnabled = true;
+        importer.wrapMode = TextureWrapMode.Repeat;
+        importer.filterMode = FilterMode.Trilinear;
+        importer.anisoLevel = 4;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.SaveAndReimport();
+    }
+
+    /// <summary>Caps a third-party texture's imported size (the source file stays unmodified).</summary>
+    private static void LimitTextureSize(string path, int size)
+    {
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) throw new FileNotFoundException("Texture not imported", path);
+        if (importer.maxTextureSize == size) return;
+        importer.maxTextureSize = size;
+        importer.SaveAndReimport();
+    }
+
     private static Dictionary<string, Material> CreateMaterials()
     {
         Shader toon = Shader.Find(ToonShaderName);
@@ -338,7 +399,7 @@ public static class BuildBoardScene
 
     private static void RemapModelMaterials(Dictionary<string, Material> mats)
     {
-        string[] guids = AssetDatabase.FindAssets("t:Model", new[] { ModelsFolder, KenneyFolder });
+        string[] guids = AssetDatabase.FindAssets("t:Model", new[] { ModelsFolder, KenneyFolder, KayKitFolder });
         foreach (string guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -374,6 +435,10 @@ public static class BuildBoardScene
                 if (isCharacter && key == "colormap")
                 {
                     target = "Character_Paint";
+                }
+                else if (path.Contains(FoodFolderTag) && key == "colormap")
+                {
+                    target = "Food_Paint";
                 }
                 else if (!SlotMap.TryGetValue(key, out target))
                 {
@@ -445,15 +510,99 @@ public static class BuildBoardScene
         theme.pawPrintNextMaterial = mats["Paw_PrintNext"];
         theme.catPuffMaterial = mats["Cat_Puff"];
         theme.ropeMaterial = mats["Prop_Rope"];
-        theme.tableFelt = mats["Table_Felt"];
         theme.tableRail = mats["Table_Rail"];
-        theme.tableMug = Model(ModelsFolder + "/mug.fbx");
-        theme.tableBox = Model(ModelsFolder + "/wall_box.fbx");
-        theme.tableDie = Model(ModelsFolder + "/die.fbx");
-        theme.tableCardFan = Model(ModelsFolder + "/card_fan.fbx");
-        theme.tableBooklet = Model(ModelsFolder + "/rule_booklet.fbx");
+        theme.worldDecor = CreateWorldDecor(mats);
         EditorUtility.SetDirty(theme);
         return theme;
+    }
+
+    /// <summary>
+    /// World table themes (design/quick-specs/world-table-themes-addition-2026-11-12.md), index = LevelCatalog world.
+    /// Rewritten on every build: tune decor here, not in the asset. World 1 reproduces the look-pass-2 table exactly
+    /// (the old fixed TableView layout's props, sizes, yaws and positions; white key light; neutral ambient). Light
+    /// values of worlds 2-5 are starting points for art-director review. Props stay off the board (beside, beyond or
+    /// in front of it), at most 6 per world, and add no lights.
+    /// </summary>
+    private static WorldDecor[] CreateWorldDecor(Dictionary<string, Material> mats)
+    {
+        string food = KenneyFolder + "/FoodKit/", kay = KayKitFolder + "/DungeonPack/", own = ModelsFolder + "/";
+        return new[]
+        {
+            new WorldDecor
+            {
+                name = "1 Starting Square", surface = mats["Table_Felt"],
+                keyColor = Color.white, keyIntensity = KeyIntensity, ambient = Ambient,
+                props = new[]
+                {
+                    Prop(own + "mug.fbx", TableSide.Left, 1f, 0.35f, 0.8f, 200f, height: true),
+                    Prop(own + "wall_box.fbx", TableSide.Right, 1f, 0.1f, 1.25f, -14f, front: true, wideAlong: 0.7f),
+                    Prop(own + "die.fbx", TableSide.Left, 1.05f, -0.45f, 0.42f, 23f, front: true, wideAlong: -0.75f, wideFront: 0.2f),
+                    Prop(own + "die.fbx", TableSide.Left, 0.55f, -0.75f, 0.42f, -38f, front: true, wideAlong: -0.6f, wideFront: -0.15f),
+                    Prop(own + "card_fan.fbx", TableSide.Right, 0.9f, -0.7f, 1.15f, 12f, front: true, wideAlong: 0.25f),
+                    Prop(own + "rule_booklet.fbx", TableSide.Far, 0.75f, -0.3f, 1.25f, -8f),
+                },
+            },
+            new WorldDecor
+            {
+                // Cool moonlight key; the warm "lamp" fill is the ambient (the Toon shader reads no extra lights).
+                name = "2 Black Cat Alley", surface = mats["Table_FeltNavy"],
+                keyColor = C(0.86f, 0.91f, 1f), keyIntensity = 0.95f, ambient = C(0.86f, 0.72f, 0.54f),
+                props = new[]
+                {
+                    Prop(own + "milk_saucer.fbx", TableSide.Left, 1f, 0.2f, 0.62f, 0f, front: true, wideAlong: -0.6f),
+                    Prop(own + "yarn_ball.fbx", TableSide.Right, 1f, -0.3f, 0.44f, 35f, front: true, wideAlong: 0.6f),
+                    Prop(own + "street_lantern.fbx", TableSide.Far, 0.9f, 0.7f, 1.1f, 20f, height: true),
+                },
+            },
+            new WorldDecor
+            {
+                name = "3 Hall of Mirrors", surface = mats["Table_Velvet"],
+                keyColor = C(1f, 0.89f, 0.70f), keyIntensity = 0.82f, ambient = C(0.72f, 0.60f, 0.48f),
+                props = new[]
+                {
+                    Prop(kay + "candle_lit.fbx", TableSide.Left, 0.9f, 0.4f, 0.7f, 0f, height: true),
+                    Prop(kay + "candle_triple.fbx", TableSide.Far, 0.9f, 0.6f, 0.75f, -20f, height: true),
+                    Prop(own + "candlestick.fbx", TableSide.Far, 0.8f, -0.55f, 0.75f, 0f, height: true),
+                    Prop(own + "hand_mirror.fbx", TableSide.Right, 1f, -0.3f, 0.75f, 30f, front: true, wideAlong: 0.55f),
+                    Prop(kay + "candle_lit.fbx", TableSide.Right, 0.9f, 0.5f, 0.6f, 40f, height: true),
+                },
+            },
+            new WorldDecor
+            {
+                name = "4 Chinese Neighbourhood", surface = mats["Table_Lacquer"],
+                keyColor = C(1f, 0.88f, 0.82f), keyIntensity = 0.92f, ambient = C(0.82f, 0.64f, 0.57f),
+                props = new[]
+                {
+                    Prop(food + "steamer.fbx", TableSide.Left, 1f, 0.3f, 0.75f, 10f),
+                    Prop(food + "bowl-soup.fbx", TableSide.Right, 1f, 0f, 0.6f, 15f, front: true, wideAlong: 0.6f),
+                    Prop(food + "chopstick.fbx", TableSide.Right, 1.05f, -0.45f, 0.6f, 80f, front: true, wideAlong: 0.35f),
+                    Prop(food + "chopstick.fbx", TableSide.Right, 1.15f, -0.5f, 0.6f, 86f, front: true, wideAlong: 0.38f, wideFront: -0.08f),
+                    Prop(food + "cup-tea.fbx", TableSide.Left, 0.8f, -0.5f, 0.38f, -30f, front: true, wideAlong: -0.6f),
+                    Prop(own + "paper_lantern.fbx", TableSide.Far, 0.9f, -0.5f, 0.75f, 0f, height: true),
+                },
+            },
+            new WorldDecor
+            {
+                name = "5 Old Bazaar", surface = mats["Table_Kilim"], surfaceTile = 1.4f, // small repeat: reads as cloth, not a poster
+                keyColor = C(1f, 0.90f, 0.72f), keyIntensity = 0.92f, ambient = C(0.82f, 0.70f, 0.52f),
+                props = new[]
+                {
+                    Prop(own + "tea_tray.fbx", TableSide.Right, 1.05f, 0f, 1f, 0f, front: true, wideAlong: 0.55f),
+                    // Coffee cup, not the nazar charm: a table nazar read as the collectable bead (screenshot 2026-11-12).
+                    Prop(food + "cup-saucer.fbx", TableSide.Left, 1f, -0.4f, 0.45f, 15f, front: true, wideAlong: -0.6f),
+                },
+            },
+        };
+    }
+
+    private static TableProp Prop(string model, TableSide side, float gap, float along, float size, float yaw,
+        bool height = false, bool front = false, float wideAlong = 0f, float wideFront = 0f)
+    {
+        return new TableProp
+        {
+            model = Model(model), side = side, gap = gap, along = along, size = size, sizeIsHeight = height, yaw = yaw,
+            frontWhenWide = front, wideAlong = wideAlong, wideFront = wideFront,
+        };
     }
 
     private static VolumeProfile CreateVolumeProfile(StepFeedbackConfig feedback)
@@ -548,6 +697,7 @@ public static class BuildBoardScene
         TableView table = presentation.AddComponent<TableView>();
         SetRef(table, "_board", board);
         SetRef(table, "_theme", theme);
+        SetRef(table, "_keyLight", key); // world table themes: tinted per world
 
         // Camera (BoardCameraRig frames it at runtime; this is the edit-time placeholder pose).
         var camGo = new GameObject("Main Camera") { tag = "MainCamera" };

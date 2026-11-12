@@ -4,20 +4,31 @@ using UnityEngine.Rendering;
 namespace LuckyStep
 {
     /// <summary>
-    /// The green felt card table the board lies on (Story 005, "Felt Table" look): a felt top, a wooden rail around
-    /// it and props beside the board (a mug, a closed game box with its logo, two dice, a card fan, a rule booklet). Rebuilt from <see cref="BoardView.BoardBounds"/>
-    /// after every board build, so it fits every level size. Pure decoration: nothing here takes part in the game.
+    /// The card table the board lies on (Story 005, "Felt Table" look; world table themes 2026-11-12): a table top,
+    /// a wooden rail around it and props beside the board, all from the current world's <see cref="WorldDecor"/>
+    /// (World 1: green felt, mug, game box, two dice, card fan, rule booklet). The world's key light colour and
+    /// ambient fill are applied at the same time. Rebuilt from <see cref="BoardView.BoardBounds"/> after every board
+    /// build, so it fits every level size. Pure decoration: nothing here takes part in the game.
     /// </summary>
     public sealed class TableView : MonoBehaviour
     {
+        private static readonly int BaseMapSt = Shader.PropertyToID("_BaseMap_ST");
+
         [SerializeField] private BoardView _board;
         [SerializeField] private BoardTheme _theme;
+        [Tooltip("Directional key light tinted per world; RenderSettings.sun if empty.")]
+        [SerializeField] private Light _keyLight;
 
         private Transform _root;
+        private MaterialPropertyBlock _surfaceBlock;
+        private bool _sceneLightingRead;
+        private SphericalHarmonicsL2 _sceneProbe;
+        private Color _sceneAmbient; // linear
 
         private void OnEnable()
         {
             if (_board == null) return;
+            ReadSceneLighting();
             _board.Built += Build;
             if (_board.Level != null) Build();
         }
@@ -32,6 +43,7 @@ namespace LuckyStep
             if (_root != null) Destroy(_root.gameObject);
             _root = new GameObject("Table").transform;
             _root.SetParent(transform, false);
+            WorldDecor decor = CurrentDecor();
 
             Bounds b = _board.BoardBounds;
             float top = b.min.y; // the board's plate rests on the felt
@@ -41,7 +53,15 @@ namespace LuckyStep
             Vector3 c = new Vector3(b.center.x, top, b.center.z + _theme.tableMarginFar * 0.5f);
 
             const float feltThickness = 0.1f;
-            Box("Felt", c + Vector3.down * (feltThickness * 0.5f), new Vector3(hx * 2f, feltThickness, hz * 2f), _theme.tableFelt, false);
+            MeshRenderer felt = Box("Felt", c + Vector3.down * (feltThickness * 0.5f), new Vector3(hx * 2f, feltThickness, hz * 2f),
+                decor != null ? decor.surface : null, false);
+            if (decor != null && decor.surfaceTile > 0f)
+            {
+                // Patterned cloth repeats at a fixed world size instead of stretching with the level's table.
+                if (_surfaceBlock == null) _surfaceBlock = new MaterialPropertyBlock();
+                _surfaceBlock.SetVector(BaseMapSt, new Vector4(hx * 2f / decor.surfaceTile, hz * 2f / decor.surfaceTile, 0f, 0f));
+                felt.SetPropertyBlock(_surfaceBlock);
+            }
 
             float rw = _theme.tableRailWidth, rh = _theme.tableRailHeight;
             float ry = top + rh * 0.5f - feltThickness * 0.5f; // rails stand on the felt slab's bottom
@@ -51,53 +71,88 @@ namespace LuckyStep
             Box("Rail E", new Vector3(c.x + hx + rw * 0.5f, ry, c.z), new Vector3(rw, railH, hz * 2f), _theme.tableRail, true);
             Box("Rail W", new Vector3(c.x - hx - rw * 0.5f, ry, c.z), new Vector3(rw, railH, hz * 2f), _theme.tableRail, true);
 
-            // Wide, shallow boards leave the sides off-screen but room in front: the side props move to the near edge.
+            if (decor == null) return;
+            ApplyLighting(decor);
+            if (decor.props == null) return;
+
+            // Wide, shallow boards leave the sides off-screen but room in front: low props move to the near edge.
             bool wide = _board.IsWide;
             float front = b.min.z - _theme.propGap * 0.75f;
-            if (_theme.tableMug != null)
+            foreach (TableProp p in decor.props)
             {
-                Transform mug = ModelFit.Spawn(_theme.tableMug, _root, "Mug", new Vector3(0f, _theme.mugHeight, 0f), true);
-                mug.position = new Vector3(b.min.x - _theme.propGap, top, b.center.z + b.extents.z * 0.35f);
-                mug.rotation = Quaternion.Euler(0f, _theme.mugYaw, 0f);
-            }
-            if (_theme.tableBox != null)
-            {
-                Transform box = ModelFit.Spawn(_theme.tableBox, _root, "Game Box", new Vector3(_theme.boxSize, 0f, _theme.boxSize), true);
-                box.position = wide
-                    ? new Vector3(b.max.x - b.extents.x * 0.3f, top, front)
-                    : new Vector3(b.max.x + _theme.propGap, top, b.center.z + b.extents.z * 0.1f);
-                box.rotation = Quaternion.Euler(0f, _theme.boxYaw, 0f);
-            }
-            // Look pass 2: game-night clutter, kept off the board (props sit beside, in front of or beyond its bounds).
-            if (_theme.tableDie != null)
-            {
-                Vector3 a = wide ? new Vector3(b.min.x + b.extents.x * 0.25f, top, front + 0.2f)
-                                 : new Vector3(b.min.x - _theme.propGap * 1.05f, top, b.center.z - b.extents.z * 0.45f);
-                Vector3 c2 = wide ? new Vector3(b.min.x + b.extents.x * 0.4f, top, front - 0.15f)
-                                  : new Vector3(b.min.x - _theme.propGap * 0.55f, top, b.center.z - b.extents.z * 0.75f);
-                Prop(_theme.tableDie, "Die A", a, 23f, _theme.tableDieSize);
-                Prop(_theme.tableDie, "Die B", c2, -38f, _theme.tableDieSize);
-            }
-            if (_theme.tableCardFan != null)
-            {
-                Vector3 at = wide ? new Vector3(b.max.x - b.extents.x * 0.75f, top, front)
-                                  : new Vector3(b.max.x + _theme.propGap * 0.9f, top, b.center.z - b.extents.z * 0.7f);
-                Prop(_theme.tableCardFan, "Card Fan", at, 12f, _theme.cardFanSize);
-            }
-            if (_theme.tableBooklet != null)
-            {
-                Prop(_theme.tableBooklet, "Rule Booklet", new Vector3(b.center.x - b.extents.x * 0.3f, top, b.max.z + _theme.propGap * 0.75f), -8f, _theme.bookletSize);
+                if (p == null || p.model == null) continue;
+                Vector3 size = p.sizeIsHeight ? new Vector3(0f, p.size, 0f) : new Vector3(p.size, 0f, p.size);
+                Transform prop = ModelFit.Spawn(p.model, _root, p.model.name, size, true);
+                prop.position = PropPosition(p, b, top, wide, front);
+                prop.rotation = Quaternion.Euler(0f, p.yaw, 0f);
             }
         }
 
-        private void Prop(GameObject model, string name, Vector3 position, float yaw, float footprint)
+        /// <summary>The current world's decor; entry 0 for a level outside the catalog. Null if the theme has none.</summary>
+        private WorldDecor CurrentDecor()
         {
-            Transform prop = ModelFit.Spawn(model, _root, name, new Vector3(footprint, 0f, footprint), true);
-            prop.position = position;
-            prop.rotation = Quaternion.Euler(0f, yaw, 0f);
+            WorldDecor[] all = _theme.worldDecor;
+            if (all == null || all.Length == 0) return null;
+            int world = _board.WorldIndex;
+            return all[world >= 0 && world < all.Length ? world : 0];
         }
 
-        private void Box(string name, Vector3 centre, Vector3 size, Material material, bool castShadows)
+        /// <summary>Beside the board (Left/Right), beyond it (Far), or in the front row on a wide board; off the board's bounds.</summary>
+        private Vector3 PropPosition(TableProp p, Bounds b, float top, bool wide, float front)
+        {
+            if (wide && p.frontWhenWide) return new Vector3(b.center.x + p.wideAlong * b.extents.x, top, front + p.wideFront);
+            float gap = p.gap * _theme.propGap;
+            switch (p.side)
+            {
+                case TableSide.Left: return new Vector3(b.min.x - gap, top, b.center.z + p.along * b.extents.z);
+                case TableSide.Right: return new Vector3(b.max.x + gap, top, b.center.z + p.along * b.extents.z);
+                default: return new Vector3(b.center.x + p.along * b.extents.x, top, b.max.z + gap);
+            }
+        }
+
+        /// <summary>Remembers the scene's ambient probe and colour once, so worlds can rescale it (World 1 = unchanged).</summary>
+        private void ReadSceneLighting()
+        {
+            if (_sceneLightingRead) return;
+            _sceneProbe = RenderSettings.ambientProbe;
+            _sceneAmbient = RenderSettings.ambientLight.linear;
+            _sceneLightingRead = true;
+        }
+
+        /// <summary>Tints the key light and sets the flat ambient (the Toon shader's only fill) for this world.</summary>
+        private void ApplyLighting(WorldDecor decor)
+        {
+            Light key = _keyLight != null ? _keyLight : RenderSettings.sun;
+            if (key != null)
+            {
+                key.color = decor.keyColor;
+                key.intensity = decor.keyIntensity;
+            }
+
+            RenderSettings.ambientLight = decor.ambient;
+            // The Toon shader reads ambient through the SH probe. A flat probe is linear in its colour, so scaling the
+            // scene's own probe per channel gives the new colour and leaves World 1's probe bit-identical.
+            Color want = decor.ambient.linear;
+            SphericalHarmonicsL2 probe = _sceneProbe;
+            bool scalable = probe != new SphericalHarmonicsL2()
+                && _sceneAmbient.r > 1e-4f && _sceneAmbient.g > 1e-4f && _sceneAmbient.b > 1e-4f;
+            if (scalable)
+            {
+                for (int ch = 0; ch < 3; ch++)
+                {
+                    float k = want[ch] / _sceneAmbient[ch];
+                    for (int i = 0; i < 9; i++) probe[ch, i] *= k;
+                }
+            }
+            else
+            {
+                probe.Clear();
+                probe.AddAmbientLight(want);
+            }
+            RenderSettings.ambientProbe = probe;
+        }
+
+        private MeshRenderer Box(string name, Vector3 centre, Vector3 size, Material material, bool castShadows)
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Destroy(go.GetComponent<Collider>());
@@ -108,6 +163,7 @@ namespace LuckyStep
             var renderer = go.GetComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
             renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            return renderer;
         }
     }
 }

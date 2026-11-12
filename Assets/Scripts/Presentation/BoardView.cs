@@ -112,6 +112,12 @@ namespace LuckyStep
         /// <summary>What the camera frames: BoardBounds, widened by BoardTheme.framePropPad per side unless IsWide.</summary>
         public Bounds FrameBounds { get; private set; }
 
+        /// <summary>
+        /// LevelCatalog world index of the built level, or -1 (no catalog, or the level is not in it). Set before
+        /// <see cref="Built"/> is raised; TableView picks the world's table decor from it.
+        /// </summary>
+        public int WorldIndex { get; private set; } = -1;
+
         private void OnEnable()
         {
             if (_controller != null) _controller.MoveBlocked += OnMoveBlocked;
@@ -229,6 +235,7 @@ namespace LuckyStep
             _portals.Clear();
             _beads.Clear();
             _builtLevel = level;
+            WorldIndex = _catalog != null ? _catalog.WorldIndexOf(_controller.CurrentLevelFile) : -1;
             _worldTint = WorldTint();
             _shown = null;
             _root = new GameObject("Board").transform;
@@ -488,8 +495,7 @@ namespace LuckyStep
         {
             Material[] tints = _theme.worldTints;
             if (_catalog == null || tints == null || tints.Length == 0) return null;
-            int world = _catalog.WorldIndexOf(_controller.CurrentLevelFile);
-            return world >= 0 ? tints[world % tints.Length] : null;
+            return WorldIndex >= 0 ? tints[WorldIndex % tints.Length] : null;
         }
 
         private void BuildPortal(int x, int y, Transform baseTile)

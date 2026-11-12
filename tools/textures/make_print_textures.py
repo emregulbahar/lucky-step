@@ -5,6 +5,7 @@ Writes into <repo>/Assets/Art/Generated/:
     PrintHazard.png  the same plus a red hazard band across the top (image top = far side of the board)
     TableFelt.png    grey felt for the card table: a soft lamp pool (bright centre, darker edges) and a faint fixed grain
     BoxLogo.png      printed "Lucky Step" logo for the game-box lid prop (look pass 2), full colour (material tint white)
+    TableKilim.png   World 5 kilim table cloth, 256 px, seamless (imported with Repeat wrap), full colour
 
 The paper is pure white so the Unity material's colour tints it to the two paper tones (#FFF6E0 / #EDE0C2).
 UV contract with tools/blender/make_models.py (INK_UV): the slab top maps 0..1 onto the whole image and the slab
@@ -109,6 +110,42 @@ def draw_logo():
     return img.resize((LOGO_SIZE, LOGO_SIZE), Image.Resampling.LANCZOS)
 
 
+KILIM_SIZE = 256  # one repeat; TableView tiles it every WorldDecor.surfaceTile world units (Repeat wrap)
+K_RED = (0x8C, 0x2E, 0x27)
+K_INDIGO = (0x2D, 0x3A, 0x5E)
+K_OCHRE = (0xC4, 0x8E, 0x3A)
+K_CREAM = (0xE6, 0xD8, 0xB8)
+K_DARK = (0x3A, 0x29, 0x22)
+
+
+def draw_kilim():
+    """World 5 (Old Bazaar) table cloth: muted kilim bands and a row of stepped diamonds, seamless both ways.
+
+    Horizontal periods (32, 128 px) divide the size and the dark border band wraps top to bottom, so it tiles.
+    Full colour: the Unity material's tint is white.
+    """
+    s = SUPER
+    n = KILIM_SIZE * s
+    img = Image.new("RGB", (n, n), K_RED)
+    d = ImageDraw.Draw(img)
+
+    def band(y0, y1, col):
+        d.rectangle((0, y0 * s, n - 1, y1 * s - 1), fill=col)
+
+    for y0, y1, col in ((0, 16, K_DARK), (16, 28, K_OCHRE), (28, 36, K_CREAM),
+                        (220, 228, K_CREAM), (228, 240, K_OCHRE), (240, 256, K_DARK), (92, 164, K_INDIGO)):
+        band(y0, y1, col)
+    for x in range(0, KILIM_SIZE, 32):  # teeth from the cream lines into the red fields
+        d.polygon([(x * s, 36 * s), ((x + 32) * s, 36 * s), ((x + 16) * s, 52 * s)], fill=K_INDIGO)
+        d.polygon([(x * s, 220 * s), ((x + 32) * s, 220 * s), ((x + 16) * s, 204 * s)], fill=K_INDIGO)
+    for cx in (64, 192):  # stepped diamonds in the indigo band
+        for hw, hh, col in ((54, 34, K_RED), (38, 24, K_CREAM), (24, 15, K_RED), (10, 6, K_OCHRE)):
+            d.polygon([((cx - hw) * s, 128 * s), (cx * s, (128 - hh) * s), ((cx + hw) * s, 128 * s), (cx * s, (128 + hh) * s)], fill=col)
+    for cx in (0, 128, 256):  # small cream diamonds between the big ones (the one at 0 wraps to 256)
+        d.polygon([((cx - 8) * s, 128 * s), (cx * s, 120 * s), ((cx + 8) * s, 128 * s), (cx * s, 136 * s)], fill=K_CREAM)
+    return img.resize((KILIM_SIZE, KILIM_SIZE), Image.Resampling.BOX)
+
+
 def check_ink_spot(img):
     """The slab sides sample UV (0.5, 8/256): image column SIZE/2, row SIZE-1-8 (rows run top-down)."""
     for dx in (-1, 0, 1):
@@ -132,6 +169,9 @@ def main():
     print("WROTE", path)
     path = os.path.join(out, "BoxLogo.png")
     draw_logo().save(path, optimize=True)
+    print("WROTE", path)
+    path = os.path.join(out, "TableKilim.png")
+    draw_kilim().save(path, optimize=True)
     print("WROTE", path)
 
 
