@@ -9,7 +9,8 @@ namespace LuckyStep
     /// key legend in the top-right: drawn key caps (arrow keys, Z, R, Esc) each followed by what the key does. Nothing is placed in the bottom of the screen, where the board's score track
     /// sits. Text only changes when a value changes (no per-frame allocation).
     /// In guided levels a speech bubble with a pointer follows the figure (<see cref="SetGuide"/>, <see cref="PlaceGuide"/>;
-    /// spec tutorial-guide-and-tips-addition-2026-11-13).
+    /// spec tutorial-guide-and-tips-addition-2026-11-13). While the bubble overlaps the level card or the key legend
+    /// (the figure stands high on a tall board), that card fades out so the bubble reads cleanly.
     /// </summary>
     /// <example><code>hud.SetLevel(1, 3, catalog.Par("Level03")); hud.SetMoves(controller.Moves);</code></example>
     public sealed class Hud : UiScreen
@@ -28,6 +29,11 @@ namespace LuckyStep
         private readonly Text _keyUndo;
         private readonly Text _keyRestart;
         private readonly Text _keyMenu;
+        private readonly RectTransform _info;
+        private readonly RectTransform _keys;
+        private readonly CanvasGroup _infoFade;
+        private readonly CanvasGroup _keysFade;
+        private readonly Vector3[] _corners = new Vector3[4];
         private int _world;
         private int _levelNumber;
         private int _parValue = -1;
@@ -39,6 +45,8 @@ namespace LuckyStep
         {
             UiStyle s = ui.Style;
             RectTransform info = ui.CreateStack("Info", Root, 0f, true, s.hudPadding, s.hudSpacing);
+            _info = info;
+            _infoFade = info.gameObject.AddComponent<CanvasGroup>();
             info.GetComponent<Image>().color = s.hudPlateColor;
             info.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.UpperLeft;
             UiRoot.Pin(info, new Vector2(0f, 1f), new Vector2(s.screenMargin, -s.screenMargin));
@@ -73,6 +81,8 @@ namespace LuckyStep
             _guide.gameObject.SetActive(false);
 
             RectTransform keys = ui.CreateStack("Keys", Root, 0f, true, s.hudPadding / 2, s.keyRowSpacing);
+            _keys = keys;
+            _keysFade = keys.gameObject.AddComponent<CanvasGroup>();
             keys.GetComponent<Image>().color = s.hudPlateColor;
             keys.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.UpperLeft;
             UiRoot.Pin(keys, new Vector2(1f, 1f), new Vector2(-s.screenMargin, -s.screenMargin));
@@ -159,6 +169,7 @@ namespace LuckyStep
             bool show = !string.IsNullOrEmpty(text);
             _guide.gameObject.SetActive(show);
             if (show) _guideText.text = text;
+            else _infoFade.alpha = _keysFade.alpha = 1f;
         }
 
         /// <summary>
@@ -173,6 +184,28 @@ namespace LuckyStep
             float shift = half > 0f ? Mathf.Clamp(local.x, -half, half) - local.x : 0f;
             _guide.anchoredPosition = local;
             _guideCard.anchoredPosition = new Vector2(shift, Ui.Style.guidePointerSize);
+
+            // The bubble card in Root space (pivot bottom centre), then fade whichever corner card it covers.
+            Rect card = _guideCard.rect;
+            Vector2 min = _guide.anchoredPosition + _guideCard.anchoredPosition - new Vector2(card.width * 0.5f, 0f)
+                + Root.rect.center;
+            var bubble = new Rect(min, card.size);
+            float step = Time.unscaledDeltaTime * Ui.Style.guideFadeSpeed;
+            Fade(_infoFade, Overlaps(_info, bubble), step);
+            Fade(_keysFade, Overlaps(_keys, bubble), step);
+        }
+
+        private bool Overlaps(RectTransform target, Rect bubble)
+        {
+            target.GetWorldCorners(_corners);
+            Vector2 a = Root.InverseTransformPoint(_corners[0]);
+            Vector2 b = Root.InverseTransformPoint(_corners[2]);
+            return bubble.Overlaps(Rect.MinMaxRect(a.x, a.y, b.x, b.y));
+        }
+
+        private static void Fade(CanvasGroup group, bool hidden, float step)
+        {
+            group.alpha = Mathf.MoveTowards(group.alpha, hidden ? 0f : 1f, step);
         }
 
         /// <summary>Shows the tutorial hint of <paramref name="levelId"/> (key hint.LevelId), or hides it when there is none.</summary>

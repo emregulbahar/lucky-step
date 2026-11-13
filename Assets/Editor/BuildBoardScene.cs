@@ -763,17 +763,6 @@ public static class BuildBoardScene
         SetRef(ui, "_pawnIcon", Load<Sprite>(UiSpritesFolder + "/icon_pawn.png"));
         SetRef(ui, "_arrowIcon", Load<Sprite>(UiSpritesFolder + "/icon_arrow.png"));
         SetRef(ui, "_baseIcon", Load<Sprite>(UiSpritesFolder + "/icon_base.png"));
-        // New-mechanic card icons (tools/ui/make_ui_sprites.py "tips"), looked up by name.
-        var tips = new SerializedObject(ui);
-        SerializedProperty tipIcons = tips.FindProperty("_tipIcons");
-        tipIcons.arraySize = LevelMechanics.All.Length;
-        for (int i = 0; i < LevelMechanics.All.Length; i++)
-        {
-            Sprite icon = Load<Sprite>(UiSpritesFolder + "/tip_" + LevelMechanics.All[i] + ".png");
-            if (icon == null) throw new FileNotFoundException("Tip icon missing", "tip_" + LevelMechanics.All[i]);
-            tipIcons.GetArrayElementAtIndex(i).objectReferenceValue = icon;
-        }
-        tips.ApplyModifiedPropertiesWithoutUndo();
         return ui;
     }
 

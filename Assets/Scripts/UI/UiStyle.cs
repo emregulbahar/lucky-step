@@ -81,12 +81,9 @@ namespace LuckyStep
         public float guideBubbleWidth = 520f;
         public int guideTextSize = 30;
         public float guidePointerSize = 28f;
+        /// <summary>Alpha per second at which a corner card fades out under (and back in after) the guide bubble.</summary>
+        public float guideFadeSpeed = 6f;
 
-        /// <summary>New-mechanic card: width, icon size, text column width, and how long clicks are ignored after it opens.</summary>
-        public float tipWidth = 1000f;
-        public float tipIconSize = 128f;
-        public float tipTextWidth = 720f;
-        public float tipInputDelaySeconds = 0.35f;
         public float rewardIconSize = 64f;
         public float dividerHeight = 8f;
         public float buttonLabelPadding = 16f;

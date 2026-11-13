@@ -58,3 +58,17 @@ Rank 5 becomes a diamond base (pale cyan), so every rank still looks different.
 - [ ] Screenshot: Level01 start with marker + bubble; mid-level bubble with counter; LuckyNext bubble
 - [ ] Screenshot: mechanic card for Level02 (TR) and for a cat level
 - [ ] No regression: existing hint strip in other levels, story cards, 52 tests
+
+## Amendment 2026-11-13 (later): no "New!" cards, guided teaching levels
+User feedback: the "New!" cards were disliked; "make them like the first tutorial".
+- The new-mechanic card (TipCard), its icons, `LevelMechanics` and `Progress.seenTips` are removed.
+- Guided levels are now the first level plus the first level of each mechanic, in play order:
+  Level01, Level02 (spike, flowerpot), Level17 (dice), Level18 (hole), Level05 (cat), Level07 (bridge),
+  Level10 (mirror), Level13 (world 4 rules), Level25 (wood), Level27 (bead). The old top hint strings of these
+  levels moved to `guide.start.<LevelId>`.
+- Bubble text: Start = `guide.start.<LevelId>` (else `guide.start`); when the next space holds a chance object that
+  still matters (`TutorialGuide.ObjectAt`) the bubble explains it (`guide.object` / `guide.lucky_object` with the
+  `tip.<id>.*` strings); a lucky next step says "door open" only when the door is the next space
+  (`guide.lucky`), else `guide.lucky_step`. Next and next-lucky counts follow the counting direction (mirror).
+- While the bubble overlaps the level card or the key legend, that card fades out (`UiStyle.guideFadeSpeed`).
+- Evidence: production/qa/evidence/tutorial-guided/. EditMode 61/61.

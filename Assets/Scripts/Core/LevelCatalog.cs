@@ -44,9 +44,10 @@ namespace LuckyStep
 
         /// <summary>
         /// Level ids played with the tutorial guide (marker on the next space, speech bubble over the figure; spec
-        /// tutorial-guide-and-tips-addition-2026-11-13). Their top hint strip is hidden.
+        /// tutorial-guide-and-tips-addition-2026-11-13): the first level and the first level of every new mechanic.
+        /// Their top hint strip is hidden.
         /// </summary>
-        public string[] guidedLevels = { "Level01" };
+        public string[] guidedLevels = { "Level01", "Level02", "Level17", "Level18", "Level05", "Level07", "Level10", "Level13", "Level25", "Level27" };
 
         /// <summary>True if <paramref name="levelId"/> is in <see cref="guidedLevels"/>.</summary>
         public bool IsGuided(string levelId) => levelId != null && guidedLevels != null && Array.IndexOf(guidedLevels, levelId) >= 0;

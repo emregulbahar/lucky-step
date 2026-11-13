@@ -65,4 +65,13 @@ MonoBehaviour:
     showPar: 1
   guidedLevels:
   - Level01
+  - Level02
+  - Level17
+  - Level18
+  - Level05
+  - Level07
+  - Level10
+  - Level13
+  - Level25
+  - Level27
   parTable: {fileID: 4900000, guid: 56634fce48beb0f4689a12e8c53ed568, type: 3}

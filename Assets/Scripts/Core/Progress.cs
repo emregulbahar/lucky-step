@@ -53,13 +53,11 @@ namespace LuckyStep
         {
             public List<string> completed = new List<string>();
             public List<string> goldenPawns = new List<string>();
-            public List<string> seenTips = new List<string>();
         }
 
         private readonly IProgressStore _store;
         private readonly HashSet<string> _completed = new HashSet<string>();
         private readonly HashSet<string> _goldenPawns = new HashSet<string>();
-        private readonly HashSet<string> _seenTips = new HashSet<string>();
 
         /// <summary>Creates progress and loads whatever <paramref name="store"/> holds (unreadable data starts empty).</summary>
         public Progress(IProgressStore store)
@@ -88,15 +86,6 @@ namespace LuckyStep
             if (pawn) _goldenPawns.Add(levelId);
             _store.Save(ToJson());
             return pawn;
-        }
-
-        /// <summary>True if the new-mechanic card for <paramref name="mechanicId"/> (LevelMechanics id) was shown.</summary>
-        public bool HasSeenTip(string mechanicId) => _seenTips.Contains(mechanicId);
-
-        /// <summary>Records that the card for <paramref name="mechanicId"/> was shown, and saves.</summary>
-        public void MarkTipSeen(string mechanicId)
-        {
-            if (_seenTips.Add(mechanicId)) _store.Save(ToJson());
         }
 
         /// <summary>
@@ -148,8 +137,6 @@ namespace LuckyStep
             data.completed.Sort(StringComparer.Ordinal);
             data.goldenPawns.AddRange(_goldenPawns);
             data.goldenPawns.Sort(StringComparer.Ordinal);
-            data.seenTips.AddRange(_seenTips);
-            data.seenTips.Sort(StringComparer.Ordinal);
             return JsonUtility.ToJson(data);
         }
 
@@ -158,7 +145,6 @@ namespace LuckyStep
         {
             _completed.Clear();
             _goldenPawns.Clear();
-            _seenTips.Clear();
             if (string.IsNullOrEmpty(json)) return;
             SaveData data;
             try
@@ -173,7 +159,6 @@ namespace LuckyStep
             if (data == null) return;
             if (data.completed != null) _completed.UnionWith(data.completed);
             if (data.goldenPawns != null) _goldenPawns.UnionWith(data.goldenPawns);
-            if (data.seenTips != null) _seenTips.UnionWith(data.seenTips);
         }
     }
 }

@@ -80,96 +80,9 @@ def base(path):
     img.resize((OUT, OUT), Image.LANCZOS).save(path)
 
 
-# New-mechanic card icons (spec tutorial-guide-and-tips-addition-2026-11-13): full colour, ink outline, drawn at
-# 512 and downsampled to 128. Colours follow the board: hazard red, lucky gold, evil-eye blue.
-RED = (0xE2, 0x3B, 0x3B, 255)
-GREEN = (0x5C, 0x9E, 0x6B, 255)
-PAPER = (0xFF, 0xF6, 0xE0, 255)
-BLUE = (0x1F, 0x4F, 0xBF, 255)
-SKY = (0x7D, 0xC7, 0xF2, 255)
-GLASS = (0xB8, 0xD6, 0xF2, 255)
-WOOD = (0xD6, 0x9E, 0x61, 255)
-WOOD_DARK = (0x8C, 0x61, 0x3D, 255)
-CAT = (0x24, 0x21, 0x29, 255)
-HOLE = (0x12, 0x14, 0x26, 255)
-LINE = 18  # ink outline width at 512
-
-
-def _icon(path, draw):
-    img = Image.new("RGBA", (BIG, BIG), CLEAR)
-    draw(ImageDraw.Draw(img))
-    img.resize((OUT, OUT), Image.LANCZOS).save(path)
-
-
-def tip_spike(d):
-    d.rounded_rectangle((60, 380, 452, 450), radius=16, fill=WOOD_DARK, outline=INK, width=LINE)
-    for x in (80, 196, 312):
-        d.polygon([(x, 390), (x + 60, 90), (x + 120, 390)], fill=RED, outline=INK, width=LINE)
-
-
-def tip_flowerpot(d):
-    d.ellipse((150, 50, 270, 190), fill=GREEN, outline=INK, width=LINE)
-    d.ellipse((240, 40, 360, 180), fill=GREEN, outline=INK, width=LINE)
-    d.rounded_rectangle((110, 180, 402, 250), radius=14, fill=RED, outline=INK, width=LINE)
-    d.polygon([(140, 245), (372, 245), (330, 460), (182, 460)], fill=RED, outline=INK, width=LINE)
-
-
-def tip_dice(d):
-    d.rounded_rectangle((70, 70, 442, 442), radius=70, fill=PAPER, outline=INK, width=LINE)
-    for cx, cy in ((160, 160), (352, 160), (256, 256), (160, 352), (352, 352)):
-        d.ellipse((cx - 34, cy - 34, cx + 34, cy + 34), fill=INK)
-
-
-def tip_bridge(d):
-    d.ellipse((60, 60, 452, 452), fill=GOLD, outline=INK, width=LINE)
-    d.ellipse((130, 130, 382, 382), outline=(0xB8, 0x86, 0x0B, 255), width=22)
-    d.polygon([(256, 170), (282, 236), (350, 240), (296, 282), (316, 350), (256, 310), (196, 350), (216, 282),
-               (162, 240), (230, 236)], fill=(0xB8, 0x86, 0x0B, 255))
-
-
-def tip_gap(d):
-    d.ellipse((50, 150, 462, 400), fill=PAPER, outline=INK, width=LINE)
-    d.ellipse((100, 190, 412, 360), fill=HOLE)
-
-
-def tip_cat(d):
-    d.polygon([(110, 230), (130, 60), (240, 160)], fill=CAT, outline=INK, width=LINE)
-    d.polygon([(402, 230), (382, 60), (272, 160)], fill=CAT, outline=INK, width=LINE)
-    d.ellipse((90, 130, 422, 450), fill=CAT, outline=INK, width=LINE)
-    for cx in (190, 322):
-        d.ellipse((cx - 40, 250, cx + 40, 320), fill=GOLD)
-        d.ellipse((cx - 10, 256, cx + 10, 314), fill=INK)
-    d.polygon([(236, 350), (276, 350), (256, 372)], fill=(0xF2, 0x9A, 0xA8, 255))
-
-
-def tip_mirror(d):
-    d.rounded_rectangle((226, 380, 286, 480), radius=20, fill=WOOD_DARK, outline=INK, width=LINE)
-    d.ellipse((110, 30, 402, 400), fill=WOOD, outline=INK, width=LINE)
-    d.ellipse((150, 70, 362, 360), fill=GLASS)
-    d.line([(200, 110), (262, 210), (230, 250), (300, 330)], fill=INK, width=14)
-
-
-def tip_wood(d):
-    for y in (110, 290):
-        d.rounded_rectangle((50, y, 462, y + 130), radius=20, fill=WOOD, outline=INK, width=LINE)
-        d.line([(110, y + 45), (300, y + 45)], fill=WOOD_DARK, width=12)
-        d.line([(200, y + 88), (400, y + 88)], fill=WOOD_DARK, width=12)
-        d.ellipse((380, y + 30, 420, y + 70), fill=INK)
-
-
-def tip_bead(d):
-    d.ellipse((60, 60, 452, 452), fill=BLUE, outline=INK, width=LINE)
-    d.ellipse((150, 150, 362, 362), fill=PAPER)
-    d.ellipse((190, 190, 322, 322), fill=SKY)
-    d.ellipse((226, 226, 286, 286), fill=INK)
-
-
-TIPS = [tip_spike, tip_flowerpot, tip_dice, tip_bridge, tip_gap, tip_cat, tip_mirror, tip_wood, tip_bead]
-
-
 if __name__ == "__main__":
     out = Path(sys.argv[1])
-    only = sys.argv[2] if len(sys.argv) > 2 else None  # "base" or "tips": draw just those icons
+    only = sys.argv[2] if len(sys.argv) > 2 else None  # e.g. "base": draw just that icon
     if only is None:
         for name, (size, face) in CARDS.items():
             card(out / name, size, face)
@@ -178,6 +91,3 @@ if __name__ == "__main__":
         arrow(out / "icon_arrow.png")
     if only in (None, "base"):
         base(out / "icon_base.png")
-    if only in (None, "tips"):
-        for draw in TIPS:
-            _icon(out / (draw.__name__ + ".png"), draw)
