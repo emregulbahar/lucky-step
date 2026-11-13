@@ -1,0 +1,8 @@
+<!-- Story 007: GameObject.CreatePrimitive adds a collider at runtime (BoardView cylinders, TableView cubes; the code
+     destroys it straight away). Keep the collider classes so engine code stripping in WebGL does not remove them. -->
+<linker>
+  <assembly fullname="UnityEngine.PhysicsModule">
+    <type fullname="UnityEngine.CapsuleCollider" preserve="all"/>
+    <type fullname="UnityEngine.BoxCollider" preserve="all"/>
+  </assembly>
+</linker>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <!-- Lucky Step full-window template (Story 007): the canvas fills the page (itch embed or fullscreen), a cream
+         loading card in the game's own colours, no Unity footer. -->
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #1d3b2a; }
+      #unity-canvas { display: block; width: 100%; height: 100%; background: #1d3b2a; outline: none; }
+      #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      #card { background: #FFF6E0; border: 3px solid #1C1A24; border-radius: 14px; box-shadow: 6px 6px 0 #1C1A24;
+              padding: 22px 28px; text-align: center; font: 700 30px/1.2 system-ui, "Segoe UI", sans-serif; color: #9a6400; }
+      #bar { width: min(60vw, 360px); height: 16px; margin-top: 16px; border: 3px solid #1C1A24; border-radius: 9px;
+             background: #EDE0C2; overflow: hidden; }
+      #fill { width: 0; height: 100%; background: #FFC21A; transition: width 0.2s; }
+      #error { display: none; margin-top: 12px; font-size: 15px; font-weight: 500; color: #E23B3B; max-width: 360px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="loading"><div id="card">{{{ PRODUCT_NAME }}}<div id="bar"><div id="fill"></div></div><div id="error"></div></div></div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var buildUrl = "Build";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        showBanner: function (msg, type) { if (type === "error") showError(msg); else console.warn(msg); },
+      };
+
+      function showError(msg) {
+        var e = document.querySelector("#error");
+        e.textContent = msg;
+        e.style.display = "block";
+        document.querySelector("#loading").style.display = "flex";
+      }
+
+      // Keyboard input needs focus inside the itch iframe: take it on load and on every click.
+      canvas.addEventListener("pointerdown", function () { canvas.focus(); });
+
+      var script = document.createElement("script");
+      script.src = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (progress) {
+          document.querySelector("#fill").style.width = 100 * progress + "%";
+        }).then(function () {
+          document.querySelector("#loading").style.display = "none";
+          canvas.focus();
+        }).catch(showError);
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

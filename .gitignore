@@ -185,3 +185,5 @@ $RECYCLE.BIN/
 !Assets/**/*.dll
 [Mm]emoryCaptures/
 [Rr]ecordings/
+production/release/itch/*.zip
+production/release/itch/shot_*.png
