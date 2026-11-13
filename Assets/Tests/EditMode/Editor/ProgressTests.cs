@@ -19,7 +19,12 @@ public sealed class ProgressTests
         }
     }
 
-    private static readonly List<string> Order = new List<string> { "Level01", "Level02", "Level03" };
+    // Two worlds: Level01-03, then Level04-05.
+    private static readonly List<List<string>> Order = new List<List<string>>
+    {
+        new List<string> { "Level01", "Level02", "Level03" },
+        new List<string> { "Level04", "Level05" },
+    };
 
     [Test]
     public void NewProgress_EmptyStore_NothingCompletedNoPawns()
@@ -57,6 +62,25 @@ public sealed class ProgressTests
         var progress = new Progress(new MemoryStore());
 
         Assert.IsFalse(progress.IsUnlocked("Level99", Order));
+    }
+
+    [Test]
+    public void IsUnlocked_FirstLevelOfEveryWorld_OpenFromStart()
+    {
+        var progress = new Progress(new MemoryStore());
+
+        Assert.IsTrue(progress.IsUnlocked("Level04", Order));
+        Assert.IsFalse(progress.IsUnlocked("Level05", Order));
+    }
+
+    [Test]
+    public void IsUnlocked_LastOfPreviousWorldDone_DoesNotOpenSecondOfNext()
+    {
+        var progress = new Progress(new MemoryStore());
+
+        progress.MarkCompleted("Level03", 10, -1);
+
+        Assert.IsFalse(progress.IsUnlocked("Level05", Order));
     }
 
     [Test]

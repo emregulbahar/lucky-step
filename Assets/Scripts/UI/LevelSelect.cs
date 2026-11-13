@@ -137,10 +137,11 @@ namespace LuckyStep
                 pawnsPossible++;
                 if (_progress.HasGoldenPawn(id)) pawns++;
             }
+            List<List<string>> worldIds = _catalog.WorldLevelIds;
             foreach (Slot slot in _slots)
             {
                 string id = slot.Level.name;
-                bool unlocked = _progress.IsUnlocked(id, ids);
+                bool unlocked = _progress.IsUnlocked(id, worldIds);
                 slot.Button.interactable = unlocked;
                 slot.Face.sprite = unlocked ? Ui.LevelButton : Ui.LevelButtonLocked;
                 slot.Number.gameObject.SetActive(unlocked);

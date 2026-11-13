@@ -87,7 +87,7 @@
         { "key": "win.next", "value": "Next" },
         { "key": "win.retry", "value": "Retry" },
         { "key": "win.level_select", "value": "Level select" },
-        { "key": "win.last_level", "value": "All levels done! More worlds are on the way." },
+        { "key": "win.last_level", "value": "You reached the last square!" },
 
         { "key": "story.world1.title", "value": "World 1: The Starting Square" },
         { "key": "story.world1.body", "value": "Every board begins with a single step, and the seventh is the one that opens the door." },
@@ -98,6 +98,8 @@
         { "key": "story.world4.title", "value": "World 4: The Chinese Quarter" },
         { "key": "story.world4.body", "value": "Eight is the lucky number here, and four is never welcome." },
         { "key": "story.world5.title", "value": "World 5: The Old Bazaar" },
-        { "key": "story.world5.body", "value": "Knock on wood and the step does not count. Carry a blue bead and bad luck passes you by." }
+        { "key": "story.world5.body", "value": "Knock on wood and the step does not count. Carry a blue bead and bad luck passes you by." },
+        { "key": "story.ending.title", "value": "The Last Square" },
+        { "key": "story.ending.body", "value": "Seven steps at a time, you crossed every board. Luck was never in the dice after all: it was in the counting. Thanks for playing Lucky Step!" }
     ]
 }

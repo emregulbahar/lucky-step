@@ -12,9 +12,9 @@ namespace LuckyStep
     /// <item><term>Menu</term><description>Play: Story (first level of its world) or Playing, at the continue level. Level select: LevelSelect. Settings: Settings.</description></item>
     /// <item><term>Settings</term><description>Music and effects volume. Back, Esc or gamepad East: Menu.</description></item>
     /// <item><term>LevelSelect</term><description>Unlocked level: Story or Playing. Back, Esc or gamepad East: Menu.</description></item>
-    /// <item><term>Story</term><description>Any key, click or gamepad South/Start: Playing.</description></item>
+    /// <item><term>Story</term><description>Any key, click or gamepad South/Start: Playing (the ending card: Menu).</description></item>
     /// <item><term>Playing</term><description>LevelWon: Won (progress saved, panel after <see cref="UiStyle.winPanelDelay"/>). Esc or gamepad East: Menu.</description></item>
-    /// <item><term>Won</term><description>Next: Story or Playing (next level). Retry: Playing (same level). Level select: LevelSelect. Esc or East: Menu.</description></item>
+    /// <item><term>Won</term><description>Next: Story or Playing (next level; after the last level the ending card, a Story). Retry: Playing (same level). Level select: LevelSelect. Esc or East: Menu.</description></item>
     /// </list>
     /// Player input is enabled only in Playing, from the frame after entering it, so the key that closed a screen does
     /// not also move the pawn. Every screen re-reads its text on <see cref="Localization.LanguageChanged"/>.
@@ -58,6 +58,7 @@ namespace LuckyStep
         private int _winRankAfter;
         private int _rankOverride = -1;
         private bool _guided;
+        private bool _ending;
         private GameState _guideState;
         private Level _guideBoardLevel;
         private Camera _camera;
@@ -87,7 +88,7 @@ namespace LuckyStep
             _settings.BackClicked += () => Enter(State.Menu);
             _select.LevelChosen += StartLevel;
             _select.BackClicked += () => Enter(State.Menu);
-            _win.NextClicked += () => StartLevel(_catalog.Next(_controller.CurrentLevelFile));
+            _win.NextClicked += OnNext;
             _win.RetryClicked += Retry;
             _win.LevelSelectClicked += () => Enter(State.LevelSelect);
 
@@ -142,6 +143,9 @@ namespace LuckyStep
                 case "story":
                     EnterStory(_catalog.WorldIndexOf(level));
                     break;
+                case "ending":
+                    EnterEnding();
+                    break;
                 case "hud":
                     Enter(State.Playing);
                     break;
@@ -182,7 +186,7 @@ namespace LuckyStep
                     if (!entered && BackPressed()) Enter(State.Menu);
                     break;
                 case State.Story:
-                    if (!entered && AnyPressed()) Enter(State.Playing);
+                    if (!entered && AnyPressed()) Enter(_ending ? State.Menu : State.Playing);
                     break;
                 case State.Won:
                     _hud.SetMoves(_controller.Moves);
@@ -301,8 +305,24 @@ namespace LuckyStep
             if (_controller.LoadLevel(_controller.CurrentLevelFile)) Enter(State.Playing);
         }
 
+        private void OnNext()
+        {
+            TextAsset next = _catalog.Next(_controller.CurrentLevelFile);
+            if (next != null) StartLevel(next);
+            else EnterEnding();
+        }
+
+        /// <summary>The ending card after the last level (story.ending); any key then opens the menu.</summary>
+        private void EnterEnding()
+        {
+            _story.SetStory("story.ending");
+            _ending = true;
+            Enter(State.Story);
+        }
+
         private void EnterStory(int worldIndex)
         {
+            _ending = false;
             string key = worldIndex >= 0 ? _catalog.Worlds[worldIndex].storyKey : null;
             _story.SetStory(string.IsNullOrEmpty(key) ? "story.world" + (worldIndex + 1) : key);
             Enter(State.Story);
@@ -361,7 +381,7 @@ namespace LuckyStep
 
         private TextAsset ContinueLevel()
         {
-            List<string> ids = _catalog.LevelIds;
+            List<List<string>> ids = _catalog.WorldLevelIds;
             foreach (TextAsset level in _catalog.Levels)
             {
                 if (_progress.IsUnlocked(level.name, ids) && !_progress.IsCompleted(level.name)) return level;

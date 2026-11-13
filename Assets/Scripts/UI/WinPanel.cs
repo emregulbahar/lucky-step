@@ -8,7 +8,7 @@ namespace LuckyStep
     /// Level complete panel (Story 006): title, steps against par, a gold banner with the pawn when this run earned the
     /// Golden pawn (punch and sparkle burst on show), a teal promotion banner when this win raised the figure rank
     /// (punch, then its base icon turns from the old rank's colour to the new one), and Next / Retry / Level select.
-    /// After the last level Next is hidden and the "all levels done" line shows.
+    /// After the last level the "last square" line shows and Next opens the ending card (ScreenFlow).
     /// </summary>
     /// <example><code>win.Show(moves: 9, par: 9, goldenPawn: true, isLastLevel: false, rankBefore: 1, rankAfter: 2);</code></example>
     public sealed class WinPanel : UiScreen
@@ -25,7 +25,6 @@ namespace LuckyStep
         private readonly Text _levelSelect;
         private int _moves;
         private int _par = -1;
-        private bool _isLastLevel;
         private readonly RectTransform _bannerRect;
         private readonly RectTransform _sparkRoot;
         private readonly Image[] _sparks;
@@ -118,7 +117,7 @@ namespace LuckyStep
         }
 
         /// <inheritdoc />
-        protected override GameObject DefaultSelection => _isLastLevel ? _retryButton.gameObject : _nextButton.gameObject;
+        protected override GameObject DefaultSelection => _nextButton.gameObject;
 
         /// <summary>
         /// Shows the result: <paramref name="par"/> -1 means unknown (score without par, no pawn possible). The
@@ -128,7 +127,6 @@ namespace LuckyStep
         {
             _moves = moves;
             _par = par;
-            _isLastLevel = isLastLevel;
             _goldenRow.SetActive(goldenPawn);
             // The moment needs a visible par: golden is only true when moves <= par and par is shown (par >= 0).
             _goldenAnimating = goldenPawn && par >= 0;
@@ -149,7 +147,6 @@ namespace LuckyStep
             _promotionRect.localScale = pop ? Vector3.one * Ui.Style.goldenStartScale : Vector3.one;
             _promotionIcon.color = Ui.Style.RankColor(pop ? rankBefore : rankAfter);
             _lastLevel.gameObject.SetActive(isLastLevel);
-            _nextButton.gameObject.SetActive(!isLastLevel);
             Show();
         }
 

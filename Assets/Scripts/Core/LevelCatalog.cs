@@ -77,10 +77,10 @@ namespace LuckyStep
             }
         }
 
-        /// <summary>Level ids in play order, for <see cref="Progress.IsUnlocked"/> (allocates).</summary>
+        /// <summary>Level ids in play order (allocates).</summary>
         public List<string> LevelIds => Levels.ConvertAll(level => level.name);
 
-        /// <summary>Each world's level ids in play order, for <see cref="Progress.CompletedWorlds"/> (allocates).</summary>
+        /// <summary>Each world's level ids in play order, for <see cref="Progress.CompletedWorlds"/> and <see cref="Progress.IsUnlocked"/> (allocates).</summary>
         public List<List<string>> WorldLevelIds
         {
             get

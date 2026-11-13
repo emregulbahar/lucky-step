@@ -87,7 +87,7 @@
         { "key": "win.next", "value": "Sonraki" },
         { "key": "win.retry", "value": "Tekrar" },
         { "key": "win.level_select", "value": "Bölüm seç" },
-        { "key": "win.last_level", "value": "Tüm bölümler bitti! Yeni dünyalar yolda." },
+        { "key": "win.last_level", "value": "Son kareye ulaştın!" },
 
         { "key": "story.world1.title", "value": "Dünya 1: Başlangıç Karesi" },
         { "key": "story.world1.body", "value": "Her tahta tek bir adımla başlar ve kapıyı açan yedinci adımdır." },
@@ -98,6 +98,8 @@
         { "key": "story.world4.title", "value": "Dünya 4: Çin Mahallesi" },
         { "key": "story.world4.body", "value": "Burada şanslı sayı sekizdir, dört ise hiç hoş karşılanmaz." },
         { "key": "story.world5.title", "value": "Dünya 5: Eski Çarşı" },
-        { "key": "story.world5.body", "value": "Tahtaya vurursan o adım sayılmaz. Nazar boncuğu taşırsan uğursuzluk sana dokunmaz." }
+        { "key": "story.world5.body", "value": "Tahtaya vurursan o adım sayılmaz. Nazar boncuğu taşırsan uğursuzluk sana dokunmaz." },
+        { "key": "story.ending.title", "value": "Son Kare" },
+        { "key": "story.ending.body", "value": "Yedi adım yedi adım bütün tahtaları geçtin. Meğer şans zarda değil, saymaktaymış. Lucky Step'i oynadığın için teşekkürler!" }
     ]
 }

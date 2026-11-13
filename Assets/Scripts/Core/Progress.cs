@@ -43,7 +43,7 @@ namespace LuckyStep
     /// <code>
     /// var progress = new Progress(new PlayerPrefsProgressStore());
     /// bool pawn = progress.MarkCompleted("Level02", controller.Moves, catalog.Par("Level02"));
-    /// bool open = progress.IsUnlocked("Level03", catalog.LevelIds);
+    /// bool open = progress.IsUnlocked("Level03", catalog.WorldLevelIds);
     /// </code>
     /// </example>
     public sealed class Progress
@@ -117,14 +117,19 @@ namespace LuckyStep
         public bool UnlockAll { get; set; }
 
         /// <summary>
-        /// True if the level can be played: the first id in <paramref name="orderedLevelIds"/> always is, any other when
-        /// the id before it is completed. Ids not in the list are locked.
+        /// True if the level can be played. Each entry of <paramref name="worldLevelIds"/> is one world's level ids in
+        /// play order: the first level of every world is always open (so a short session can reach every world's new
+        /// idea; final-review decision 2026-11-13), any other when the level before it in its world is completed. Ids
+        /// not in any world are locked.
         /// </summary>
-        public bool IsUnlocked(string levelId, IReadOnlyList<string> orderedLevelIds)
+        public bool IsUnlocked(string levelId, IEnumerable<IReadOnlyList<string>> worldLevelIds)
         {
-            for (int i = 0; i < orderedLevelIds.Count; i++)
+            foreach (IReadOnlyList<string> world in worldLevelIds)
             {
-                if (orderedLevelIds[i] == levelId) return UnlockAll || i == 0 || _completed.Contains(orderedLevelIds[i - 1]);
+                for (int i = 0; i < world.Count; i++)
+                {
+                    if (world[i] == levelId) return UnlockAll || i == 0 || _completed.Contains(world[i - 1]);
+                }
             }
             return false;
         }

@@ -5,7 +5,7 @@ namespace LuckyStep
 {
     /// <summary>
     /// Command-line QA capture arguments (run-and-observe, Story 006), same pattern as ScreenshotOnArg:
-    /// <c>--ui menu|select|settings|story|hud|win</c>, <c>--lang en|tr</c>, <c>--level LevelId</c>, <c>--progress-demo</c>,
+    /// <c>--ui menu|select|settings|story|ending|hud|win</c>, <c>--lang en|tr</c>, <c>--level LevelId</c>, <c>--progress-demo</c>,
     /// <c>--win-delay seconds</c> (with <c>--ui win</c>), plus the Story 005 <c>--moves</c> replay. Read once at startup
     /// (allocates). Screenshot runs advance a fixed 1/<see cref="CaptureFrameRate"/> s per frame, so <c>--after N</c>
     /// frames is N/60 s of UI time however long the real frames take.
